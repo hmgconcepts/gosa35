@@ -132,7 +132,7 @@ const Exam = {
     if(data.closed){ this.root().innerHTML='<div class="card"><h3>🚫 Closed</h3><p>This exam is no longer accepting submissions.</p></div>'; return; }
     this.data=data; CBT.prepareForStudent(this.data); if(!this.qs().length){ this.root().innerHTML='<div class="card"><h3>No questions found</h3><p>This CBT exam has no valid questions. Ask the teacher to re-upload the CSV question bank.</p></div>'; return; }
     this.answers=new Array(this.qs().length).fill(null);
-    this.remaining=(data.duration||45)*60; this.startTs=Date.now();
+    this.remaining=(data.duration||45)*60; this.startTs=Date.now(); this.deadline = Date.now() + (this.remaining * 1000);
     if(data.instructions){ if(!confirm('Instructions:\n\n'+data.instructions+'\n\nClick OK to begin.')) { this.codeEntry(code); return; } }
     this.beginMonitor(); this.tick(); this.render();
   },
@@ -140,7 +140,7 @@ const Exam = {
     let viol=0; const cfg=this.data.anti_cheat_config||{};
     this.monitor=CBT.startAntiCheat(cfg,(type,n)=>{ viol=n; this.violations=n; this.violationLog=this.monitor.log; const w=document.getElementById('viol'); if(w) w.textContent='⚠ '+n+' integrity flag(s)'; if((cfg.max_violations||5) && n>=cfg.max_violations){ toast('Too many integrity violations — submitting.','danger'); this.submit(); } });
   },
-  tick(){ this.timer=setInterval(()=>{ this.remaining--; const t=document.getElementById('clock'); if(t){ const m=Math.floor(this.remaining/60),s=this.remaining%60; t.textContent=m+':'+String(s).padStart(2,'0'); if(this.remaining<=60)t.style.color='#dc2626'; } if(this.remaining<=0){ clearInterval(this.timer); toast('Time up — submitting.','warning'); this.submit(); } },1000); },
+  tick(){ if(this.timer) clearInterval(this.timer); const update=()=>{ this.remaining=Math.max(0, Math.ceil((this.deadline-Date.now())/1000)); const t=document.getElementById('clock'); if(t){ const m=Math.floor(this.remaining/60),ss=this.remaining%60; t.textContent=m+':'+String(ss).padStart(2,'0'); if(this.remaining<=60)t.style.color='#dc2626'; } if(this.remaining<=0){ clearInterval(this.timer); this.timer=null; toast('Time up — submitting.','warning'); this.submit(); } }; update(); this.timer=setInterval(update,1000); },
   render(){
     const q=this.qs()[this.idx]; if(!q){ return; }
     const opts=(q.options||[]).map((o,i)=>{ const L=String.fromCharCode(65+i); const checked=this.answers[this.idx]===L?'checked':''; return '<label style="display:block;padding:10px;border:1px solid var(--gray-200);border-radius:8px;margin:6px 0;cursor:pointer"><input type="radio" name="opt" value="'+L+'" '+checked+' onchange="Exam.answer(\''+L+'\')"> '+L+'. '+esc(o)+'</label>'; }).join('');
@@ -193,9 +193,6 @@ const Exam = {
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toast(m,t){ alert(m); }
 function openModal(){} function closeModal(){}
-Exam.start();
-</script>
-<script>
 // School Connect v5: subject tabs for multi-subject/UTME packages.
 (function(){
  if(!window.Exam) return;
@@ -210,5 +207,7 @@ Exam.start();
   const root=this.root(); const card=root.querySelector('.card'); if(card) card.insertAdjacentHTML('afterbegin',tabs);
  };
 })();
+
+Exam.start();
 </script>
 </body></html>
