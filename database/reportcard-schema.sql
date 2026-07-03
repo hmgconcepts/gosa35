@@ -114,6 +114,19 @@ alter table public.report_cards enable row level security;
 -- =====================================================================
 -- 2. HELPER (no-op if main schema already made it)
 -- =====================================================================
+
+-- ENTERPRISE V4 REPORTCARD PARENT_CHILD: standalone reportcard schema privacy dependency
+create table if not exists public.parent_child (
+  id uuid primary key default uuid_generate_v4(),
+  parent_id uuid references public.profiles(id) on delete cascade,
+  student_id uuid references public.students(id) on delete cascade,
+  relationship text default 'parent',
+  verified boolean default false,
+  created_at timestamptz default now(),
+  unique(parent_id, student_id)
+);
+alter table public.parent_child enable row level security;
+
 create or replace function public.is_parent_of(uid uuid, child uuid)
 returns boolean language sql security definer stable as $$
   select exists (select 1 from public.parent_child where parent_id=uid and student_id=child);

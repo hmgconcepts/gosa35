@@ -1107,6 +1107,25 @@ grant execute on function public.verify_certificate(text) to anon, authenticated
 
 
 -- Role/page access map controlled from Admin Dashboard → Page Access Manager.
+
+-- ENTERPRISE V4: school_settings must exist before any ALTER/POLICY uses it
+create table if not exists public.school_settings (
+  id int primary key default 1,
+  admission_prefix text default 'GOSA',
+  admission_next int default 1,
+  staff_prefix text default 'STF',
+  staff_next int default 1,
+  parent_prefix text default 'PAR',
+  parent_next int default 1,
+  signature_url text default '',
+  principal_name text default '',
+  role_access jsonb,
+  role_write jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+insert into public.school_settings (id) values (1) on conflict (id) do nothing;
+
 alter table public.school_settings add column if not exists role_access jsonb;
 
 -- Page access manager write-permission map.
