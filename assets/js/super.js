@@ -442,9 +442,9 @@ const Super = {
     driveDirect(url) {
       if (!url) return '';
       let m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
-      if (m) return 'https://drive.google.com/uc?export=view&id=' + m[1];
+      if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000';
       m = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-      if (m) return 'https://drive.google.com/uc?export=view&id=' + m[1];
+      if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000';
       return url;
     },
     html(person) {

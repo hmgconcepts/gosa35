@@ -70,7 +70,7 @@ const Generator = {
       timetable_generator: 'timetable-generator.html',
       student_profile: 'student-profile.html',
       verify_certificate: 'verify-certificate.html',
-      feature_guide: 'feature-guide.html'
+      feature_guide: 'feature-guide.html', profile: 'profile.html', 'change-password': 'change-password.html'
     };
     return map[id] || (id + '.html');
   },
@@ -130,7 +130,7 @@ const Generator = {
     // ---- 2b. Load specialised page templates when available ----
     // These pages have richer workflows than generic CRUD pages (CBT taking,
     // certificate printing, admissions links, inbox workflow and teacher overview).
-    const specialIds = ['apply','student-profile','cbt','cbt-prompts','cbt-exam','certificates','admissions','entrance','teacher-overview','inbox','messages','notifications','voting','academic_records','report-cards','idcards','analytics','academic_setup','apply'];
+    const specialIds = ['apply','student-profile','cbt','cbt-prompts','cbt-exam','certificates','admissions','entrance','teacher-overview','inbox','messages','notifications','voting','academic_records','report-cards','idcards','analytics','academic_setup','apply','profile','change-password','cbt-multi'];
     const staticPages = {};
     for (const sid of specialIds) {
       try {
@@ -213,12 +213,15 @@ const Generator = {
       } },
       { id: 'cbt-exam',           name: 'Take Exam',           fn: () => staticPages['cbt-exam'] || T.modulePage(resolvedConfig, 'cbt-exam', { requireRole: 'all' }) },
       { id: 'cbt-prompts',        name: 'CBT Prompt Templates', fn: () => staticPages['cbt-prompts'] || T.modulePage(resolvedConfig, 'cbt-prompts') },
+      { id: 'cbt-multi',          name: 'Multi-Subject CBT',   fn: () => staticPages['cbt-multi'] || T.modulePage(resolvedConfig, 'cbt') },
       { id: 'verify-certificate', name: 'Verify Certificate',  fn: () => T.modulePage(resolvedConfig, 'verify-certificate', { requireRole: 'all' }) },
       { id: 'teacher-overview',   name: 'Teacher Overview',   fn: () => staticPages['teacher-overview'] || T.modulePage(resolvedConfig, 'teacher-overview') },
       { id: 'feature-guide',      name: 'Feature Guide',      fn: () => T.modulePage(resolvedConfig, 'feature-guide', { requireRole: 'all' }) },
       { id: 'about',              name: 'About',               fn: () => T.modulePage(resolvedConfig, 'about', { noShell: true }) },
       { id: 'contact',            name: 'Contact',             fn: () => T.modulePage(resolvedConfig, 'contact', { noShell: true }) },
       { id: 'apply',              name: 'Apply',               fn: () => staticPages['apply'] || T.modulePage(resolvedConfig, 'apply', { noShell: true }) },
+      { id: 'profile',            name: 'My Profile',          fn: () => staticPages['profile'] || Generator.fallbackPage('profile') },
+      { id: 'change-password',    name: 'Change Password',     fn: () => staticPages['change-password'] || Generator.fallbackPage('change-password') },
       { id: 'notifications',      name: 'Notifications',       fn: () => staticPages['notifications'] || T.modulePage(resolvedConfig, 'notifications', { requireRole: 'all' }) },
       { id: 'developer',          name: 'Developer',           fn: () => T.modulePage(resolvedConfig, 'developer', { requireRole: 'all' }) },
       { id: 'voting',             name: 'Voting & Polls',      fn: () => staticPages['voting'] || T.voting(resolvedConfig) },
@@ -312,6 +315,10 @@ const Generator = {
       .replace(/s\.admission_prefix := 'SCH'/g, "s.admission_prefix := '" + acronym + "'")
       .replace(/coalesce\(s\.admission_prefix,'STD'\)/g, "coalesce(s.admission_prefix,'" + acronym + "')")
       .replace(/coalesce\(s\.admission_prefix,'SCH'\)/g, "coalesce(s.admission_prefix,'" + acronym + "')");
+  },
+
+  staticSimplePage(cfg, filename) {
+    return Generator.fallbackPage(filename.replace('.html',''));
   },
 
   /** Replace demo branding in copied specialised static pages. */

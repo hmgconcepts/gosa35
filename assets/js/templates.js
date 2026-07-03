@@ -330,7 +330,7 @@ ${T.setupRequiredBanner()}
       const map = {
         'academic-records':'academic_records', 'admin-data':'admin_data', 'report-cards':'report_cards',
         'cbt-prompts':'cbt_prompts', 'cbt-exam':'cbt_exam', 'timetable-generator':'timetable_generator',
-        'student-profile':'student_profile', 'feature-guide':'feature_guide', 'verify-certificate':'verify_certificate'
+        'student-profile':'student_profile', 'profile':'profile', 'change-password':'change_password', 'cbt-multi':'cbt_multi', 'feature-guide':'feature_guide', 'verify-certificate':'verify_certificate'
       };
       return map[x] || String(x || '').replace(/-/g, '_');
     };
@@ -341,7 +341,7 @@ ${T.setupRequiredBanner()}
     // Default role menus are intentionally lean. Admin can later override this from
     // Dashboard → Page Access Manager without removing any feature from the system.
     const staffSet = new Set([
-      'dashboard','notifications','feature_guide','teacher_overview',
+      'dashboard','notifications','profile','change_password','feature_guide','teacher_overview',
       'students','classes','subjects','attendance','results','report_cards','academic_records',
       'cbt','cbt_prompts','entrance','assignments','timetable','timetable_generator','sow',
       'lesson_plans','library','digital_library','eresources','announcements','events','messages','inbox',
@@ -349,12 +349,12 @@ ${T.setupRequiredBanner()}
       'certificates','reports','directory','rubrics','counselling','substitutions','helpdesk','book_request'
     ]);
     const parentSet = new Set([
-      'dashboard','notifications','feature_guide','student_profile','fees','payments_online','results',
+      'dashboard','notifications','profile','change_password','feature_guide','student_profile','fees','payments_online','results',
       'report_cards','attendance','assignments','diary','timetable','announcements','events','messages','inbox',
       'complaints','eresources','certificates','school_calendar'
     ]);
     const studentSet = new Set([
-      'dashboard','notifications','feature_guide','student_profile','cbt_exam','assignments','digital_library',
+      'dashboard','notifications','profile','change_password','feature_guide','student_profile','cbt_exam','assignments','digital_library',
       'eresources','timetable','results','report_cards','attendance','announcements','events','messages','inbox',
       'complaints','certificates','diary','school_calendar'
     ]);
@@ -368,7 +368,7 @@ ${T.setupRequiredBanner()}
 
   iconFor(id) {
     const map = {
-      dashboard:'🏠', about:'🏫', contact:'☎️', apply:'📝', 'feature-guide':'📘', 'verify-certificate':'🔎', 'teacher-overview':'👨‍🏫', 'cbt-exam':'🧪', 'academic-records':'📄', academic_setup:'⚙️', students:'👨‍🎓', staff:'👨‍🏫', classes:'📚', attendance:'📋', results:'📊',
+      dashboard:'🏠', about:'🏫', contact:'☎️', apply:'📝', 'feature-guide':'📘', 'verify-certificate':'🔎', 'teacher-overview':'👨‍🏫', 'cbt-exam':'🧪', 'cbt-multi':'🧪', profile:'👤', 'change-password':'🔐', 'academic-records':'📄', academic_setup:'⚙️', students:'👨‍🎓', staff:'👨‍🏫', classes:'📚', attendance:'📋', results:'📊',
       timetable:'🗓️', sow:'📋', cbt:'💻', assignments:'📝', library:'📖', conduct:'⚖️', health:'🩺',
       promotion:'🎓', fees:'💰', finance:'💵', leave:'🏖️', visitors:'🚪', transport:'🚌',
       announcements:'📢', events:'🎭', messages:'📱', inbox:'💬', complaints:'📨', broadcast:'📨',
@@ -392,7 +392,7 @@ ${T.setupRequiredBanner()}
      collisions caused by name.split(' ')[0]). Falls back to the module name. */
   labelFor(id, fallbackName) {
     const map = {
-      dashboard:'Dashboard', about:'About', contact:'Contact', apply:'Apply', 'feature-guide':'Feature Guide', 'verify-certificate':'Verify Certificate', 'teacher-overview':'Teacher Overview', 'cbt-exam':'Take Exam', 'student-profile':'Student Profile', academic_records:'Academic Records', academic_setup:'Academic Setup', students:'Students', staff:'Staff', classes:'Classes',
+      dashboard:'Dashboard', about:'About', contact:'Contact', apply:'Apply', 'feature-guide':'Feature Guide', 'verify-certificate':'Verify Certificate', 'teacher-overview':'Teacher Overview', 'cbt-exam':'Take Exam', 'cbt-multi':'Multi-Subject CBT', profile:'My Profile', 'change-password':'Change Password', 'student-profile':'Student Profile', academic_records:'Academic Records', academic_setup:'Academic Setup', students:'Students', staff:'Staff', classes:'Classes',
       attendance:'Attendance', results:'Results', timetable:'Timetable',
       'timetable-generator':'Auto-Timetable', sow:'Scheme', cbt:'CBT', assignments:'Assignments',
       library:'Library', conduct:'Conduct', health:'Health', promotion:'Promotion',
@@ -431,7 +431,7 @@ ${T.setupRequiredBanner()}
       // Public pages (about/contact/apply/verify) are still generated, but are not
       // placed inside authenticated role dashboards to keep staff/parent/student
       // navigation focused.
-      'student-profile', 'cbt-exam', 'teacher-overview', 'feature-guide', 'notifications', 'parents'
+      'student-profile', 'profile', 'change-password', 'cbt-exam', 'cbt-multi', 'teacher-overview', 'feature-guide', 'notifications', 'parents'
     ];
     // Combine and dedupe — avoid 'class' vs 'classes' collisions
     const known = [...new Set([...base, ...catalogIds, ...dedicatedPages])];
@@ -450,13 +450,13 @@ ${T.setupRequiredBanner()}
       ['ID Cards','idcards.html'],['Certificates','certificates.html'],['Flyer','flyer.html'],['Broadcast','broadcast.html'],['Announcements','announcements.html'],['Voting','voting.html']
     ];
     const staffLinks = [
-      ['Attendance','attendance.html'],['Results','results.html'],['CBT Manager','cbt.html'],['CBT Prompts','cbt-prompts.html'],['Report Cards','report-cards.html'],['Academic Records','academic-records.html'],['Assignments','assignments.html'],['Scheme of Work','sow.html'],['Lesson Plans','lesson_plans.html'],['Timetable','timetable.html'],['Digital Library','digital_library.html'],['Library','library.html'],['Behaviour','behaviour.html'],['Support Plans','support_plans.html'],['Diary','diary.html'],['Messages','messages.html'],['Inbox','inbox.html'],['Students','students.html']
+      ['My Account','profile.html'],['Change Password','change-password.html'],['Attendance','attendance.html'],['Results','results.html'],['CBT Manager','cbt.html'],['CBT Prompts','cbt-prompts.html'],['Report Cards','report-cards.html'],['Academic Records','academic-records.html'],['Assignments','assignments.html'],['Scheme of Work','sow.html'],['Lesson Plans','lesson_plans.html'],['Timetable','timetable.html'],['Digital Library','digital_library.html'],['Library','library.html'],['Behaviour','behaviour.html'],['Support Plans','support_plans.html'],['Diary','diary.html'],['Messages','messages.html'],['Inbox','inbox.html'],['Students','students.html']
     ];
     const parentLinks = [
-      ['Child Dashboard','student-profile.html'],['Fees / Balance','fees.html'],['Results','results.html'],['Report Cards','report-cards.html'],['Attendance','attendance.html'],['Assignments','assignments.html'],['Diary','diary.html'],['Timetable','timetable.html'],['Messages','inbox.html'],['Announcements','announcements.html'],['Complaint','complaints.html'],['Apply / Admissions','apply.html']
+      ['My Account','profile.html'],['Change Password','change-password.html'],['Child Dashboard','student-profile.html'],['Fees / Balance','fees.html'],['Results','results.html'],['Report Cards','report-cards.html'],['Attendance','attendance.html'],['Assignments','assignments.html'],['Diary','diary.html'],['Timetable','timetable.html'],['Messages','inbox.html'],['Announcements','announcements.html'],['Complaint','complaints.html'],['Apply / Admissions','apply.html']
     ];
     const studentLinks = [
-      ['Take CBT','cbt-exam.html'],['Assignments','assignments.html'],['Digital Library','digital_library.html'],['E-Resources','eresources.html'],['Timetable','timetable.html'],['Results','results.html'],['Report Cards','report-cards.html'],['My Profile','student-profile.html'],['Diary','diary.html'],['Announcements','announcements.html'],['Inbox','inbox.html'],['Complaints','complaints.html'],['Certificates','certificates.html']
+      ['Take CBT','cbt-exam.html'],['Multi-Subject CBT','cbt-multi.html'],['Assignments','assignments.html'],['Digital Library','digital_library.html'],['E-Resources','eresources.html'],['Timetable','timetable.html'],['Results','results.html'],['Report Cards','report-cards.html'],['My Profile','student-profile.html'],['Diary','diary.html'],['Announcements','announcements.html'],['Inbox','inbox.html'],['Complaints','complaints.html'],['Certificates','certificates.html']
     ];
     const buttons = arr => arr.map(x => `<a class="btn btn-outline btn-sm" href="${x[1]}">${T.esc(x[0])}</a>`).join('');
     return T.shell(config, 'Dashboard', `

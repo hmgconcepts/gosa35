@@ -28,6 +28,7 @@ const CBT = {
     const type = String(q.type || q.question_type || 'mcq').toLowerCase().replace(/\s+/g,'_');
     let options = Array.isArray(q.options) ? q.options.slice() : [];
     if (!options.length) ['a','b','c','d','e'].forEach(k => { if (q[k] != null && String(q[k]).trim() !== '') options.push(String(q[k])); });
+    if (!options.length && (type === 'true_false' || type === 'truefalse' || type === 'boolean')) options = ['True','False'];
     const answer = q.answer != null ? q.answer : (q.correct != null ? q.correct : q.correct_answer);
     return {
       id: q.id || ('q' + (idx + 1)),

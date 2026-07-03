@@ -648,11 +648,17 @@ const App = {
       } catch (_) { return []; }
     };
     try {
-      const [studentCount, staffCount, feeRows, announcements, openPolls, attendanceCount, cbtCount, resultCount, parentCount, complaintCount] = await Promise.all([
+      const [studentCount, staffCount, feeRows, announcements, openPolls, events, broadcasts, surveys, lostFound, ptaMeetings, meals, attendanceCount, cbtCount, resultCount, parentCount, complaintCount] = await Promise.all([
         safeCount('students'), safeCount('staff'),
         safeRows('fee_payments', 'amount_paid', 500),
         safeRows('announcements', '*', 5),
-        safeRows('polls', '*', 3),
+        safeRows('polls', '*', 5),
+        safeRows('events', '*', 5),
+        safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='broadcast')),
+        safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='surveys')),
+        safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='lost_found')),
+        safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='parent_meeting')),
+        safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='cafeteria' || r.module==='menu')),
         safeCount('attendance'), safeCount('cbt_exams'), safeCount('results'),
         safeCount('parent_child'), safeCount('complaints')
       ]);
@@ -677,7 +683,7 @@ const App = {
         ? openPolls.map(p => '<div style="padding:10px 0;border-bottom:1px solid var(--gray-200)"><a href="voting.html?poll='+p.id+'"><strong>'+esc(p.title)+'</strong></a><span class="badge badge-success" style="margin-left:8px">open</span><div style="font-size:.86rem;color:var(--gray-600)">'+esc(p.description||'Cast your vote now').slice(0,120)+'</div></div>').join('')
         : '<p style="color:var(--gray-500)">No active polls.</p>';
       document.querySelectorAll('#dash-polls,.dash-polls').forEach(el => el.innerHTML = pollHTML);
-      App.injectDashboardLiveFeed(announcements, openPolls);
+      App.injectDashboardLiveFeed(announcements, openPolls, {events, broadcasts, surveys, lostFound, ptaMeetings, meals});
       App.injectPaymentHistory();
       
       const ctx = document.getElementById('dash-chart');
