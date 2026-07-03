@@ -538,6 +538,23 @@ OUTPUT RULES — obey strictly:
 
 Now generate the CSV only.</textarea>
 </div>
+
+<div class="card" style="margin-top:18px;border-left:6px solid #2563eb"><h2>MCQ-ONLY STRICT CSV PROMPT</h2><p style="color:var(--gray-700)">Use this when you want only multiple-choice questions. The output must be saved as a downloadable CSV file and uploaded directly into CBT.</p><textarea class="form-input" rows="14" style="font-family:monospace;font-size:.82rem" onclick="this.select()">Generate [NUMBER] multiple-choice questions for [SUBJECT], [CLASS], topic [TOPIC].
+
+Output ONLY downloadable CSV file content. Do not output markdown, code fence, notes, numbering outside CSV, or explanation outside CSV.
+
+Use this exact header row:
+"question","type","a","b","c","d","answer","explanation","mark","difficulty","topic","tolerance","section"
+
+Rules:
+- Every row must have type "mcq".
+- Options a, b, c and d must be plausible.
+- The answer field must contain the correct option text or letter.
+- The explanation field must explain why the answer is correct.
+- Wrap every field in double quotes.
+- Put the subject name in section.
+
+Now output the CSV only.</textarea></div>
 </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
