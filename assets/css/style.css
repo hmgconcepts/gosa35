@@ -491,7 +491,7 @@ body { letter-spacing: -0.01em; background: linear-gradient(180deg,#f8fafc 0%,#e
 th { background:#f1f5f9 !important; color:#334155 !important; }
 
 /* V5 secure navigation: hide role-filtered menu until profile role is resolved. */
-body:not([data-role-ready="1"]) .app-nav a[data-role-allow] { display: none !important; }
+body:not([data-role-ready="1"]) .app-nav a[data-role-allow] { visibility: visible !important; }
 .app-nav a[style*="display: none"] { display: none !important; }
 
 .dashboard-live-feed{margin-top:18px;border:1px solid var(--gray-200);background:linear-gradient(180deg,#fff,#f8fafc)}
