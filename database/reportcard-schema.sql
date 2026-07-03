@@ -37,6 +37,8 @@ create table if not exists public.students (
   created_at timestamptz default now()
 );
 alter table public.students enable row level security;
+alter table public.students add column if not exists user_id uuid references public.profiles(id) on delete set null;
+create index if not exists students_user_id_idx on public.students(user_id);
 
 -- =====================================================================
 -- 1. TABLES
@@ -112,6 +114,11 @@ alter table public.report_cards enable row level security;
 -- =====================================================================
 -- 2. HELPER (no-op if main schema already made it)
 -- =====================================================================
+create or replace function public.is_parent_of(uid uuid, child uuid)
+returns boolean language sql security definer stable as $$
+  select exists (select 1 from public.parent_child where parent_id=uid and student_id=child);
+$$;
+
 create or replace function public.is_staff(uid uuid)
 returns boolean language sql security definer stable as $$
   select exists (

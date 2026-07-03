@@ -126,6 +126,13 @@ returns boolean language sql security definer stable as $$
   );
 $$;
 
+
+-- ENTERPRISE V3 CBT ADMIN HELPER
+create or replace function public.is_admin(uid uuid)
+returns boolean language sql security definer stable as $$
+  select exists (select 1 from public.profiles where id=uid and role in ('super_admin','admin','administrator','owner','director','principal','proprietor','head_teacher','bursar') and status in ('approved','active'));
+$$;
+
 -- =====================================================================
 -- 3. SECURE RPCs (so anonymous students can sit exams without seeing answers)
 -- =====================================================================

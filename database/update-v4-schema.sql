@@ -138,7 +138,7 @@ alter table public.parent_child add column if not exists relationship text defau
 
 drop view if exists public.parent_child_view cascade;
 create view public.parent_child_view as
-  select pc.id, pc.relationship,
+  select pc.id, pc.created_at, pc.relationship,
          pc.parent_id, pr.full_name as parent_name, pr.email as parent_email,
          pc.student_id, st.full_name as student_name, st.class as student_class
   from public.parent_child pc

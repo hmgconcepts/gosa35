@@ -50,6 +50,30 @@ create table if not exists public.profiles (
 );
 alter table public.profiles enable row level security;
 
+-- =====================================================================
+-- ENTERPRISE V3 EARLY HELPERS (must exist before any RLS policy uses them)
+-- =====================================================================
+create or replace function public.is_admin(uid uuid)
+returns boolean language sql security definer stable as $$
+  select exists (
+    select 1 from public.profiles
+    where id = uid
+      and role in ('super_admin','admin','administrator','owner','director','principal','proprietor','head_teacher','teacher','bursar')
+      and status in ('approved','active')
+  );
+$$;
+
+create or replace function public.is_staff(uid uuid)
+returns boolean language sql security definer stable as $$
+  select exists (
+    select 1 from public.profiles
+    where id = uid
+      and role in ('super_admin','admin','administrator','owner','director','principal','proprietor','head_teacher','staff','teacher','bursar')
+      and status in ('approved','active')
+  );
+$$;
+
+
 -- ---- 2.2 Core academic ----
 create table if not exists public.students (
   id uuid primary key default uuid_generate_v4(),
@@ -139,6 +163,13 @@ create table if not exists public.parent_child (
   unique(parent_id, student_id)
 );
 alter table public.parent_child enable row level security;
+-- ENTERPRISE V3 PARENT HELPER
+
+create or replace function public.is_parent_of(uid uuid, child uuid)
+returns boolean language sql security definer stable as $$
+  select exists (select 1 from public.parent_child where parent_id = uid and student_id = child);
+$$;
+
 
 create table if not exists public.attendance (
   id uuid primary key default uuid_generate_v4(),
@@ -201,6 +232,7 @@ create table if not exists public.assignments (
   created_at timestamptz default now()
 );
 alter table public.assignments enable row level security;
+alter table public.assignments add column if not exists teacher_id uuid references public.profiles(id) on delete set null;
 
 create table if not exists public.library (
   id uuid primary key default uuid_generate_v4(),
@@ -532,6 +564,11 @@ create table if not exists public.inventory (
   created_at timestamptz default now()
 );
 alter table public.inventory enable row level security;
+alter table public.inventory add column if not exists item_name text;
+alter table public.inventory add column if not exists category text;
+alter table public.inventory add column if not exists quantity int default 1;
+alter table public.inventory add column if not exists location text;
+alter table public.inventory add column if not exists condition text default 'good';
 
 create table if not exists public.certificates (
   id uuid primary key default uuid_generate_v4(),
@@ -612,6 +649,8 @@ create table if not exists public.lesson_plans (
   created_at timestamptz default now()
 );
 alter table public.lesson_plans enable row level security;
+alter table public.lesson_plans add column if not exists posted_by uuid references public.profiles(id) on delete set null;
+alter table public.lesson_plans add column if not exists teacher_id uuid references public.profiles(id) on delete set null;
 
 -- Behaviour / PBIS points (ClassDojo parity)
 create table if not exists public.behaviour_points (
@@ -1108,3 +1147,29 @@ create policy "read_certificates" on public.certificates for select using (
   public.is_staff(auth.uid()) or student_id in (select id from public.students where user_id=auth.uid()) or public.is_parent_of(auth.uid(), student_id)
 );
 create policy "write_certificates" on public.certificates for all using (public.is_staff(auth.uid())) with check (public.is_staff(auth.uid()));
+
+
+-- =====================================================================
+-- ENTERPRISE V3 MODULE RECORDS CORE (prevents inbox/audience schema cache errors even before enhancement scripts)
+-- =====================================================================
+create table if not exists public.module_records (
+  id uuid primary key default uuid_generate_v4(),
+  module text not null,
+  title text,
+  body text,
+  status text,
+  audience text default 'private',
+  recipient_id uuid references public.profiles(id) on delete set null,
+  source text default 'manual',
+  ref_date date,
+  amount numeric,
+  data jsonb not null default '{}'::jsonb,
+  created_by uuid references public.profiles(id),
+  updated_by uuid references public.profiles(id),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+alter table public.module_records enable row level security;
+create index if not exists module_records_module_idx on public.module_records (module, created_at desc);
+alter table public.module_records add column if not exists audience text default 'private';
+alter table public.module_records add column if not exists recipient_id uuid references public.profiles(id) on delete set null;
