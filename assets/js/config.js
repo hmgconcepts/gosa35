@@ -1,0 +1,38 @@
+// ====================================================================
+// School Connect Gen v3 — Generated School Site Config
+// ====================================================================
+
+// Supabase credentials
+window.SUPABASE_URL = 'https://dgarrlzbmscpgtefdupm.supabase.co';
+window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnYXJybHpibXNjcGd0ZWZkdXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMzc0MTYsImV4cCI6MjA5NzkxMzQxNn0.7CNB3KcQD3NHr6ENDGb7gRX_ld_xjgpQeL_YVuLRW_A';
+
+// Initialize Supabase client (guarded so public/offline pages do not crash if the CDN is unavailable)
+window.sb = null;
+var sb = null;
+if (window.supabase && window.SUPABASE_URL && window.SUPABASE_KEY) {
+  window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true }
+  });
+  sb = window.sb;
+} else {
+  console.warn('[School Connect] Supabase client unavailable. Check network/CDN or assets/js/config.js.');
+}
+
+// School configuration
+window.SCHOOL = {
+  name: 'God of Seed Academy',
+  shortName: 'GoSA',
+  motto: 'Excellence in Learning and Character',
+  address: '',
+  phone: '',
+  email: '',
+  logoExt: 'png',
+  primary: '#4f46e5',
+  accent: '#7c3aed',
+  themeId: 'indigo',
+  campuses: [],
+  hmgLink: 'https://hmgconcepts.pages.dev/',
+  currency: '\u20A6'
+};
+
+console.log('[School Connect] Config loaded — Supabase: ' + window.SUPABASE_URL);
