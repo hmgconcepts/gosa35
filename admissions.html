@@ -448,7 +448,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
       <div class="card">
         <h3>📨 Submitted applications</h3>
         <div style="display:flex;gap:8px;margin-bottom:8px"><button class="btn btn-outline" onclick="ADM.load()">↻ Refresh</button></div>
-        <div id="adm-list"><span class="pulse">Loading…</span></div>
+        <div style="margin:8px 0"><button class="btn btn-outline" onclick="CRUD.bulkPrintAdmissions()" data-admin-only>🖨 Print / PDF ALL applications</button></div><div id="adm-list"><span class="pulse">Loading…</span></div>
       </div>
     </div>
     <footer style="padding:20px 28px;border-top:1px solid var(--gray-200);font-size:0.82rem;color:var(--gray-500);text-align:center">
@@ -493,7 +493,7 @@ const ADM={
     if(!data||!data.length){document.getElementById('adm-list').innerHTML='<p style="color:var(--gray-500)">No applications yet.</p>';return;}
     document.getElementById('adm-list').innerHTML='<div class="table-wrap"><table><thead><tr><th>Applicant</th><th>Class</th><th>Parent</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
       data.map(a=>'<tr><td>'+esc(a.full_name||'')+'</td><td>'+esc(a.applying_for_class||'')+'</td><td>'+esc(a.parent_name||'')+'<br><small>'+esc(a.parent_phone||'')+'</small></td><td><span class="badge">'+esc(a.status)+'</span>'+(a.extracted?' <span class="badge badge-success">enrolled</span>':'')+'</td>'+
-        '<td style="white-space:nowrap" data-admin-only>'+(a.extracted?'':'<button class="btn btn-sm btn-primary" onclick="ADM.extract(\''+a.id+'\')">Accept &amp; Extract</button> ')+'<button class="btn btn-sm btn-outline" onclick="ADM.set(\''+a.id+'\',\'rejected\')">Reject</button></td></tr>').join('')+'</tbody></table></div>';
+        '<td style="white-space:nowrap" data-admin-only>'+'<button class="btn btn-sm btn-outline" onclick="CRUD.previewAdmission(\''+a.id+'\')">👁 Preview</button> <button class="btn btn-sm btn-outline" onclick="CRUD.printAdmissionPDF(\''+a.id+'\')">📄 PDF</button> '+(a.extracted?'':'<button class="btn btn-sm btn-primary" onclick="ADM.extract(\''+a.id+'\')">Accept &amp; Extract</button> ')+'<button class="btn btn-sm btn-outline" onclick="ADM.set(\''+a.id+'\',\'rejected\')">Reject</button></td></tr>').join('')+'</tbody></table></div>';
     if(window.App&&App.applyRoleVisibility)try{App.applyRoleVisibility();}catch(e){}
   },
   async extract(id){ const {data,error}=await sb.rpc('extract_admission',{p_id:id}); if(error||(data&&!data.ok)){toast((error&&error.message)||(data&&data.error)||'Error','danger');return;} if(window.App&&App.logActivity)App.logActivity('extract','admission',id); toast('✅ Student created from application','success'); ADM.load(); },
