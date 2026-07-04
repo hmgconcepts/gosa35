@@ -441,18 +441,28 @@ const Super = {
        photos stored on Drive actually render on the ID card (issue 11). */
     driveDirect(url) {
       if (!url) return '';
-      let m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+      url = String(url).trim();
+      // ENTERPRISE V6 (issue 19): support every common Google Drive link shape,
+      // googleusercontent links, and Dropbox share links.
+      let m = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/) || url.match(/[?&]id=([^&#]+)/) || url.match(/drive\.google\.com\/open\?id=([^&#]+)/) || url.match(/drive\.google\.com\/uc\?[^ ]*id=([^&#]+)/);
       if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000';
-      m = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-      if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000';
+      if (/dropbox\.com/.test(url)) return url.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace(/[?&]dl=0/, '');
       return url;
+    },
+    /* v7 (issue 10): second-chance Drive photo URL. If the thumbnail endpoint
+       fails (some files 403 on it), retry via lh3.googleusercontent.com before
+       falling back to the initial-letter avatar. */
+    driveAlt(url) {
+      const m = String(url || '').match(/[-\w]{25,}/);
+      return m ? 'https://lh3.googleusercontent.com/d/' + m[0] + '=w1000' : '';
     },
     html(person) {
       const s = Super.school || {};
       const photo = this.driveDirect(person.photo_url || '');
       const initial = (person.full_name || person.name || 'S').charAt(0).toUpperCase();
+      const altSmall = this.driveAlt(person.photo_url || '');
       const photoImg = photo
-        ? `<img src="${Super.esc(photo)}" referrerpolicy="no-referrer" style="width:70px;height:70px;border-radius:10px;object-fit:cover;background:#f1f5f9" alt="photo" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:70px;height:70px;border-radius:10px;background:var(--primary,#4f46e5);color:#fff;align-items:center;justify-content:center;font-weight:900;font-size:1.6rem">${initial}</div>`
+        ? `<img src="${Super.esc(photo)}" referrerpolicy="no-referrer" style="width:70px;height:70px;border-radius:10px;object-fit:cover;background:#f1f5f9" alt="photo" data-alt="${Super.esc(altSmall)}" onerror="if(this.dataset.alt&&this.src!==this.dataset.alt){this.src=this.dataset.alt;this.dataset.alt='';}else{this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';}"><div style="display:none;width:70px;height:70px;border-radius:10px;background:var(--primary,#4f46e5);color:#fff;align-items:center;justify-content:center;font-weight:900;font-size:1.6rem">${initial}</div>`
         : `<div style="width:70px;height:70px;border-radius:10px;background:var(--primary,#4f46e5);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.6rem">${initial}</div>`;
       const isStaff = (person.type === 'staff');
       const idNo = person.admission_no || person.staff_no || person.id || '';
@@ -477,8 +487,51 @@ const Super = {
         (s.motto ? '<br><em style="color:#64748b">"' + Super.esc(s.motto) + '"</em>' : '') + '</div>';
       const credit = '<div style="background:#0f172a;color:#94a3b8;font-size:.56rem;text-align:center;padding:3px 0">If found, please return to the school office · Powered by HMG Concepts</div>';
       const bigPhoto = photo
-        ? '<img src="' + Super.esc(photo) + '" referrerpolicy="no-referrer" style="width:110px;height:110px;border-radius:12px;object-fit:cover;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.2);background:#f1f5f9" alt="photo" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div style="display:none;width:110px;height:110px;border-radius:12px;background:' + pc + ';color:#fff;align-items:center;justify-content:center;font-weight:900;font-size:2.4rem;border:3px solid #fff">' + initial + '</div>'
+        ? '<img src="' + Super.esc(photo) + '" referrerpolicy="no-referrer" style="width:110px;height:110px;border-radius:12px;object-fit:cover;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.2);background:#f1f5f9" alt="photo" data-alt="' + Super.esc(this.driveAlt(person.photo_url || '')) + '" onerror="if(this.dataset.alt&&this.src!==this.dataset.alt){this.src=this.dataset.alt;this.dataset.alt=\'\';}else{this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';}"><div style="display:none;width:110px;height:110px;border-radius:12px;background:' + pc + ';color:#fff;align-items:center;justify-content:center;font-weight:900;font-size:2.4rem;border:3px solid #fff">' + initial + '</div>'
         : '<div style="width:110px;height:110px;border-radius:12px;background:' + pc + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:2.4rem;border:3px solid #fff">' + initial + '</div>';
+
+      // ============================================================
+      // ENTERPRISE V6 (issue 2): PREMIUM template — replica of the
+      // provided Sunrise-Academy-style sample:
+      //   • deep navy header band: logo+name left, "SCHOOL NAME /
+      //     STUDENT ID CARD" right
+      //   • white body: rounded photo left, bold name + Class /
+      //     Student ID / D.O.B. / Valid Thru rows centre
+      //   • large QR + "SCAN TO VERIFY" right, small crest + barcode
+      //     bottom-right
+      // ============================================================
+      if (tpl === 'premium') {
+        const dmy = (v) => { if (!v) return ''; const d = new Date(v); if (isNaN(d)) return String(v); return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear(); };
+        const yr = new Date().getFullYear();
+        const validThru = s.session || (yr + '/' + (yr + 1));
+        const navy = pc || '#2d3d8f';
+        // v7: exact sample typography — bold NAVY "Label:" + dark value
+        const row = (k, v, bold) => v ? '<div style="font-size:.95rem;color:#111;margin:3px 0;line-height:1.35"><b style="color:' + navy + ';font-weight:800">' + Super.esc(k) + ':</b> <span style="' + (bold ? 'font-weight:700;' : 'font-weight:600;') + 'color:#111827">' + Super.esc(v) + '</span></div>' : '';
+        const altPhoto = this.driveAlt(person.photo_url || '');
+        const photoBig = photo
+          ? '<img src="' + Super.esc(photo) + '" referrerpolicy="no-referrer" style="width:132px;height:150px;border-radius:14px;object-fit:cover;background:#e2e8f0" data-alt="' + Super.esc(altPhoto) + '" onerror="if(this.dataset.alt&&this.src!==this.dataset.alt){this.src=this.dataset.alt;this.dataset.alt=\'\';}else{this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';}"><div style="display:none;width:132px;height:150px;border-radius:14px;background:' + navy + ';color:#fff;align-items:center;justify-content:center;font-weight:900;font-size:3rem">' + initial + '</div>'
+          : '<div style="width:132px;height:150px;border-radius:14px;background:' + navy + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:3rem">' + initial + '</div>';
+        return '<div class="sc-idcard" style="width:520px;max-width:96vw;border-radius:22px;overflow:hidden;background:#f4f6fb;box-shadow:0 14px 40px rgba(15,23,42,.25);font-family:\'Segoe UI\',Arial,sans-serif;border:1px solid #d8dee9">' +
+          '<div style="background:' + navy + ';color:#fff;display:flex;align-items:center;gap:14px;padding:16px 22px">' +
+            '<img src="' + logo + '" style="width:52px;height:52px;object-fit:contain;background:#fff;border-radius:12px;padding:4px" onerror="this.style.display=\'none\'">' +
+            '<div style="flex:1;min-width:0"><div style="font-weight:900;font-size:1.02rem;letter-spacing:.4px;line-height:1.15">' + Super.esc((s.name || 'SCHOOL').toUpperCase()) + '</div><div style="font-size:.66rem;opacity:.85">' + Super.esc(s.motto || '') + '</div></div>' +
+            '<div style="text-align:right"><div style="font-weight:900;font-size:1.05rem;letter-spacing:.6px">' + Super.esc((s.shortName || s.name || 'SCHOOL').toUpperCase()) + '</div><div style="font-size:.78rem;letter-spacing:2.5px;opacity:.92">' + (isStaff ? 'STAFF ID CARD' : 'STUDENT ID CARD') + '</div></div></div>' +
+          '<div style="display:flex;gap:18px;padding:20px 22px;background:#fdfdfd;align-items:flex-start">' +
+            '<div style="flex-shrink:0">' + photoBig + '</div>' +
+            '<div style="flex:1;min-width:0;padding-top:4px">' +
+              '<div style="font-weight:900;font-size:1.55rem;color:#0f172a;line-height:1.12;margin-bottom:8px;letter-spacing:-.01em">' + Super.esc(person.full_name || person.name || '') + '</div>' +
+              (isStaff
+                ? row('Designation', person.role, true) + row('Department', person.department) + row('Staff ID', idNo, true) + row('Phone', person.phone)
+                : row('Class', ((person.class || '') + ' ' + (person.arm || '')).trim(), true) + row('Student ID', idNo, true) + row('D.O.B.', dmy(person.date_of_birth || person.dob)) ) +
+              row('Valid Thru', validThru, true) +
+            '</div>' +
+            '<div style="flex-shrink:0;text-align:center;width:118px">' +
+              '<img src="' + this.qrUrl(JSON.stringify({ id: idNo, name: person.full_name || '', type: person.type || 'student' }), 220) + '" style="width:108px;height:108px" alt="QR">' +
+              '<div style="font-size:.66rem;font-weight:900;letter-spacing:1.5px;color:' + navy + ';margin-top:3px">SCAN TO VERIFY</div>' +
+              '<div style="margin-top:8px;display:flex;align-items:center;gap:5px;justify-content:center"><img src="' + logo + '" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display=\'none\'"><div style="text-align:left"><div style="font-size:.55rem;font-weight:900;color:#0f172a;line-height:1">' + Super.esc((s.shortName || '').toUpperCase()) + '</div><div style="height:12px;width:64px;background:repeating-linear-gradient(90deg,#111 0 2px,transparent 2px 4px)"></div></div></div>' +
+            '</div></div>' +
+          contactFooter + credit + '</div>';
+      }
 
       // VERTICAL (portrait, lanyard-style) professional template (issue 3)
       if (tpl === 'vertical') {
@@ -534,7 +587,7 @@ const Super = {
     },
     print(person) {
       const w = window.open('', '_blank');
-      w.document.write('<html><head><title>ID Card</title></head><body style="display:flex;justify-content:center;padding:30px">' + this.html(person) + '<script>window.onload=()=>window.print()<\/script></body></html>');
+      w.document.write('<html><head><title>ID Card</title><base href="'+document.baseURI.replace(/[^/]*$/,'')+'"></head><body style="display:flex;justify-content:center;padding:30px">' + this.html(person) + '<script>window.onload=function(){var imgs=[].slice.call(document.images),left=imgs.length;if(!left)return window.print();var done=function(){if(--left<=0)setTimeout(function(){window.print()},300)};imgs.forEach(function(im){if(im.complete)done();else{im.onload=done;im.onerror=done}})};<\/script></body></html>');
       w.document.close();
     }
   },
@@ -555,7 +608,7 @@ const Super = {
         <h2 style="margin:0;border-bottom:2px solid #e2e8f0;display:inline-block;padding:0 30px 6px">${Super.esc(opts.name || '')}</h2>
         <p style="max-width:560px;margin:18px auto;line-height:1.6">${Super.esc(opts.body || 'has successfully met the requirements and is hereby recognised for outstanding achievement.')}</p>
         <div style="display:flex;justify-content:space-between;margin-top:40px;font-size:.85rem">
-          <div>____________________<br>Date: ${Super.esc(opts.date || new Date().toLocaleDateString())}</div>
+          <div>____________________<br>Date: ${Super.esc(opts.date || (function(){const d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();})())}</div>
           <div>____________________<br>${Super.esc(opts.signatory || 'Head of School')}</div>
         </div>
         <p style="margin-top:24px;font-size:.72rem;color:#94a3b8">Verification code: <strong>${Super.esc(code)}</strong> · Verify at ${Super.esc((typeof location!=='undefined'?location.origin:''))}</p>

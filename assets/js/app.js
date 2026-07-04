@@ -9,6 +9,13 @@
 
 const PUBLIC_PAGES = ['login','index','about','contact','apply','register','signup','cbt-exam','offline',''];
 
+/* ENTERPRISE V6 — global date helpers. School standard: dd/mm/yyyy everywhere. */
+function fmtDMY(v){ if(!v) return ''; const d=new Date(v); if(isNaN(d)) return String(v);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }
+function fmtDMYT(v){ if(!v) return ''; const d=new Date(v); if(isNaN(d)) return String(v);
+  return fmtDMY(d)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+window.fmtDMY = fmtDMY; window.fmtDMYT = fmtDMYT;
+
 function currentPage() {
   return (location.pathname.split('/').pop() || 'index.html').replace('.html','');
 }
@@ -54,6 +61,25 @@ const App = {
     }
     
     App.applyRoleVisibility();
+    App.loadSchoolSettings();
+  },
+
+  /* ENTERPRISE V6 (issue 10): pull school_settings (signature URL, principal
+     name, admission prefix…) from the DB so signatures saved on ONE device
+     appear on documents printed from ANY device. localStorage remains a
+     fast local override. */
+  async loadSchoolSettings() {
+    try {
+      const supabase = window.sb || this.sb || null; if (!supabase) return;
+      const { data } = await supabase.from('school_settings').select('*').eq('id', 1).maybeSingle();
+      if (data) {
+        window.SC_SETTINGS = data;
+        try {
+          if (data.signature_url && !localStorage.getItem('sc-signature-url')) localStorage.setItem('sc-signature-url', data.signature_url);
+          if (data.principal_name && !localStorage.getItem('sc-principal-name')) localStorage.setItem('sc-principal-name', data.principal_name);
+        } catch (_) {}
+      }
+    } catch (_) {}
   },
 
   applyStoredTheme() {
@@ -362,9 +388,35 @@ const App = {
     return null; // null means use default CRUD rules
   },
 
+  /* ENTERPRISE V6 (issue 3): deterministic navigation.
+     1. Removes duplicate links pointing to the same page.
+     2. Re-sorts links into the fixed catalog order stored in NAV_ORDER so the
+        menu can never appear in a different order on different pages.
+     3. Runs before role filtering on every page load. */
+  NAV_ORDER: ['dashboard','profile','student-profile','change-password','notifications','academic_setup','students','staff','parents','classes','subjects','departments','attendance','timetable','timetable-generator','sow','lesson_plans','results','report-cards','academic-records','transcripts','rubrics','cbt','cbt-prompts','cbt-multi','cbt-exam','entrance','assignments','digital_library','library','book_request','eresources','lms','announcements','events','school_calendar','messages','inbox','broadcast','complaints','voting','surveys','gallery','birthdays','fees','payments_online','finance','financial_aid','donations','hr','payroll','staff_loans','staff_bonus','appraisals','leave','substitutions','admissions','promotion','alumni','certificates','transfer_cert','idcards','flyer','document_builder','conduct','behaviour','health','counselling','support_plans','diary','gamification','hostel','cafeteria','menu','transport','fleet_tracking','visitors','checkin','front_desk','lost_found','parent_meeting','facility_booking','library_borrowers','career_counseling','helpdesk','directory','reports','analytics','inventory','storage','compliance','activity_log','admin-data','approvals','settings','teacher-overview','feature-guide','developer'],
+  normalizeNavOrder() {
+    try {
+      const nav = document.querySelector('.app-nav'); if (!nav) return;
+      const links = [...nav.querySelectorAll('a[data-module-id]')];
+      if (links.length < 2) return;
+      // 1. dedupe by module id (keep first occurrence)
+      const seen = new Set();
+      links.forEach(a => {
+        const id = a.getAttribute('data-module-id');
+        if (seen.has(id)) a.remove(); else seen.add(id);
+      });
+      // 2. stable sort into canonical order (unknown ids keep insertion order at the end)
+      const order = App.NAV_ORDER;
+      const remaining = [...nav.querySelectorAll('a[data-module-id]')];
+      const rank = (a) => { const i = order.indexOf(a.getAttribute('data-module-id')); return i === -1 ? order.length + remaining.indexOf(a) : i; };
+      remaining.sort((a, b) => rank(a) - rank(b)).forEach(a => nav.appendChild(a));
+    } catch (e) {}
+  },
+
   applyRoleNav(role) {
     document.body.dataset.roleReady = '1';
     document.body.dataset.currentRole = String(role || '').toLowerCase();
+    App.normalizeNavOrder();
     const links = [...document.querySelectorAll('[data-role-allow]')];
     const isAdmin = App.isAdminRole(role);
 
@@ -375,8 +427,11 @@ const App = {
         el.style.display = '';
         el.classList.remove('nav-locked');
       } else {
-        el.style.display = ok ? '' : 'none';
-        el.classList.remove('nav-locked');
+        // ENTERPRISE V6 (issue 3): menu items are NEVER removed — a restricted
+        // page stays visible but padlocked. The menu is therefore always
+        // COMPLETE and IDENTICAL on every page, for every role.
+        el.style.display = '';
+        el.classList.toggle('nav-locked', !ok);
       }
       if (!ok) {
         el.setAttribute('aria-disabled', 'true');
@@ -648,11 +703,11 @@ const App = {
       } catch (_) { return []; }
     };
     try {
-      const [studentCount, staffCount, feeRows, announcements, openPolls, events, broadcasts, surveys, lostFound, ptaMeetings, meals, attendanceCount, cbtCount, resultCount, parentCount, complaintCount] = await Promise.all([
+      const [studentCount, staffCount, feeRows, announcements, openPolls, events, broadcasts, surveys, lostFound, ptaMeetings, meals, attendanceCount, cbtCount, resultCount, parentCount, complaintCount, hostelRows] = await Promise.all([
         safeCount('students'), safeCount('staff'),
         safeRows('fee_payments', 'amount_paid', 500),
         safeRows('announcements', '*', 5),
-        safeRows('polls', '*', 5),
+        safeRows('polls', '*', 5).then(x=>(x||[]).filter(p=>String(p.status||'open')==='open')),
         safeRows('events', '*', 5),
         safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='broadcast')),
         safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='surveys')),
@@ -660,7 +715,8 @@ const App = {
         safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='parent_meeting')),
         safeRows('module_records', '*', 5).then(x=>(x||[]).filter(r=>r.module==='cafeteria' || r.module==='menu')),
         safeCount('attendance'), safeCount('cbt_exams'), safeCount('results'),
-        safeCount('parent_child'), safeCount('complaints')
+        safeCount('parent_child'), safeCount('complaints'),
+        safeRows('hostel_allocations', '*', 4)
       ]);
       const feesPaid = (feeRows || []).reduce((a,b) => a + (Number(b.amount_paid) || 0), 0);
       set('stat-students', studentCount);
@@ -676,14 +732,14 @@ const App = {
       set('ov-complaints', complaintCount);
       
       const annHTML = announcements.length
-        ? announcements.map(a => '<div style="padding:10px 0;border-bottom:1px solid var(--gray-200)"><a href="announcements.html"><strong>'+esc(a.title)+'</strong></a><div style="font-size:0.82rem;color:var(--gray-500)">'+(a.created_at ? new Date(a.created_at).toLocaleString() : '')+'</div><div style="font-size:.86rem;color:var(--gray-600)">'+esc(a.body||'').slice(0,120)+'</div></div>').join('')
+        ? announcements.map(a => '<div style="padding:10px 0;border-bottom:1px solid var(--gray-200)"><a href="announcements.html"><strong>'+esc(a.title)+'</strong></a><div style="font-size:0.82rem;color:var(--gray-500)">'+(a.created_at ? fmtDMYT(a.created_at) : '')+'</div><div style="font-size:.86rem;color:var(--gray-600)">'+esc(a.body||'').slice(0,120)+'</div></div>').join('')
         : '<p style="color:var(--gray-500)">No announcements yet.</p>';
       document.querySelectorAll('#dash-announcements,.dash-announcements').forEach(el => el.innerHTML = annHTML);
       const pollHTML = openPolls.length
         ? openPolls.map(p => '<div style="padding:10px 0;border-bottom:1px solid var(--gray-200)"><a href="voting.html?poll='+p.id+'"><strong>'+esc(p.title)+'</strong></a><span class="badge badge-success" style="margin-left:8px">open</span><div style="font-size:.86rem;color:var(--gray-600)">'+esc(p.description||'Cast your vote now').slice(0,120)+'</div></div>').join('')
         : '<p style="color:var(--gray-500)">No active polls.</p>';
       document.querySelectorAll('#dash-polls,.dash-polls').forEach(el => el.innerHTML = pollHTML);
-      App.injectDashboardLiveFeed(announcements, openPolls, {events, broadcasts, surveys, lostFound, ptaMeetings, meals});
+      App.injectDashboardLiveFeed(announcements, openPolls, {events, broadcasts, surveys, lostFound, ptaMeetings, meals, hostel: hostelRows});
       App.injectPaymentHistory();
       
       const ctx = document.getElementById('dash-chart');
@@ -698,6 +754,131 @@ const App = {
         });
       }
     } catch (e) { console.warn('Dashboard load failed:', e.message); }
+  },
+
+  /* ============================================================
+     ENTERPRISE V6 — LIVE DASHBOARD FEED (fixes: voting/polls, events,
+     result broadcasts, surveys, lost & found, PTA meetings, cafeteria
+     menu and hostel notices now appear on every role's dashboard).
+     Previously this function was invoked but never defined, so the
+     whole feed silently failed with a TypeError.
+     ============================================================ */
+  injectDashboardLiveFeed(announcements, openPolls, extra) {
+    try {
+      extra = extra || {};
+      const esc2 = (s) => esc(String(s == null ? '' : s));
+      const when = (r) => r.ref_date ? fmtDMY(r.ref_date) : (r.date ? fmtDMY(r.date) : (r.created_at ? fmtDMY(r.created_at) : ''));
+      const item = (icon, title, sub, href, badge) =>
+        '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--gray-200)">' +
+        '<span style="font-size:1.15rem;line-height:1">' + icon + '</span>' +
+        '<div style="flex:1;min-width:0"><a href="' + esc2(href || '#') + '" style="font-weight:700;color:var(--dark);text-decoration:none">' + esc2(title) + '</a>' +
+        (badge ? ' <span class="badge badge-success" style="font-size:.66rem">' + esc2(badge) + '</span>' : '') +
+        '<div style="font-size:.8rem;color:var(--gray-500)">' + esc2(sub || '') + '</div></div></div>';
+
+      const sections = [];
+      // 🗳 open polls / voting — students, staff and parents can vote right from here
+      if ((openPolls || []).length) {
+        sections.push({ title: '🗳️ Voting & Polls — cast your vote', html: openPolls.map(p =>
+          item('🗳️', p.title, (p.description || 'Voting is open — tap to vote') + (p.closes_at ? ' · closes ' + fmtDMY(p.closes_at) : ''), 'voting.html?poll=' + p.id, (p.status||'open'))).join('') +
+          '<div style="margin-top:8px"><a class="btn btn-sm btn-primary" href="voting.html">Open Voting Booth →</a></div>' });
+      }
+      const map = [
+        ['events',        '🎭 Upcoming Events',        'events.html',          (r)=>[r.title, (r.venue?r.venue+' · ':'')+when(r)]],
+        ['broadcasts',    '📨 Result Broadcasts',      'broadcast.html',       (r)=>[r.title, (r.body||'').slice(0,90)]],
+        ['surveys',       '📋 Surveys & Forms',        'surveys.html',         (r)=>[r.title, (r.body||'Please respond').slice(0,90)]],
+        ['lostFound',     '🔍 Lost & Found',           'lost_found.html',      (r)=>[r.title, ((r.data&&r.data.kind)||'')+' · '+((r.data&&r.data.location)||'')+' · '+when(r)]],
+        ['ptaMeetings',   '👥 PTA Meetings',           'parent_meeting.html',  (r)=>[r.title, ((r.data&&r.data.venue)||'')+' · '+when(r)+' '+((r.data&&r.data.time)||'')]],
+        ['meals',         '🍽️ Cafeteria & Meals',      'cafeteria.html',       (r)=>[r.title, ((r.data&&r.data.category)||'')+(r.amount?' · '+((window.SCHOOL&&SCHOOL.currency)||'₦')+Number(r.amount).toLocaleString():'')]],
+        ['hostel',        '🛏️ Hostel Notices',         'hostel.html',          (r)=>[(r.block?('Block '+r.block+' · Room '+(r.room||'')):r.title||'Hostel update'), (r.status||'')+' · '+when(r)]]
+      ];
+      map.forEach(([key, title, href, fmt]) => {
+        const rows = extra[key] || [];
+        if (rows.length) sections.push({ title, html: rows.slice(0,4).map(r => { const [t, sub] = fmt(r); return item(title.split(' ')[0], t || '(untitled)', sub, href); }).join('') });
+      });
+
+      if (!sections.length) return;
+      const feedHTML = '<div class="card" style="margin-top:16px"><h3 style="margin-top:0">📡 Live School Feed</h3>' +
+        sections.map(s => '<div style="margin-bottom:10px"><div style="font-weight:800;font-size:.82rem;letter-spacing:.04em;color:var(--primary);text-transform:uppercase;margin:8px 0 2px">' + s.title + '</div>' + s.html + '</div>').join('') + '</div>';
+
+      // Place inside every visible role section; fall back to appending after announcements.
+      let placed = false;
+      document.querySelectorAll('.dash-live,#dash-live').forEach(el => { el.innerHTML = feedHTML; placed = true; });
+      if (!placed) {
+        document.querySelectorAll('#dash-announcements,.dash-announcements').forEach(el => {
+          const card = el.closest('.card');
+          if (card && !card.parentElement.querySelector('.sc-live-feed')) {
+            const w = document.createElement('div'); w.className = 'sc-live-feed'; w.innerHTML = feedHTML;
+            card.parentElement.appendChild(w); placed = true;
+          }
+        });
+      }
+      if (!placed) {
+        const content = document.querySelector('.app-content');
+        if (content) { const w = document.createElement('div'); w.className = 'sc-live-feed'; w.innerHTML = feedHTML; content.appendChild(w); }
+      }
+    } catch (e) { console.warn('Live feed injection failed:', e.message); }
+  },
+
+  /* ENTERPRISE V6 — recent fee payments panel for parents/students (was
+     referenced but missing). Renders into #dash-payments if present. */
+  async injectPaymentHistory() {
+    try {
+      const supabase = window.sb || this.sb || null; if (!supabase) return;
+      const box = document.getElementById('dash-payments'); if (!box) return;
+      const role = String(App.currentRole || (window.SC_PROFILE && SC_PROFILE.role) || '').toLowerCase();
+      let q = supabase.from('fee_payments').select('*').order('created_at', { ascending: false }).limit(8);
+      const { data } = await q;
+      let rows = data || [];
+      if (role === 'parent' && window.SC_PROFILE && SC_PROFILE.id) {
+        const { data: links } = await supabase.from('parent_child').select('student_id').eq('parent_id', SC_PROFILE.id);
+        const ids = (links || []).map(l => l.student_id);
+        rows = rows.filter(r => ids.includes(r.student_id));
+      }
+      box.innerHTML = rows.length ? rows.map(r => '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gray-200)"><span>' + esc(r.student_name || '') + '</span><b>' + ((window.SCHOOL && SCHOOL.currency) || '₦') + Number(r.amount_paid || 0).toLocaleString() + '</b><span style="color:var(--gray-500)">' + fmtDMY(r.created_at) + '</span></div>').join('') : '<p style="color:var(--gray-500)">No payments recorded yet.</p>';
+    } catch (e) {}
+  },
+
+  /* ENTERPRISE V6 (issue 11): visual gallery — photo & video previews in a
+     responsive grid with a click-to-enlarge lightbox. Renders into
+     #gallery-grid if present, otherwise injects one above the gallery table. */
+  async load_gallery() {
+    try {
+      const supabase = window.sb || this.sb || null; if (!supabase) return;
+      let grid = document.getElementById('gallery-grid');
+      if (!grid) {
+        const tableWrap = document.querySelector('#gallery-table') && document.querySelector('#gallery-table').closest('.table-wrap');
+        const host = (tableWrap && tableWrap.parentElement) || document.querySelector('.app-content');
+        if (!host) return;
+        grid = document.createElement('div'); grid.id = 'gallery-grid';
+        grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin:14px 0';
+        host.insertBefore(grid, tableWrap || host.firstChild);
+      }
+      const { data } = await supabase.from('gallery').select('*').order('created_at', { ascending: false }).limit(120);
+      const rows = data || [];
+      if (!rows.length) { grid.innerHTML = '<p style="color:var(--gray-500);grid-column:1/-1">No photos or videos yet. Click “+ Add new” and paste an image/video/YouTube/Drive link.</p>'; return; }
+      const md = (window.Super && Super.media) || null;
+      grid.innerHTML = rows.map(g => {
+        const url = g.media_url || ''; const kind = md ? md.kind(url) : 'link';
+        let inner;
+        if (kind === 'youtube' && md) { const id = md.ytId(url); inner = '<img src="https://img.youtube.com/vi/' + id + '/mqdefault.jpg" style="width:100%;height:140px;object-fit:cover" loading="lazy"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);font-size:2rem;color:#fff;text-shadow:0 2px 6px #000">▶</span>'; }
+        else if (kind === 'video') inner = '<video src="' + esc(url) + '" style="width:100%;height:140px;object-fit:cover" muted preload="metadata"></video><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);font-size:2rem;color:#fff;text-shadow:0 2px 6px #000">▶</span>';
+        else if (kind === 'drive' && md) inner = '<img src="https://drive.google.com/thumbnail?id=' + md.driveId(url) + '&sz=w600" referrerpolicy="no-referrer" style="width:100%;height:140px;object-fit:cover" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{textContent:\'🖼️ Drive media\',style:\'height:140px;display:flex;align-items:center;justify-content:center;background:#f1f5f9\'}))">';
+        else if (kind === 'image') inner = '<img src="' + esc(url) + '" style="width:100%;height:140px;object-fit:cover" loading="lazy">';
+        else inner = '<div style="height:140px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;font-size:2rem">🔗</div>';
+        return '<div onclick="App.galleryView(\'' + esc(url).replace(/'/g, "\\'") + '\',\'' + (g.media_type || kind) + '\',\'' + esc(g.caption || '').replace(/'/g, "\\'") + '\')" style="position:relative;cursor:pointer;border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 4px 12px rgba(15,23,42,.06)">' + inner +
+          '<div style="padding:8px 10px"><div style="font-weight:700;font-size:.82rem;color:var(--dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(g.caption || g.album || 'Untitled') + '</div><div style="font-size:.7rem;color:var(--gray-500)">' + esc(g.album || '') + ' · ' + fmtDMY(g.created_at) + '</div></div></div>';
+      }).join('');
+    } catch (e) { console.warn('Gallery grid failed:', e.message); }
+  },
+  galleryView(url, type, caption) {
+    const md = (window.Super && Super.media) || null;
+    const kind = md ? md.kind(url) : (type || 'image');
+    let body;
+    if (kind === 'youtube' && md) body = '<iframe width="100%" height="420" src="https://www.youtube.com/embed/' + md.ytId(url) + '" frameborder="0" allowfullscreen style="border-radius:12px"></iframe>';
+    else if (kind === 'video') body = '<video src="' + esc(url) + '" controls autoplay style="width:100%;max-height:70vh;border-radius:12px"></video>';
+    else if (kind === 'drive' && md) body = '<iframe src="https://drive.google.com/file/d/' + md.driveId(url) + '/preview" width="100%" height="420" allow="autoplay" style="border-radius:12px;border:0"></iframe>';
+    else body = '<img src="' + esc(url) + '" style="width:100%;max-height:70vh;object-fit:contain;border-radius:12px">';
+    openModal(caption || 'Gallery preview', body + '<p style="margin-top:8px"><a href="' + esc(url) + '" target="_blank" rel="noopener">Open original ↗</a></p>');
   },
 
   openAddModal(type) {

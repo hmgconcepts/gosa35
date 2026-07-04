@@ -166,18 +166,29 @@ const ReportEngine = {
   empty(msg){ return `<div class="card"><h3>No output generated</h3><p>${this.esc(msg)}</p></div>`; },
 
   signatureBlock(){
+    // ENTERPRISE V6 (issue 10): the principal's signature now resolves from
+    // EVERY place it can be saved — the Settings page (localStorage), the
+    // school_settings DB row (window.SC_SETTINGS) and config.js — and Google
+    // Drive links are converted to direct-image URLs. A white/scanned
+    // background is removed visually using mix-blend-mode:multiply +
+    // contrast/brightness filters so the ink shows cleanly on documents.
     const sc = window.SCHOOL || {};
-    const url = sc.signatureUrl || sc.signature_url || sc.principalSignature || sc.signature || '';
-    const name = sc.principalName || sc.principal_name || 'Principal / Authorised Signatory';
+    const st = window.SC_SETTINGS || {};
+    let url = '';
+    try { url = localStorage.getItem('sc-signature-url') || ''; } catch(_){}
+    url = url || st.signature_url || sc.signatureUrl || sc.signature_url || sc.principalSignature || sc.signature || '';
+    let name = '';
+    try { name = localStorage.getItem('sc-principal-name') || ''; } catch(_){}
+    name = name || st.principal_name || sc.principalName || sc.principal_name || 'Principal / Authorised Signatory';
     if (!url) return '<div class="doc-signature"><div style="width:220px;border-top:1px solid #111;margin:34px auto 4px"></div><b>'+this.esc(name)+'</b></div>';
     const direct = (window.Super && Super.idcard && Super.idcard.driveDirect) ? Super.idcard.driveDirect(url) : url;
-    return '<div class="doc-signature"><img src="'+this.esc(direct)+'" style="max-width:180px;max-height:80px;object-fit:contain" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'"><div style="width:220px;border-top:1px solid #111;margin:4px auto"></div><b>'+this.esc(name)+'</b></div>';
+    return '<div class="doc-signature"><img src="'+this.esc(direct)+'" crossorigin="anonymous" style="max-width:180px;max-height:80px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.35) brightness(1.06)" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.parentElement.insertAdjacentHTML(\'afterbegin\',\'<div style=&quot;height:40px&quot;></div>\')"><div style="width:220px;border-top:1px solid #111;margin:4px auto"></div><b>'+this.esc(name)+'</b></div>';
   },
 
   print(title, html, landscape=false){
     const w=window.open('','_blank'); if(!w){ if(typeof toast==='function')toast('Popup blocked. Please allow popups.','warning'); return; }
     const sig = this.signatureBlock();
-    w.document.open(); w.document.write(`<!DOCTYPE html><html><head><title>${this.esc(title)}</title>${this.printCSS(landscape)}</head><body>${html}${sig}<script>setTimeout(()=>window.print(),600);<\/script></body></html>`); w.document.close(); w.focus();
+    w.document.open(); w.document.write(`<!DOCTYPE html><html><head><title>${this.esc(title)}</title><base href="${document.baseURI.replace(/[^/]*$/,'')}">${this.printCSS(landscape)}</head><body>${html}${sig}<script>window.onload=function(){setTimeout(function(){window.print()},400)};<\/script></body></html>`); w.document.close(); w.focus();
   },
   printCSS(landscape=false){ return `<style>
     @page{size:A4 ${landscape?'landscape':'portrait'};margin:8mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;margin:0}.re-head{display:grid;grid-template-columns:95px 1fr;gap:14px;align-items:center;margin-bottom:4px}.re-head.landscape{grid-template-columns:70px 1fr 260px}.re-logo{width:86px;height:86px;object-fit:contain}.re-head.landscape .re-logo{width:62px;height:62px}.re-school h1{font-family:Georgia,serif;color:#008c7a;font-size:34px;margin:0;letter-spacing:1px}.re-head.landscape .re-school h1{font-size:24px;writing-mode:vertical-rl;transform:rotate(180deg)}.re-school p{margin:2px 0;font-size:12px}.re-head h2{text-align:center;font-size:14px;margin:0}.term-title{text-align:center;font-size:14px;margin:4px 0}.info,.scores,.trait-grid table,.comments,.broad{width:100%;border-collapse:collapse}.info td,.scores th,.scores td,.trait-grid th,.trait-grid td,.comments td,.broad th,.broad td{border:1px solid #222;padding:4px;font-size:11px}.scores th,.trait-grid th,.broad th{background:#008c7a;color:#fff;font-weight:700}.scores tr:nth-child(even),.trait-grid tr:nth-child(even),.comments tr:nth-child(odd),.broad tr:nth-child(even){background:#c9c9c9}.left{text-align:left!important}.scores td,.scores th,.broad td,.broad th{text-align:center}.scores .total{color:#16a34a;font-weight:700}.scores .grade{color:#16a34a;font-weight:700}.scores .remark{color:#15803d;font-weight:700}.sr-top{display:grid;grid-template-columns:1fr 90px;gap:10px;align-items:start}.sr-photo{width:78px;height:100px;object-fit:cover}.trait-grid{display:grid;grid-template-columns:1fr 1fr 1.45fr;gap:8px;margin-top:8px}.comments{margin-top:6px}.comments td:first-child{width:170px;font-weight:700}.sheet{font-size:10px}.landscape-sheet .re-head{max-width:100%}.meta{text-align:center;font-size:12px}.broad th,.broad td{font-size:9px;padding:3px}.broad .rot{height:120px;min-width:26px;vertical-align:bottom}.broad .rot span{writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;white-space:nowrap}.doc-signature{text-align:center;margin-top:22px;page-break-inside:avoid}@media print{button{display:none!important}}</style>`; }

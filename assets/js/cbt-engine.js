@@ -25,10 +25,13 @@ const CBT = {
 
   normalizeQuestion(q, idx) {
     q = q || {};
-    const type = String(q.type || q.question_type || 'mcq').toLowerCase().replace(/\s+/g,'_');
+    // ENTERPRISE V6 (issue 12): normalise every spelling — true/false, true-false,
+    // tf, boolean, truefalse — to the canonical 'true_false' so options render.
+    let type = String(q.type || q.question_type || 'mcq').toLowerCase().replace(/[\s\/\\-]+/g,'_');
+    if (['tf','boolean','truefalse','true_or_false','yes_no','yesno'].includes(type)) type = 'true_false';
     let options = Array.isArray(q.options) ? q.options.slice() : [];
     if (!options.length) ['a','b','c','d','e'].forEach(k => { if (q[k] != null && String(q[k]).trim() !== '') options.push(String(q[k])); });
-    if (!options.length && (type === 'true_false' || type === 'truefalse' || type === 'boolean')) options = ['True','False'];
+    if (type === 'true_false') options = ['True','False'];  // always exactly True/False (issue 12)
     const answer = q.answer != null ? q.answer : (q.correct != null ? q.correct : q.correct_answer);
     return {
       id: q.id || ('q' + (idx + 1)),
@@ -51,8 +54,24 @@ const CBT = {
     let qs = exam._questions || exam.questions || exam.csv_data || [];
     if (typeof qs === 'string') { try { qs = JSON.parse(qs); } catch(e) { qs = []; } }
     qs = (qs || []).map((q,i) => this.normalizeQuestion(q,i));
-    if (exam.randomise) qs = this.shuffle(qs);
-    if (exam.select_count && Number(exam.select_count) > 0) qs = qs.slice(0, Number(exam.select_count));
+    // ENTERPRISE V6 (issue 13): UTME-style multi-subject exams must keep each
+    // subject's questions GROUPED — never mixed together randomly. Randomise
+    // and select_count now operate WITHIN each subject section.
+    const sections = [...new Set(qs.map(q => q.section || q.subject || 'General'))];
+    if (sections.length > 1) {
+      const perSection = Math.max(0, Number(exam.select_count) || 0); // per-subject cap in multi mode
+      let grouped = [];
+      sections.forEach(sec => {
+        let block = qs.filter(q => (q.section || q.subject || 'General') === sec);
+        if (exam.randomise) block = this.shuffle(block);
+        if (perSection > 0) block = block.slice(0, perSection);
+        grouped = grouped.concat(block);
+      });
+      qs = grouped;
+    } else {
+      if (exam.randomise) qs = this.shuffle(qs);
+      if (exam.select_count && Number(exam.select_count) > 0) qs = qs.slice(0, Number(exam.select_count));
+    }
     exam._questions = qs;
     exam.questions = qs;
     return exam;
@@ -79,17 +98,33 @@ const CBT = {
 
   isCorrect(q, given) {
     const norm = v => String(v == null ? '' : v).trim().toLowerCase();
-    const g = norm(given);
+    let g = norm(given);
     const ans = q.answer != null ? q.answer : q.correct;
     if (Array.isArray(ans)) return ans.map(norm).includes(g);
-    if (q.type === 'numeric') return Math.abs(Number(given) - Number(ans)) < 0.0001;
-    return norm(ans) === g;
+    if (q.type === 'numeric') {
+      const tol = Math.abs(Number(q.tolerance)) || 0.0001;
+      return Math.abs(Number(given) - Number(ans)) <= tol;
+    }
+    const a = norm(ans);
+    if (a === g) return true;
+    // ENTERPRISE V6 (issue 12 grading): students answer option questions with a
+    // LETTER (A/B/C/D) while teachers may store the answer as the option TEXT
+    // (e.g. "True") — or vice-versa. Accept both directions.
+    const opts = (q.options || []).map(norm);
+    if (opts.length) {
+      const letterToText = (x) => (x.length === 1 && x >= 'a' && x <= 'z') ? opts[x.charCodeAt(0) - 97] : undefined;
+      const textToLetter = (x) => { const i = opts.indexOf(x); return i >= 0 ? String.fromCharCode(97 + i) : undefined; };
+      if (letterToText(g) !== undefined && letterToText(g) === a) return true;   // given=letter, answer=text
+      if (letterToText(a) !== undefined && letterToText(a) === g) return true;   // answer=letter, given=text
+      if (textToLetter(g) !== undefined && textToLetter(g) === a) return true;
+    }
+    return false;
   },
 
   startAntiCheat(cfg, onFlag) {
     cfg = cfg || {}; let count = 0; const log = [];
     const flag = type => { count++; log.push({type, at:new Date().toISOString()}); if (onFlag) onFlag(type, count); };
-    if (cfg.watermark !== false && !document.getElementById('cbt-watermark')) { const wm=document.createElement('div'); wm.id='cbt-watermark'; wm.textContent=((window.SC_PROFILE&&SC_PROFILE.full_name)||'Candidate')+' · '+new Date().toLocaleString(); wm.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9997;opacity:.08;font-size:32px;font-weight:900;color:#111;display:flex;align-items:center;justify-content:center;transform:rotate(-28deg);'; document.body.appendChild(wm); }
+    if (cfg.watermark !== false && !document.getElementById('cbt-watermark')) { const wm=document.createElement('div'); wm.id='cbt-watermark'; wm.textContent=((window.SC_PROFILE&&SC_PROFILE.full_name)||'Candidate')+' · '+(window.fmtDMYT?fmtDMYT(new Date()):new Date().toLocaleString()); wm.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9997;opacity:.08;font-size:32px;font-weight:900;color:#111;display:flex;align-items:center;justify-content:center;transform:rotate(-28deg);'; document.body.appendChild(wm); }
     const handlers = [];
     if (cfg.window_blur !== false) { const h=()=>flag('window_blur'); window.addEventListener('blur',h); handlers.push(['blur',h]); }
     if (cfg.copy_paste !== false) {
@@ -101,8 +136,8 @@ const CBT = {
     return { log, stop(){ handlers.forEach(([ev,h,target]) => (target||window).removeEventListener(ev,h)); const wm=document.getElementById('cbt-watermark'); if(wm) wm.remove(); } };
   },
 
-  async listExams() { if (!this._sb) return {data:null,error:{message:'Database not configured'}}; let q=this._sb.from('cbt_exams').select('*').order('created_at',{ascending:false}).limit(100); const role=String((window.SC_PROFILE&&SC_PROFILE.role)||(window.App&&App.currentRole)||'').toLowerCase(); if (window.App && !App.isAdminRole(role) && window.SC_PROFILE && SC_PROFILE.id) q=q.eq('teacher_id', SC_PROFILE.id); return await q; },
-  async createExam(exam) { if (!this._sb) return {data:null,error:{message:'Database not configured'}}; exam.code = (exam.code || this._generateCode(6)).toUpperCase(); exam.created_at = new Date().toISOString(); if (window.SC_PROFILE && SC_PROFILE.id && !exam.teacher_id) exam.teacher_id = SC_PROFILE.id; return await this._sb.from('cbt_exams').insert(exam).select().single(); },
+  async listExams() { if (!this._sb) return {data:null,error:{message:'Database not configured'}}; return await this._sb.from('cbt_exams').select('*').order('created_at',{ascending:false}).limit(100); },
+  async createExam(exam) { if (!this._sb) return {data:null,error:{message:'Database not configured'}}; exam = exam || {}; exam.code = (exam.code || this._generateCode(6)).toUpperCase(); exam.created_at = new Date().toISOString(); if (!exam.teacher_id && window.SC_PROFILE && SC_PROFILE.id) exam.teacher_id = SC_PROFILE.id; exam.anti_cheat_config = Object.assign({tab_switch:true,window_blur:true,copy_paste:true,right_click:true,fullscreen:true,watermark:true,devtools:true,max_violations:5}, exam.anti_cheat_config || {}); return await this._sb.from('cbt_exams').insert(exam).select().single(); },
   _generateCode(len) { const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let i=0;i<len;i++) r+=chars.charAt(Math.floor(Math.random()*chars.length)); return r; },
 
   advancedPromptTemplate(subject, klass, topic, count) {
@@ -126,8 +161,7 @@ const CBT = {
         answer: get('answer','correct','correct_answer') || vals[5] || 'A',
         explanation: get('explanation','reason') || vals[6] || '',
         type: get('type','question_type') || vals[7] || 'mcq',
-        mark: Number(get('mark','score') || 1) || 1,
-        difficulty: get('difficulty') || '', tags: get('tags') || '', section: get('section','subject_section') || ''
+        mark: Number(get('mark','score') || 1) || 1
       };
       questions.push(this.normalizeQuestion(q, i));
     });

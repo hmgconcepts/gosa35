@@ -292,7 +292,7 @@ const VotingUI = {
           <span>👥 ${p.audience || 'all'}</span>
           <span>·</span>
           <span>📊 <span id="poll-${p.id}-total">0</span> votes</span>
-          ${p.closes_at ? `<span>·</span><span>⏰ closes ${new Date(p.closes_at).toLocaleString()}</span>` : ''}
+          ${p.closes_at ? `<span>·</span><span>⏰ closes ${(window.fmtDMYT?fmtDMYT(p.closes_at):new Date(p.closes_at).toLocaleString())}</span>` : ''}
           ${p.status === 'open' ? `<button class="btn btn-sm btn-outline" data-vote-action="close" data-poll="${p.id}" style="margin-left:auto">Close</button>` : ''}
         </div>
       </div>`;

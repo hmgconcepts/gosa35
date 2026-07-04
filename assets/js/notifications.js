@@ -294,7 +294,7 @@ function timeAgo(iso) {
   if (hr < 24) return hr + 'h ago';
   const day = Math.floor(hr / 24);
   if (day < 30) return day + 'd ago';
-  return new Date(iso).toLocaleDateString();
+  const d=new Date(iso); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
 }
 
 /* Re-export for window */

@@ -210,11 +210,15 @@ const CRUD = {
       {key:'title',label:'Title',type:'text',required:true},{key:'description',label:'Description',type:'textarea'},
       {key:'date',label:'Date',type:'date'},{key:'venue',label:'Venue',type:'text'},{key:'organiser',label:'Organiser',type:'text'}
     ]},
-    complaints: { table:'complaints', title:'Complaint', cols:[
-      {key:'type',label:'Type',type:'text'},{key:'subject',label:'Subject',type:'text',required:true},
-      {key:'body',label:'Details',type:'textarea'},
+    complaints: { table:'complaints', title:'Complaint / Grievance', help:'Anyone (parent, student, staff) can lodge a complaint. It is routed to the admin team, tracked through statuses and closed with a resolution note. Attach evidence with a Drive link.', cols:[
+      {key:'type',label:'Category',type:'select',options:['academic','welfare','bullying','fees/billing','facility','staff conduct','transport','other']},
+      {key:'subject',label:'Subject (short summary)',type:'text',required:true},
+      {key:'body',label:'Full details — what happened, when, who was involved',type:'textarea',required:true},
+      {key:'attachment_link',label:'Evidence link (photo/doc on Google Drive — optional)',type:'text',help:'Paste a Drive/web link. No upload needed.'},
       {key:'urgency',label:'Urgency',type:'select',options:['low','normal','high','critical']},
-      {key:'status',label:'Status',type:'select',options:['submitted','reviewing','in_progress','resolved','rejected']}
+      {key:'status',label:'Status (admin updates this)',type:'select',options:['submitted','reviewing','in_progress','resolved','rejected']},
+      {key:'assigned_to',label:'Assigned to (admin only)',type:'ref',refTable:'staff',refValue:'full_name',refStore:'value'},
+      {key:'resolution',label:'Resolution note (filled when closing)',type:'textarea'}
     ]},
     gallery: { table:'gallery', title:'Gallery item', cols:[
       {key:'album',label:'Album',type:'text'},{key:'caption',label:'Caption',type:'text'},
@@ -228,7 +232,7 @@ const CRUD = {
     ]},
     birthdays: { table:'birthdays', title:'Birthday', cols:[
       {key:'person_name',label:'Pick a student (auto-fills date & class)',type:'ref',refTable:'students',refValue:'full_name',refExtra:['class','date_of_birth'],refStore:'value',autofill:{date:'date_of_birth',class:'class'}},
-      {key:'type',label:'Type',type:'select',options:['student','staff']},
+      {key:'type',label:'Type',type:'select',options:['student','staff','parent']},
       {key:'date',label:'Date of birth',type:'date'},{key:'class',label:'Class',type:'text'}
     ]},
     departments: { table:'departments', title:'Department', cols:[
@@ -253,7 +257,7 @@ const CRUD = {
       {key:'pension',label:'Pension',type:'number'},
       {key:'loan_deduction',label:'Loan repayment',type:'number'},
       {key:'other_deductions',label:'Other deductions',type:'number'},
-      {key:'net_pay',label:'Net pay (auto if blank)',type:'number'},
+      {key:'net_pay',label:'Net pay (computed by database)',type:'number',readonly:true,computeOnly:true,help:'Auto: basic+allowances+bonus+overtime − tax/pension/loan/other'},
       {key:'method',label:'Payment method',type:'select',options:['bank transfer','cash','cheque','mobile money']},
       {key:'status',label:'Status',type:'select',options:['draft','approved','paid']}
     ]},
@@ -379,13 +383,14 @@ const CRUD = {
     ]},
     parents: { table:'parents', title:'Parent / Guardian Registry', cols:[
       {key:'full_name',label:'Full Name',type:'text',required:true},
+      {key:'date_of_birth',label:'Date of birth (for birthday list)',type:'date'},
       {key:'email',label:'Email Address',type:'email'},
       {key:'phone',label:'Phone Number',type:'text'},
       {key:'occupation',label:'Occupation',type:'text'},
       {key:'address',label:'Home Address',type:'text'},
       {key:'status',label:'Status',type:'select',options:['active','pending','suspended']}
     ]},
-    parent_child: { table:'parent_child', listTable:'parent_child_view', title:'Parent–Child Link', listCols:[
+    parent_child: { table:'parent_child', listTable:'parent_child_view', listOrder:'parent_name', title:'Parent–Child Link', help:'Link a parent ACCOUNT to a student RECORD. One parent can be linked to many children; the same pair can only be linked once. Use the Unlink button on a row to remove a link.', listCols:[
       {key:'parent_name',label:'Parent',type:'text'},{key:'parent_email',label:'Parent Email',type:'text'},
       {key:'student_name',label:'Student',type:'text'},{key:'student_class',label:'Class',type:'text'},
       {key:'relationship',label:'Relationship',type:'text'},{key:'verified',label:'Verified',type:'checkbox'}
@@ -469,7 +474,7 @@ const CRUD = {
     financial_aid:{ title:'Scholarship/Aid',cols:[['title','Scheme','text',true],['data.student','Student','ref-students'],['amount','Amount/Waiver','number'],['status','Status','select',['applied','approved','renewed','ended']],['body','Notes','textarea']] },
     front_desk:  { title:'Front-desk log',cols:[['title','Subject','text',true],['data.kind','Type','select',['call','dispatch','walk-in','inquiry']],['body','Details','textarea'],['data.contact','Contact','text'],['ref_date','Date','date']] },
     career_counseling:{ title:'Career record',cols:[['title','Title','text',true],['data.student','Student','ref-students'],['body','Guidance / offers','textarea'],['data.university','University/Placement','text']] },
-    document_builder:{ title:'Document',cols:[['title','Document','text',true],['data.type','Type','select',['hall ticket','bonafide','transfer','testimonial','custom']],['body','Content','textarea']] },
+    document_builder:{ title:'Custom Document', help:'Build any official school document (hall ticket, bonafide letter, testimonial…): 1) Pick the document type. 2) Choose who it is for. 3) Type the body text — use [NAME], [CLASS], [DATE] placeholders. 4) Save, then press Print on the row to output a letterheaded, signed document.', cols:[['title','Document title (e.g. Bonafide Letter — Ada Obi)','text',true],['data.type','Document type','select',['hall ticket','bonafide certificate','recommendation letter','transfer letter','testimonial','invitation letter','fee clearance','custom']],['data.student','For (student — optional)','ref-students'],['data.recipient','Addressed to (e.g. The Embassy, Parent)','text'],['body','Body text — placeholders [NAME] [CLASS] [DATE] are replaced at print time','textarea',true],['status','Status','select',['draft','final','issued']]] },
     fleet_tracking:{ title:'Fleet log',cols:[['title','Vehicle/Route','text',true],['data.driver','Driver','text'],['body','Notes / location','textarea'],['ref_date','Date','date']] },
     facility_booking:{ title:'Facility booking',cols:[['title','Facility','text',true],['ref_date','Date','date',true],['data.time','Time','time'],['data.bookedby','Booked by','text'],['status','Status','select',['requested','approved','cancelled']]] },
     compliance:  { title:'Compliance item',cols:[['title','Item','text',true],['data.category','Category','select',['accreditation','fire drill','inspection','statutory']],['ref_date','Date','date'],['status','Status','select',['pending','passed','failed','due']],['body','Notes','textarea']] },
@@ -573,7 +578,15 @@ const CRUD = {
     // either student_id, student_name or class-level fields. Supabase RLS remains the
     // final security layer.
 
-    const { data, error } = await query;
+    let { data, error } = await query;
+    // ENTERPRISE V6 (issue 17): some views (e.g. parent_child_view on older
+    // schemas) lack the order column — retry unordered instead of erroring.
+    if (error && /column .* does not exist/i.test(error.message || '')) {
+      const rq = d.generic
+        ? this.sb.from(listTable).select('*').eq('module', d.module).limit(500)
+        : this.sb.from(listTable).select('*').limit(500);
+      ({ data, error } = await rq);
+    }
     const cols = d.listCols || d.cols;
     const writable = this.canWrite(moduleId) && (!d.readOnly || (window.App && App.isAdminRole && App.isAdminRole(currentRole)));
     const cellVal = (row, c) => c.key.indexOf('data.') === 0 ? ((row.data || {})[c.key.slice(5)]) : row[c.key];
@@ -650,6 +663,7 @@ const CRUD = {
         ((moduleId === 'payroll' || moduleId === 'hr') ? '<button class="btn btn-sm btn-primary" onclick="CRUD.printPayslip(\'' + row.id + '\')">Payslip</button> ' : '') +
         (moduleId === 'fees' ? '<button class="btn btn-sm btn-primary" onclick="CRUD.printReceipt(\'' + row.id + '\')">Print E-Receipt</button> ' : '') +
         (moduleId === 'admissions' ? '<button class="btn btn-sm btn-primary" onclick="CRUD.previewAdmission(\'' + row.id + '\')">Preview</button> ' : '') +
+        (moduleId === 'document_builder' ? '<button class="btn btn-sm btn-primary" onclick="CRUD.printDocument(\'' + row.id + '\')">🖨 Print</button> ' : '') +
         '<button class="btn btn-sm btn-outline" onclick="CRUD.openForm(\'' + moduleId + '\',\'' + row.id + '\')">Edit</button> ' +
         '<button class="btn btn-sm btn-outline" onclick="CRUD.remove(\'' + moduleId + '\',\'' + row.id + '\')">Delete</button>' +
       '</td>') + '</tr>').join('');
@@ -802,17 +816,17 @@ const CRUD = {
         if (!payload.teacher_id) payload.teacher_id = SC_PROFILE.id;
         if (!payload.posted_by) payload.posted_by = SC_PROFILE.id;
         if (!payload.recorded_by && d.table === 'attendance') payload.recorded_by = SC_PROFILE.id;
-        if (!payload.teacher && SC_PROFILE.full_name && d.table !== 'assignments') payload.teacher = SC_PROFILE.full_name;
+        const hasTeacherCol = (d.cols || []).some(c => c.key === 'teacher');
+        if (!payload.teacher && SC_PROFILE.full_name && hasTeacherCol) payload.teacher = SC_PROFILE.full_name;
       }
     }
     if (d.table === 'results' && !id) {
       payload.assessment_source = payload.assessment_source || 'manual';
     }
-    // Issue 5: auto-compute payroll net pay when left blank
-    if (d.table === 'payroll' && (payload.net_pay == null)) {
-      const n = (x) => Number(payload[x]) || 0;
-      payload.net_pay = n('basic') + n('allowances') + n('bonus') + n('overtime') - n('tax') - n('pension') - n('loan_deduction') - n('other_deductions');
-    }
+    // ENTERPRISE V6 (issue 27): net_pay is a DB-computed column (GENERATED or
+    // trigger). Sending it caused: cannot insert a non-DEFAULT value into
+    // column "net_pay". We now NEVER send it — the database computes it.
+    if (d.table === 'payroll') { delete payload.net_pay; }
     // Issue 5: auto-compute appraisal average score + band
     if (d.table === 'staff_appraisals') {
       const keys = ['punctuality', 'teaching_quality', 'student_results', 'teamwork', 'conduct'];
@@ -823,14 +837,27 @@ const CRUD = {
         payload.total_score = avg + '/10 — ' + band;
       }
     }
-    let res;
+    // (res declared below by the self-healing save wrapper)
     // parent_child duplicate guard: show a friendly message instead of Supabase unique constraint error.
     if (!id && d.table === 'parent_child' && payload.parent_id && payload.student_id) {
       const ex = await this.sb.from('parent_child').select('id').eq('parent_id', payload.parent_id).eq('student_id', payload.student_id).maybeSingle().catch(()=>({data:null}));
       if (ex.data) { toast('This parent is already linked to this child. Choose another child or update the existing link.', 'warning', 7000); return; }
     }
-    if (id) res = await this.sb.from(d.table).update(payload).eq('id', id);
-    else res = await this.sb.from(d.table).insert(payload);
+    const runSave = async (pl) => id ? await this.sb.from(d.table).update(pl).eq('id', id) : await this.sb.from(d.table).insert(pl);
+    let res = await runSave(payload);
+    // ENTERPRISE V6 (issues 16, 26, 32, 35): self-healing writes. If the target
+    // database is missing a column (older schema), strip the unknown column —
+    // for module_records tables tuck it into data{} instead — and retry.
+    let guard = 0;
+    while (res.error && guard < 6) {
+      const m = String(res.error.message || '').match(/find the '([A-Za-z0-9_]+)' column|column "?([A-Za-z0-9_]+)"? (?:of|does not exist)/i);
+      const bad = m && (m[1] || m[2]);
+      if (!bad || !(bad in payload)) break;
+      if (d.generic || d.table === 'module_records') { payload.data = payload.data || {}; payload.data[bad] = payload[bad]; }
+      console.warn('[CRUD] Column "' + bad + '" missing in DB — retrying without it. Run database/update-v6-schema.sql to add it permanently.');
+      delete payload[bad]; guard++;
+      res = await runSave(payload);
+    }
     if (res.error) { toast(res.error.message, 'danger', 6000); return; }
     if (window.App && App.logActivity) App.logActivity(id ? 'update' : 'create', d.table, id || d.title);
     try {
@@ -840,6 +867,24 @@ const CRUD = {
         }
         if (moduleId === 'inbox' || moduleId === 'messages') {
           await Notifications.create({ title: '💬 New Message: ' + (payload.title || d.title), body: payload.body || '', url: 'inbox.html', audience: 'all', channels: ['inapp','push'] });
+        }
+        // ENTERPRISE V6 (issue 8): every dashboard-worthy module now fires an
+        // in-app + push notification so students/parents/staff see it at once.
+        const notifyMap = {
+          events:         { icon:'🎭', label:'New Event',            url:'events.html' },
+          broadcast:      { icon:'📨', label:'Result Broadcast',     url:'broadcast.html' },
+          surveys:        { icon:'📋', label:'New Survey',           url:'surveys.html' },
+          cafeteria:      { icon:'🍽️', label:'Cafeteria Update',     url:'cafeteria.html' },
+          menu:           { icon:'🍽️', label:'Meal Menu Update',     url:'menu.html' },
+          lost_found:     { icon:'🔍', label:'Lost & Found',         url:'lost_found.html' },
+          parent_meeting: { icon:'👥', label:'PTA Meeting',          url:'parent_meeting.html', audience:'parent' },
+          hostel:         { icon:'🛏️', label:'Hostel Update',        url:'hostel.html' },
+          assignments:    { icon:'📝', label:'New Assignment',       url:'assignments.html', audience:'student' },
+          school_calendar:{ icon:'📅', label:'Calendar Update',      url:'school_calendar.html' }
+        };
+        const nm = notifyMap[this.canonicalId(moduleId)] || notifyMap[moduleId];
+        if (nm) {
+          await Notifications.create({ title: nm.icon + ' ' + nm.label + ': ' + (payload.title || d.title), body: (payload.body || '').slice(0, 160), url: nm.url, audience: nm.audience || (payload.audience || 'all'), channels: ['inapp','push'] });
         }
       }
     } catch(e) { console.warn('Notification hook skipped:', e.message || e); }
@@ -854,6 +899,43 @@ const CRUD = {
       } else toast('✅ Saved. Add an email to generate login invitation details.', 'success', 6000);
     } else toast('✅ Saved.', 'success');
     this.renderList(moduleId);
+  },
+
+  /* ENTERPRISE V6 (issue 31): print a Custom Document on school letterhead.
+     Replaces [NAME], [CLASS], [DATE] placeholders, adds logo, address and the
+     principal's signature automatically. */
+  async printDocument(id) {
+    if (!this.sb) return;
+    const { data: doc } = await this.sb.from('module_records').select('*').eq('id', id).maybeSingle();
+    if (!doc) { toast('Document not found', 'warning'); return; }
+    const d = doc.data || {}; const sc = window.SCHOOL || {}; const st = window.SC_SETTINGS || {};
+    let studentName = d.student || '', studentClass = '';
+    if (studentName) {
+      try { const { data: stu } = await this.sb.from('students').select('full_name,class').ilike('full_name', studentName).maybeSingle(); if (stu) { studentName = stu.full_name; studentClass = stu.class || ''; } } catch(_){}
+    }
+    const today = CRUD.formatDate(new Date().toISOString());
+    let body = String(doc.body || '').replace(/\[NAME\]/g, studentName || '[NAME]').replace(/\[CLASS\]/g, studentClass || '[CLASS]').replace(/\[DATE\]/g, today);
+    const rawSig = (function(){ try { return localStorage.getItem('sc-signature-url') || ''; } catch(_) { return ''; } })() || st.signature_url || '';
+    const sig = (window.Super && Super.idcard && Super.idcard.driveDirect) ? Super.idcard.driveDirect(rawSig) : rawSig;
+    const pn = (function(){ try { return localStorage.getItem('sc-principal-name') || ''; } catch(_) { return ''; } })() || st.principal_name || 'Principal';
+    const sign = sig ? '<div style="margin-top:34px;text-align:right"><img src="' + esc(sig) + '" referrerpolicy="no-referrer" style="max-width:150px;max-height:70px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)"><br><b>' + esc(pn) + '</b><br><span style="font-size:.8rem">' + esc(d.type || 'Authorised') + '</span></div>'
+                     : '<div style="margin-top:44px;text-align:right">____________________<br><b>' + esc(pn) + '</b></div>';
+    const html = '<div style="max-width:720px;margin:0 auto;font-family:Georgia,serif;color:#111">' +
+      '<div style="display:flex;align-items:center;gap:14px;border-bottom:3px double ' + (sc.primary || '#1e2a5e') + ';padding-bottom:12px;margin-bottom:6px">' +
+      '<img src="assets/img/logo.' + (sc.logoExt || 'svg') + '" style="width:70px;height:70px;object-fit:contain" onerror="this.style.display=\'none\'">' +
+      '<div><h1 style="margin:0;color:' + (sc.primary || '#1e2a5e') + '">' + esc(sc.name || 'School') + '</h1>' +
+      '<div style="font-size:.82rem;color:#334155">' + esc(sc.address || '') + (sc.phone ? ' · Tel: ' + esc(sc.phone) : '') + (sc.email ? ' · ' + esc(sc.email) : '') + '</div>' +
+      (sc.motto ? '<div style="font-size:.78rem;font-style:italic;color:#7c2d12">Motto: ' + esc(sc.motto) + '</div>' : '') + '</div></div>' +
+      '<div style="text-align:right;font-size:.85rem">Date: ' + esc(today) + '</div>' +
+      (d.recipient ? '<p style="margin:14px 0 4px"><b>To:</b> ' + esc(d.recipient) + '</p>' : '') +
+      '<h2 style="text-align:center;text-decoration:underline;margin:22px 0 14px;font-size:1.15rem;letter-spacing:1px">' + esc((d.type || doc.title || 'DOCUMENT').toUpperCase()) + '</h2>' +
+      '<div style="line-height:1.9;white-space:pre-wrap;text-align:justify">' + esc(body) + '</div>' + sign +
+      '<p style="margin-top:30px;font-size:.68rem;color:#94a3b8;text-align:center">Generated electronically by ' + esc(sc.name || '') + ' · School Connect</p></div>';
+    const w = window.open('', '_blank');
+    if (!w) { toast('Popup blocked! Please allow popups.', 'warning'); return; }
+    w.document.open();
+    w.document.write('<!DOCTYPE html><html><head><title>' + esc(doc.title || 'Document') + '</title><base href="'+document.baseURI.replace(/[^/]*$/,'')+'"></head><body style="padding:34px">' + html + '<script>window.onload=function(){setTimeout(function(){window.print()},250)};<\/script></body></html>');
+    w.document.close(); w.focus();
   },
 
   async previewAdmission(id) {
@@ -871,9 +953,10 @@ const CRUD = {
     if (!f) return;
     const sc = window.SCHOOL || {};
     const cur = sc.currency || '₦';
-    const rawSig = localStorage.getItem('sc-signature-url') || sc.signatureUrl || sc.signature_url || '';
+    const st = window.SC_SETTINGS || {};
+    const rawSig = localStorage.getItem('sc-signature-url') || st.signature_url || sc.signatureUrl || sc.signature_url || '';
     const sig = (window.Super && Super.idcard && Super.idcard.driveDirect) ? Super.idcard.driveDirect(rawSig) : rawSig;
-    const pn = localStorage.getItem('sc-principal-name') || sc.principalName || sc.principal_name || 'Bursar / Principal';
+    const pn = localStorage.getItem('sc-principal-name') || st.principal_name || sc.principalName || sc.principal_name || 'Bursar / Principal';
     const sign = sig ? '<div style="margin-top:28px;text-align:center"><img src="' + esc(sig) + '" referrerpolicy="no-referrer" style="max-width:150px;max-height:70px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.15)"><br><b>' + esc(pn) + '</b><br>Official Signature</div>' : '';
     const logo = 'assets/img/logo.' + (sc.logoExt || 'svg');
     const rdate = CRUD.formatDate(f.created_at || new Date().toISOString());
@@ -881,7 +964,7 @@ const CRUD = {
     const w = window.open('', '_blank');
     if (!w) { toast('Popup blocked! Please allow popups.', 'warning'); return; }
     w.document.open();
-    w.document.write('<!DOCTYPE html><html><head><title>E-Receipt</title></head><body style="display:flex;justify-content:center;padding:20px">' + html + '<script>setTimeout(()=>window.print(),500);<\/script></body></html>');
+    w.document.write('<!DOCTYPE html><html><head><title>E-Receipt</title><base href="'+document.baseURI.replace(/[^/]*$/,'')+'"></head><body style="display:flex;justify-content:center;padding:20px">' + html + '<script>window.onload=function(){setTimeout(function(){window.print()},250)};<\/script></body></html>');
     w.document.close();
     w.focus();
   },
@@ -890,7 +973,11 @@ const CRUD = {
     const d = this.def(moduleId);
     if (!this.canWrite(moduleId)) { toast('Read-only for your role on this page.', 'warning', 5000); return; }
     if (!d || !this.sb) return;
-    if (window.App && !App.isAdminRole(App.currentRole)) {
+    // ENTERPRISE V6 (issue 15): library books are SHARED resources — any staff
+    // member with write access may delete them; ownership lock only applies to
+    // personal academic records (results, lesson plans, CBT…).
+    const sharedTables = ['library', 'digital_library', 'gallery', 'eresources', 'events', 'announcements'];
+    if (window.App && !App.isAdminRole(App.currentRole) && !sharedTables.includes(d.table)) {
       const { data: row } = await this.sb.from(d.table).select('*').eq('id', id).maybeSingle();
       if (row && (row.teacher_id || row.posted_by || row.teacher)) {
         const uid = window.SC_PROFILE?.id;
@@ -911,17 +998,23 @@ const CRUD = {
   /* Issue 10: bulk-import student birthdays from the students table */
   async importBirthdays() {
     if (!this.sb) { toast('Database not configured.', 'warning'); return; }
-    const [studRes, staffRes, parentRes, existingRes] = await Promise.all([
+    // ENTERPRISE V6 (issue 29): import STUDENT + STAFF + PARENT birthdays.
+    // Staff DOB is stored privacy-safe as day+month only — we synthesize a
+    // sortable date (year 2000) so they appear in the month groups.
+    const [studRes, staffRes, staffDm, parentRes, existingRes] = await Promise.all([
       this.sb.from('students').select('full_name,class,date_of_birth').not('date_of_birth', 'is', null).catch(()=>({data:[]})),
       this.sb.from('staff').select('full_name,role,date_of_birth').not('date_of_birth', 'is', null).catch(()=>({data:[]})),
+      this.sb.from('staff').select('full_name,role,dob_day,dob_month').not('dob_month', 'is', null).catch(()=>({data:[]})),
       this.sb.from('parents').select('full_name,occupation,date_of_birth').not('date_of_birth', 'is', null).catch(()=>({data:[]})),
       this.sb.from('birthdays').select('person_name').catch(()=>({data:[]}))
     ]);
     const have = new Set((existingRes.data || []).map(b => b.person_name));
     const rows = [];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     (studRes.data||[]).forEach(s => { if(!have.has(s.full_name)) rows.push({ person_name:s.full_name, type:'student', date:s.date_of_birth, class:s.class }); });
-    (staffRes.data||[]).forEach(s => { if(!have.has(s.full_name)) rows.push({ person_name:s.full_name, type:'staff', date:s.date_of_birth, class:s.role||'' }); });
-    (parentRes.data||[]).forEach(s => { if(!have.has(s.full_name)) rows.push({ person_name:s.full_name, type:'parent', date:s.date_of_birth, class:s.occupation||'' }); });
+    (staffRes.data||[]).forEach(s => { if(!have.has(s.full_name)) { rows.push({ person_name:s.full_name, type:'staff', date:s.date_of_birth, class:s.role||'Staff' }); have.add(s.full_name); } });
+    (staffDm.data||[]).forEach(s => { const mi = months.indexOf(s.dob_month); if(!have.has(s.full_name) && mi >= 0) { rows.push({ person_name:s.full_name, type:'staff', date:'2000-'+String(mi+1).padStart(2,'0')+'-'+String(parseInt(s.dob_day)||1).padStart(2,'0'), class:s.role||'Staff' }); have.add(s.full_name); } });
+    (parentRes.data||[]).forEach(s => { if(!have.has(s.full_name)) rows.push({ person_name:s.full_name, type:'parent', date:s.date_of_birth, class:s.occupation||'Parent' }); });
     if (!rows.length) { toast('All available student, staff and parent birthdays are already imported.', 'info'); return; }
     const { error } = await this.sb.from('birthdays').insert(rows);
     if (error) { toast(error.message, 'danger'); return; }
@@ -998,6 +1091,50 @@ const CRUD = {
     this.renderList('results');
   },
 
+  /* ============================================================
+     ENTERPRISE V6 (issue 25): END-OF-SESSION CLASS MIGRATION.
+     After third-term exams, admin opens Promotion page → "Promote whole
+     class". Every student in the FROM class is moved to the TO class in ONE
+     action (their results/fees history stays attached to their student id).
+     Repeat-list students can be excluded by unticking them.
+     ============================================================ */
+  async promoteWholeClass() {
+    if (!this.sb) { toast('Database not configured.', 'warning'); return; }
+    const { data: classes } = await this.sb.from('classes').select('name').order('name');
+    const opts = (classes || []).map(c => '<option>' + esc(c.name) + '</option>').join('');
+    openModal('🎓 End-of-Session Class Migration',
+      '<p style="color:var(--gray-600)">Move every student from one class to the next after the 3rd-term exams. Results, fees and records remain attached to each student automatically.</p>' +
+      '<div class="grid grid-2"><div class="form-group"><label>From class</label><select id="pm-from" class="form-select" onchange="CRUD._pmLoad()"><option value="">— select —</option>' + opts + '</select></div>' +
+      '<div class="form-group"><label>To class (next class)</label><select id="pm-to" class="form-select"><option value="">— select —</option>' + opts + '<option value="__graduated__">🎓 Graduated / Alumni</option></select></div></div>' +
+      '<div id="pm-list" style="max-height:260px;overflow:auto;border:1px solid var(--gray-200);border-radius:8px;padding:8px;margin-top:6px"><p style="color:var(--gray-500)">Pick a “From class” to load its students…</p></div>',
+      '<button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="CRUD._pmApply()">Promote selected →</button>');
+  },
+  async _pmLoad() {
+    const from = document.getElementById('pm-from').value; const box = document.getElementById('pm-list');
+    if (!from) { box.innerHTML = ''; return; }
+    const { data } = await this.sb.from('students').select('id,full_name,admission_no').eq('class', from).order('full_name').limit(1000);
+    box.innerHTML = (data && data.length)
+      ? '<label style="display:block;font-weight:700;margin-bottom:6px"><input type="checkbox" checked onchange="document.querySelectorAll(\'.pm-stu\').forEach(c=>c.checked=this.checked)"> Select all (' + data.length + ')</label>' +
+        data.map(st => '<label style="display:block;padding:3px 0"><input type="checkbox" class="pm-stu" value="' + st.id + '" checked> ' + esc(st.full_name) + ' <span style="color:var(--gray-500)">' + esc(st.admission_no || '') + '</span></label>').join('')
+      : '<p style="color:var(--gray-500)">No students in that class.</p>';
+  },
+  async _pmApply() {
+    const from = document.getElementById('pm-from').value, to = document.getElementById('pm-to').value;
+    if (!from || !to) { toast('Choose both classes.', 'warning'); return; }
+    const ids = [...document.querySelectorAll('.pm-stu:checked')].map(c => c.value);
+    if (!ids.length) { toast('No students selected.', 'warning'); return; }
+    if (!confirm('Promote ' + ids.length + ' student(s) from ' + from + ' to ' + (to === '__graduated__' ? 'Alumni (graduated)' : to) + '?')) return;
+    let ok = 0;
+    for (const id of ids) {
+      const patch = to === '__graduated__' ? { status: 'graduated' } : { class: to };
+      const { error } = await this.sb.from('students').update(patch).eq('id', id);
+      if (!error) { ok++; await this.sb.from('promotions').insert({ student_name: '', from_class: from, to_class: to === '__graduated__' ? 'GRADUATED' : to, action: to === '__graduated__' ? 'graduate' : 'promote', status: 'applied' }).then(()=>{},()=>{}); }
+    }
+    if (window.App && App.logActivity) App.logActivity('bulk-promote', 'students', from + '→' + to + ' (' + ok + ')');
+    toast('✅ Promoted ' + ok + ' student(s) to ' + (to === '__graduated__' ? 'Alumni' : to) + '.', 'success', 6000);
+    closeModal(); this.renderList('students'); this.renderList('promotion');
+  },
+
   exportCSV(moduleId) {
     const d = this.def(moduleId); if (!d || !this.sb) return;
     let q = this.sb.from(d.table).select('*');
@@ -1039,7 +1176,7 @@ const CRUD = {
       '<div style="display:flex;justify-content:space-between;margin-top:30px;font-size:.8rem"><div>____________________<br>Prepared by (Bursar)</div><div>____________________<br>Authorised (Proprietor)</div></div>' +
       '<p style="margin-top:18px;font-size:.7rem;color:#94a3b8;text-align:center">This is a computer-generated payslip · ' + esc(sc.name || '') + ' · Powered by HMG Concepts</p></div></div>';
     const w = window.open('', '_blank');
-    w.document.write('<html><head><title>Payslip</title></head><body style="display:flex;justify-content:center;padding:20px">' + html + '<script>window.onload=()=>window.print()<\/script></body></html>');
+    w.document.write('<html><head><title>Payslip</title><base href="'+document.baseURI.replace(/[^/]*$/,'')+'"></head><body style="display:flex;justify-content:center;padding:20px">' + html + '<script>window.onload=function(){setTimeout(function(){window.print()},250)};<\/script></body></html>');
     w.document.close();
   },
 
@@ -1055,7 +1192,7 @@ const CRUD = {
       const head = '<tr>' + cols.map(c => '<th>' + esc(c.label) + '</th>').join('') + '</tr>';
       const rows = data.map(r => '<tr>' + cols.map(c => '<td>' + esc(String(cellVal(r, c) == null ? '' : cellVal(r, c))) + '</td>').join('') + '</tr>').join('');
       const w = window.open('', '_blank');
-      w.document.write('<html><head><title>' + esc(d.title) + ' export</title><style>body{font-family:Arial,sans-serif;padding:18px;color:#111}h2{margin:0}small{color:#666}table{border-collapse:collapse;width:100%;margin-top:14px;font-size:12px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}th{background:#f1f5f9}</style></head><body><h2>' + esc(sc.name || 'School') + ' — ' + esc(d.title) + ' records</h2><small>Generated ' + new Date().toLocaleString() + ' · ' + data.length + ' record(s)</small><table>' + head + rows + '</table><script>window.onload=()=>window.print()<\/script></body></html>');
+      w.document.write('<html><head><title>' + esc(d.title) + ' export</title><style>body{font-family:Arial,sans-serif;padding:18px;color:#111}h2{margin:0}small{color:#666}table{border-collapse:collapse;width:100%;margin-top:14px;font-size:12px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}th{background:#f1f5f9}</style><base href="'+document.baseURI.replace(/[^/]*$/,'')+'"></head><body><h2>' + esc(sc.name || 'School') + ' — ' + esc(d.title) + ' records</h2><small>Generated ' + (window.fmtDMYT?fmtDMYT(new Date()):new Date().toLocaleString()) + ' · ' + data.length + ' record(s)</small><table>' + head + rows + '</table><script>window.onload=()=>window.print()<\/script></body></html>');
       w.document.close();
     });
   },
