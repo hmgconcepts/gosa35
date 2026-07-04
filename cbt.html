@@ -440,6 +440,8 @@ window.CBTUI = {
           '<button class="btn btn-sm btn-outline" onclick="CBTUI.share(\''+esc(e.code)+'\')">Share</button> '+
           '<button class="btn btn-sm btn-outline" onclick="CBTUI.results(\''+e.id+'\',\''+esc(e.code)+'\')">Results</button> '+
           '<button class="btn btn-sm btn-outline" onclick="CBTUI.preview(\''+e.id+'\')">Preview</button> '+
+          '<button class="btn btn-sm btn-primary" onclick="CBTUI.edit(\''+e.id+'\')">✏️ Edit</button> '+
+          '<button class="btn btn-sm btn-outline" onclick="CBTUI.editQuestions(\''+e.id+'\')">Edit Questions</button> '+
           '<button class="btn btn-sm btn-outline" onclick="CBTUI.appendCSV(\''+e.id+'\')">Attach CSV</button> '+
           '<button class="btn btn-sm btn-outline" data-admin-only onclick="CBTUI.del(\''+e.id+'\')">Delete</button>'+
         '</td></tr>').join('')+'</tbody></table></div>';
@@ -514,6 +516,88 @@ window.CBTUI = {
   async toggle(id,open){ if(!sb)return; await sb.from('cbt_exams').update({is_open:open}).eq('id',id); CBTUI.refresh(); },
   async preview(id){ const {data:e}=await sb.from('cbt_exams').select('*').eq('id',id).maybeSingle(); const qs=(e&&e.csv_data)||[]; openModal('Preview Questions — '+esc(e&&e.title||''), '<p><b>'+qs.length+'</b> question(s). First 20 shown.</p><div class="table-wrap"><table><thead><tr><th>#</th><th>Section</th><th>Type</th><th>Question</th><th>Answer</th></tr></thead><tbody>'+qs.slice(0,20).map((q,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(q.section||q.subject||'')+'</td><td>'+esc(q.type||'mcq')+'</td><td>'+esc(q.question||q.prompt||'')+'</td><td>'+esc(q.answer||q.correct||'')+'</td></tr>').join('')+'</tbody></table></div>'); },
   appendCSV(id){ openModal('Attach / Append CSV', '<p>Paste an additional CSV question bank. The questions will be appended to the existing exam.</p><textarea id="append-cbt-csv" class="form-input" rows="8" style="font-family:monospace"></textarea>', '<button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="CBTUI.saveAppendCSV(\''+id+'\')">Append questions</button>'); },
+  /* ============================================================
+     ENTERPRISE V6 (issue 4): FULL EXAM EDITING AFTER CREATION.
+     Teachers can now edit every setting of an exam, edit/delete
+     individual questions, append another CSV, or replace the whole
+     question bank — at any time after creation.
+     ============================================================ */
+  async edit(id){
+    if(!sb) return;
+    const {data:e}=await sb.from('cbt_exams').select('*').eq('id',id).maybeSingle();
+    if(!e){ toast('Exam not found','warning'); return; }
+    openModal('✏️ Edit Exam — '+esc(e.title||''), `
+      <div class="form-group"><label>Title</label><input class="form-input" id="ed-title" value="${esc(e.title||'')}"></div>
+      <div class="grid grid-2">
+        <div class="form-group"><label>Subject</label><input class="form-input" id="ed-subject" value="${esc(e.subject||'')}"></div>
+        <div class="form-group"><label>Class</label><input class="form-input" id="ed-class" value="${esc(e.class||'')}"></div>
+        <div class="form-group"><label>Duration (minutes)</label><input class="form-input" type="number" id="ed-dur" value="${e.duration||45}"></div>
+        <div class="form-group"><label>Report column</label><input class="form-input" id="ed-col" value="${esc(e.report_column||'')}"></div>
+        <div class="form-group"><label>Max score contribution</label><input class="form-input" type="number" id="ed-max" value="${e.max_score||0}"></div>
+        <div class="form-group"><label>Negative mark / wrong</label><input class="form-input" type="number" step="0.25" id="ed-neg" value="${e.negative_mark||0}"></div>
+        <div class="form-group"><label>Select N questions (0=all)</label><input class="form-input" type="number" id="ed-sel" value="${e.select_count||0}"></div>
+        <div class="form-group"><label>Attempt limit (0=unlimited)</label><input class="form-input" type="number" id="ed-att" value="${e.attempt_limit||0}"></div>
+      </div>
+      <div class="form-group"><label>Candidate instructions</label><textarea class="form-input" id="ed-instr" rows="2">${esc(e.instructions||'')}</textarea></div>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ed-open" ${e.is_open?'checked':''}> Open for candidates</label>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ed-rand" ${e.randomise?'checked':''}> Randomise questions</label>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ed-rel" ${e.release_results!==false?'checked':''}> Release results instantly</label>`,
+      '<button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="CBTUI.saveEdit(\''+id+'\')">Save changes</button>');
+  },
+  async saveEdit(id){
+    const v=(x)=>document.getElementById(x).value, c=(x)=>document.getElementById(x).checked;
+    const patch={ title:v('ed-title'), subject:v('ed-subject'), class:v('ed-class'), duration:parseInt(v('ed-dur'))||45,
+      report_column:v('ed-col'), max_score:parseFloat(v('ed-max'))||0, negative_mark:parseFloat(v('ed-neg'))||0,
+      select_count:parseInt(v('ed-sel'))||0, attempt_limit:parseInt(v('ed-att'))||0, instructions:v('ed-instr'),
+      is_open:c('ed-open'), randomise:c('ed-rand'), release_results:c('ed-rel') };
+    const {error}=await sb.from('cbt_exams').update(patch).eq('id',id);
+    if(error){ toast(error.message,'danger'); return; }
+    toast('✅ Exam updated.','success'); closeModal(); CBTUI.refresh();
+  },
+  async editQuestions(id){
+    if(!sb) return;
+    const {data:e}=await sb.from('cbt_exams').select('*').eq('id',id).maybeSingle();
+    if(!e){ toast('Exam not found','warning'); return; }
+    let qs=e.csv_data||[]; if(typeof qs==='string'){ try{qs=JSON.parse(qs);}catch(_){qs=[];} }
+    CBTUI._eq={id, qs};
+    const rows=qs.map((q,i)=>'<tr><td>'+(i+1)+'</td><td style="max-width:340px">'+esc((q.question||q.prompt||'').slice(0,90))+'</td><td>'+esc(q.type||'mcq')+'</td><td>'+esc(String(q.answer||q.correct||''))+'</td>'+
+      '<td style="white-space:nowrap"><button class="btn btn-sm btn-outline" onclick="CBTUI.editQ('+i+')">Edit</button> <button class="btn btn-sm btn-outline" onclick="CBTUI.delQ('+i+')">Delete</button></td></tr>').join('');
+    openModal('🛠️ Edit Questions — '+esc(e.title||'')+' ('+qs.length+')',
+      '<div class="table-wrap" style="max-height:380px;overflow:auto"><table><thead><tr><th>#</th><th>Question</th><th>Type</th><th>Answer</th><th></th></tr></thead><tbody>'+ (rows||'<tr><td colspan=5>No questions — use Attach CSV.</td></tr>') +'</tbody></table></div>',
+      '<button class="btn btn-outline" onclick="closeModal()">Close</button><button class="btn btn-outline" onclick="CBTUI.appendCSV(\''+id+'\')">＋ Attach another CSV</button><button class="btn btn-primary" onclick="CBTUI.saveQuestions()">Save all changes</button>');
+  },
+  editQ(i){
+    const q=CBTUI._eq.qs[i]||{};
+    openModal('Edit Question '+(i+1), `
+      <div class="form-group"><label>Question</label><textarea class="form-input" id="eq-q" rows="2">${esc(q.question||q.prompt||'')}</textarea></div>
+      <div class="grid grid-2">
+        <div class="form-group"><label>Type</label><select class="form-select" id="eq-type">${['mcq','true_false','multi_select','fill_blank','short_answer','numeric','essay'].map(t=>'<option '+((q.type||'mcq')===t?'selected':'')+'>'+t+'</option>').join('')}</select></div>
+        <div class="form-group"><label>Mark</label><input class="form-input" type="number" id="eq-mark" value="${q.mark||1}"></div>
+        <div class="form-group"><label>Option A</label><input class="form-input" id="eq-a" value="${esc(q.a||(q.options&&q.options[0])||'')}"></div>
+        <div class="form-group"><label>Option B</label><input class="form-input" id="eq-b" value="${esc(q.b||(q.options&&q.options[1])||'')}"></div>
+        <div class="form-group"><label>Option C</label><input class="form-input" id="eq-c" value="${esc(q.c||(q.options&&q.options[2])||'')}"></div>
+        <div class="form-group"><label>Option D</label><input class="form-input" id="eq-d" value="${esc(q.d||(q.options&&q.options[3])||'')}"></div>
+        <div class="form-group"><label>Correct answer (text or letter)</label><input class="form-input" id="eq-ans" value="${esc(String(q.answer||q.correct||''))}"></div>
+        <div class="form-group"><label>Subject/Section (multi-subject)</label><input class="form-input" id="eq-sec" value="${esc(q.section||q.subject||'')}"></div>
+      </div>
+      <div class="form-group"><label>Explanation (shown after grading)</label><input class="form-input" id="eq-exp" value="${esc(q.explanation||'')}"></div>`,
+      '<button class="btn btn-outline" onclick="CBTUI.editQuestions(\''+CBTUI._eq.id+'\')">← Back</button><button class="btn btn-primary" onclick="CBTUI.saveQ('+i+')">Apply</button>');
+  },
+  saveQ(i){
+    const v=(x)=>document.getElementById(x).value;
+    const q=CBTUI._eq.qs[i]||{};
+    Object.assign(q,{ question:v('eq-q'), type:v('eq-type'), a:v('eq-a'), b:v('eq-b'), c:v('eq-c'), d:v('eq-d'),
+      answer:v('eq-ans'), mark:Number(v('eq-mark'))||1, section:v('eq-sec'), subject:v('eq-sec'), explanation:v('eq-exp') });
+    if(q.options) delete q.options; // rebuild from a-d on normalisation
+    CBTUI._eq.qs[i]=q; toast('Question updated in draft — press “Save all changes”.','info'); CBTUI.editQuestions(CBTUI._eq.id);
+  },
+  delQ(i){ if(!confirm('Delete question '+(i+1)+'?'))return; CBTUI._eq.qs.splice(i,1); CBTUI.editQuestions(CBTUI._eq.id); },
+  async saveQuestions(){
+    const {id,qs}=CBTUI._eq||{}; if(!id)return;
+    const {error}=await sb.from('cbt_exams').update({csv_data:qs}).eq('id',id);
+    if(error){ toast(error.message,'danger'); return; }
+    toast('✅ Question bank saved ('+qs.length+' questions).','success'); closeModal(); CBTUI.refresh();
+  },
   async saveAppendCSV(id){ const txt=document.getElementById('append-cbt-csv').value.trim(); const qs=CBT.parseCSV(txt); if(!qs.length){toast('No valid questions found','warning');return;} const {data:e}=await sb.from('cbt_exams').select('csv_data').eq('id',id).maybeSingle(); const old=(e&&e.csv_data)||[]; const {error}=await sb.from('cbt_exams').update({csv_data:old.concat(qs), updated_at:new Date().toISOString()}).eq('id',id); if(error){toast(error.message,'danger');return;} closeModal(); toast('Questions appended.','success'); CBTUI.refresh(); },
   async del(id){ if(!sb)return; if(!confirm('Delete this exam and all its results?'))return; await sb.from('cbt_exams').delete().eq('id',id); if(App&&App.logActivity)App.logActivity('delete','cbt_exam',id); toast('Deleted.','info'); CBTUI.refresh(); },
   share(code){

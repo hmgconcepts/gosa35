@@ -169,7 +169,18 @@ const Exam = {
     const payload={ exam_id:this.data.id, student_name:this.student.name, student_class:this.student.class, student_id_ref:this.student.id_ref, student_type:this.data.exam_mode,
       score:graded.score, total:graded.total, percent:graded.percent, correct_count:graded.correct, wrong_count:graded.wrong, skipped_count:graded.skipped,
       time_taken:timeTaken, violations:this.violations||0, violation_log:this.violationLog||[], answers_data:this.answers };
-    let resp; try{ resp=await sb.rpc('cbt_submit',{ p_payload: payload }); }catch(e){ resp={error:e}; }
+    // ENTERPRISE V6 (issue 41): high-concurrency submission hardening.
+    // 50+ students submitting at once can hit transient network/database
+    // contention; retry up to 4 times with exponential backoff + jitter
+    // before falling back to the local backup file.
+    let resp=null;
+    for(let attempt=0;attempt<4;attempt++){
+      try{ resp=await sb.rpc('cbt_submit',{ p_payload: payload }); }catch(e){ resp={error:e}; }
+      if(resp && !resp.error && resp.data && resp.data.saved) break;
+      const wait=(500*Math.pow(2,attempt))+Math.floor(Math.random()*400);
+      this.root().insertAdjacentHTML('beforeend','<p style="text-align:center;color:var(--gray-500)">Submitting… retry '+(attempt+1)+' of 4</p>');
+      await new Promise(r=>setTimeout(r,wait));
+    }
     try{ localStorage.removeItem('cbt-draft-'+this.data.code); }catch(e){}
     if(!resp || resp.error || !resp.data || !resp.data.saved){
       // Emergency backup
@@ -193,18 +204,40 @@ const Exam = {
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toast(m,t){ alert(m); }
 function openModal(){} function closeModal(){}
-// School Connect v5: subject tabs for multi-subject/UTME packages.
+// ENTERPRISE V6 (issue 13): full UTME-style multi-subject experience.
+// - A tab per subject with live "answered/total" counters
+// - The question palette shows ONLY the current subject's questions
+// - Per-subject navigation like real JAMB CBT
 (function(){
  if(!window.Exam) return;
  Exam.sections=function(){ return [...new Set(this.qs().map(q=>q.section||q.subject||'General'))]; };
  Exam.goSubject=function(sec){ const i=this.qs().findIndex(q=>(q.section||q.subject||'General')===sec); if(i>=0){this.idx=i;this.render();} };
+ Exam.sectionStats=function(sec){ let t=0,a=0; this.qs().forEach((q,i)=>{ if((q.section||q.subject||'General')===sec){ t++; if(this.answers[i]!=null&&String(this.answers[i]).trim()!=='')a++; } }); return {t,a}; };
  Exam._oldRender=Exam.render;
  Exam.render=function(){
   const q=this.qs()[this.idx]; if(!q) return;
   const secs=this.sections(); const current=q.section||q.subject||'General';
-  const tabs=secs.length>1?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+secs.map(sec=>'<button class="btn btn-sm '+(sec===current?'btn-primary':'btn-outline')+'" onclick="Exam.goSubject(\''+esc(sec)+'\')">'+esc(sec)+'</button>').join('')+'</div>':'';
+  const multi=secs.length>1;
+  const tabs=multi?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;border-bottom:2px solid var(--gray-200);padding-bottom:10px">'+secs.map(sec=>{ const st=Exam.sectionStats(sec); return '<button class="btn btn-sm '+(sec===current?'btn-primary':'btn-outline')+'" onclick="Exam.goSubject(\''+esc(sec)+'\')">'+esc(sec)+' <span style="font-size:.68rem;opacity:.85">('+st.a+'/'+st.t+')</span></button>'; }).join('')+'</div>':'';
   this._oldRender();
-  const root=this.root(); const card=root.querySelector('.card'); if(card) card.insertAdjacentHTML('afterbegin',tabs);
+  const root=this.root(); const card=root.querySelector('.card'); if(!card) return;
+  card.insertAdjacentHTML('afterbegin',tabs);
+  if(multi){
+    // Replace the global palette with a per-subject palette (UTME style)
+    const palettes=card.querySelectorAll(':scope > div');
+    const pal=palettes[palettes.length-1];
+    if(pal && pal.querySelector('button')){
+      let html='';
+      let localNo=0;
+      this.qs().forEach((qq,i)=>{
+        if((qq.section||qq.subject||'General')!==current) return;
+        localNo++;
+        const bg=i===this.idx?'var(--primary);color:#fff':(this.answers[i]!=null?'#dcfce7':(this.flags[i]?'#fef08a':'#fff'));
+        html+='<button onclick="Exam.go('+i+')" style="width:34px;height:34px;border-radius:6px;border:1px solid var(--gray-300);background:'+bg+'">'+localNo+'</button>';
+      });
+      pal.innerHTML='<div style="font-size:.75rem;color:var(--gray-500);width:100%;margin-bottom:4px">'+esc(current)+' — question map</div>'+html;
+    }
+  }
  };
 })();
 
