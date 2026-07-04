@@ -1,5 +1,5 @@
 // School Connect Service Worker — offline + push
-const CACHE = 'sc-cache-2026-07-04-v7';
+const CACHE = 'sc-cache-2026-07-04-v8';
 const CORE = ['./','./index.html','./login.html','./dashboard.html','./offline.html','./assets/css/style.css','./assets/js/config.js','./assets/js/app.js','./assets/js/notifications.js','./assets/js/voting.js','./assets/js/pwa-install.js','./assets/js/super.js','./assets/js/site-help.js','./assets/js/cbt-engine.js','./assets/js/analytics.js','./assets/js/enterprise.js','./assets/js/crud.js','./assets/img/logo.png','./manifest.json'];
 
 self.addEventListener('install', e => {
@@ -10,6 +10,25 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // ENTERPRISE V8 (issue 14 — weak networks): navigations race the network
+  // against a 4s timeout and fall back to cache/offline; assets use
+  // stale-while-revalidate so cached copies render instantly.
+  if (e.request.mode === 'navigate') {
+    e.respondWith((async () => {
+      const cached = await caches.match(e.request);
+      try {
+        const net = await Promise.race([
+          fetch(e.request),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), 4000))
+        ]);
+        if (net.ok) { const copy = net.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+        return net;
+      } catch (_) {
+        return cached || caches.match('./offline.html');
+      }
+    })());
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => {
       const network = fetch(e.request).then(res => {
@@ -20,7 +39,6 @@ self.addEventListener('fetch', e => {
         return res;
       }).catch(() => {
         if (cached) return cached;
-        if (e.request.mode === 'navigate') return caches.match('./offline.html');
         return Promise.reject(new Error('offline'));
       });
       return cached || network;

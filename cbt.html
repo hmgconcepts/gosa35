@@ -388,6 +388,7 @@
         <button class="btn btn-primary" onclick="CBTUI.newExam()">+ New Exam / Test</button>
         <button class="btn btn-outline" onclick="CBTUI.downloadTemplate()">⬇ CSV Template</button>
         <button class="btn btn-outline" onclick="CBTUI.refresh()">↻ Refresh</button>
+        <button class="btn btn-outline" onclick="CBTUI.importBackup()">📥 Import offline backup (JSON)</button>
       </div>
       <div class="card" style="margin-bottom:18px">
         <p style="color:var(--gray-600);margin:0">
@@ -433,8 +434,14 @@ window.CBTUI = {
     const { data, error } = await CBT.listExams();
     if(error){ box.innerHTML = '<div class="card">Could not load exams: '+esc(error.message)+'</div>'; return; }
     if(!data || !data.length){ box.innerHTML = '<div class="card">No exams yet. Click <strong>+ New Exam / Test</strong> to create one.</div>'; return; }
-    box.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Code</th><th>Subject</th><th>Type</th><th>Class</th><th>Report column</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
-      data.map(e=>'<tr><td><strong>'+esc(e.code)+'</strong></td><td>'+esc(e.subject)+'</td><td>'+esc(e.assessment_type)+'</td><td>'+esc(e.class||'-')+'</td><td>'+esc(e.report_column||'-')+'</td><td>'+(e.is_open?'<span class=\'badge badge-success\'>Open</span>':'<span class=\'badge\'>Closed</span>')+'</td>'+
+    // ENTERPRISE V8 (issue 7): multi-subject (UTME) packages are listed in their
+    // own section, separate from ordinary single-subject CBT, for easy tracking.
+    const isMulti = (e) => String(e.subject||'').indexOf('MULTI-SUBJECT') === 0;
+    const ordinary = data.filter(e=>!isMulti(e)), multi = data.filter(isMulti);
+    const tableFor = (rows, label, badge) => !rows.length ? '' :
+      '<h3 style="margin:14px 0 6px">'+label+' <span class="badge" style="background:'+(badge||'#eef2ff')+'">'+rows.length+'</span></h3>'+
+      '<div class="table-wrap"><table><thead><tr><th>Code</th><th>Subject</th><th>Type</th><th>Class</th><th>Report column</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
+      rows.map(e=>'<tr><td><strong>'+esc(e.code)+'</strong></td><td>'+(isMulti(e)?'<span class="badge" style="background:#ede9fe;color:#5b21b6;margin-right:4px">UTME</span>':'')+esc(e.subject)+'</td><td>'+esc(e.assessment_type)+'</td><td>'+esc(e.class||'-')+'</td><td>'+esc(e.report_column||'-')+'</td><td>'+(e.is_open?'<span class=\'badge badge-success\'>Open</span>':'<span class=\'badge\'>Closed</span>')+'</td>'+
         '<td style="white-space:nowrap">'+
           '<button class="btn btn-sm btn-outline" onclick="CBTUI.toggle(\''+e.id+'\','+(!e.is_open)+')">'+(e.is_open?'Close':'Open')+'</button> '+
           '<button class="btn btn-sm btn-outline" onclick="CBTUI.share(\''+esc(e.code)+'\')">Share</button> '+
@@ -445,6 +452,8 @@ window.CBTUI = {
           '<button class="btn btn-sm btn-outline" onclick="CBTUI.appendCSV(\''+e.id+'\')">Attach CSV</button> '+
           '<button class="btn btn-sm btn-outline" data-admin-only onclick="CBTUI.del(\''+e.id+'\')">Delete</button>'+
         '</td></tr>').join('')+'</tbody></table></div>';
+    box.innerHTML = tableFor(ordinary,'📝 Ordinary CBT (single subject)') + tableFor(multi,'🧪 Multi-Subject / UTME packages','#ede9fe') +
+      (multi.length?'' : '<p style="color:var(--gray-500);font-size:.85rem">Create UTME-style packages on the <a href="cbt-multi.html">Multi-Subject CBT Builder</a> page.</p>');
   },
   newExam(){
     const subj = (window.SCHOOL&&window.SCHOOL.modules)?'':'';
@@ -515,6 +524,27 @@ window.CBTUI = {
   },
   async toggle(id,open){ if(!sb)return; await sb.from('cbt_exams').update({is_open:open}).eq('id',id); CBTUI.refresh(); },
   async preview(id){ const {data:e}=await sb.from('cbt_exams').select('*').eq('id',id).maybeSingle(); const qs=(e&&e.csv_data)||[]; openModal('Preview Questions — '+esc(e&&e.title||''), '<p><b>'+qs.length+'</b> question(s). First 20 shown.</p><div class="table-wrap"><table><thead><tr><th>#</th><th>Section</th><th>Type</th><th>Question</th><th>Answer</th></tr></thead><tbody>'+qs.slice(0,20).map((q,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(q.section||q.subject||'')+'</td><td>'+esc(q.type||'mcq')+'</td><td>'+esc(q.question||q.prompt||'')+'</td><td>'+esc(q.answer||q.correct||'')+'</td></tr>').join('')+'</tbody></table></div>'); },
+  /* ENTERPRISE V8 (issue 8): import an offline exam backup JSON downloaded by a
+     candidate whose submission failed. Saves via cbt_import_backup RPC with
+     duplicate protection. */
+  importBackup(){
+    var inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
+    inp.onchange=function(){
+      var f=inp.files[0]; if(!f) return;
+      var r=new FileReader();
+      r.onload=async function(){
+        var obj; try{ obj=JSON.parse(String(r.result)); }catch(e){ toast('Not a valid backup JSON file.','danger'); return; }
+        var payload=obj.payload||obj;
+        if(!payload || !payload.exam_id){ toast('This file is not a School Connect exam backup.','danger'); return; }
+        if(!sb){ toast('Database not configured.','warning'); return; }
+        var res; try{ res=await sb.rpc('cbt_import_backup',{p_payload:payload}); }catch(e){ res={error:e}; }
+        if(res.error || !res.data || !res.data.saved){ toast('Import failed: '+((res.data&&res.data.error)||(res.error&&res.error.message)||'run database/update-v8-schema.sql first'),'danger',8000); return; }
+        toast('✅ Backup imported — '+(payload.student_name||'candidate')+' result saved to '+(res.data.title||'exam')+'.','success',7000);
+      };
+      r.readAsText(f);
+    };
+    inp.click();
+  },
   appendCSV(id){ openModal('Attach / Append CSV', '<p>Paste an additional CSV question bank. The questions will be appended to the existing exam.</p><textarea id="append-cbt-csv" class="form-input" rows="8" style="font-family:monospace"></textarea>', '<button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="CBTUI.saveAppendCSV(\''+id+'\')">Append questions</button>'); },
   /* ============================================================
      ENTERPRISE V6 (issue 4): FULL EXAM EDITING AFTER CREATION.
@@ -633,7 +663,8 @@ document.addEventListener('DOMContentLoaded', CBTUI.refresh); CBTUI.refresh();
       const [sub,cls,term,ses]=await Promise.all([
         sb.from('subjects').select('name').order('name'), sb.from('classes').select('name').order('name'),
         sb.from('lookups').select('value').eq('kind','term').order('position'), sb.from('lookups').select('value').eq('kind','session').order('position')]);
-      this._subjects=(sub.data||[]).map(x=>x.name); this._classes=(cls.data||[]).map(x=>x.name); this._terms=(term.data||[]).map(x=>x.value); this._sessions=(ses.data||[]).map(x=>x.value);
+      const uniq=(a)=>{const s=new Set();return (a||[]).filter(v=>{const k=String(v==null?'':v).trim().toLowerCase();if(!k||s.has(k))return false;s.add(k);return true;});};
+      this._subjects=uniq((sub.data||[]).map(x=>x.name)); this._classes=uniq((cls.data||[]).map(x=>x.name)); this._terms=uniq((term.data||[]).map(x=>x.value)); this._sessions=uniq((ses.data||[]).map(x=>x.value));
       const fill=(id,arr)=>{const el=document.getElementById(id); if(el) el.innerHTML='<option value="">— select —</option>'+arr.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');};
       fill('ex-subject',this._subjects); fill('ex-class',this._classes); fill('ex-term',this._terms); fill('ex-session',this._sessions);
     }catch(e){ console.warn('CBT dropdown load failed',e); }

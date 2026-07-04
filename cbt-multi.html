@@ -82,7 +82,7 @@ const MM = {
     if (!window.sb) return;
     const fill = async (sel, table, col) => {
       try { const { data } = await sb.from(table).select(col).order(col);
-        (data||[]).forEach(r => { const o = document.createElement('option'); o.textContent = r[col]; document.getElementById(sel).appendChild(o); });
+        const seen=new Set(); (data||[]).forEach(r => { const v=String(r[col]==null?'':r[col]).trim(); const k=v.toLowerCase(); if(!v||seen.has(k))return; seen.add(k); const o = document.createElement('option'); o.textContent = v; document.getElementById(sel).appendChild(o); });
       } catch(_){}
     };
     fill('mm-class','classes','name');

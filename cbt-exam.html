@@ -173,13 +173,21 @@ const Exam = {
     // 50+ students submitting at once can hit transient network/database
     // contention; retry up to 4 times with exponential backoff + jitter
     // before falling back to the local backup file.
+    // ENTERPRISE V8 (issue 12): tuned for 100+ simultaneous candidates —
+    // 6 retries, exponential backoff capped at 8s with jitter, plus an
+    // auto-resubmit queue (pending submissions retry on next page load).
     let resp=null;
-    for(let attempt=0;attempt<4;attempt++){
+    for(let attempt=0;attempt<6;attempt++){
       try{ resp=await sb.rpc('cbt_submit',{ p_payload: payload }); }catch(e){ resp={error:e}; }
       if(resp && !resp.error && resp.data && resp.data.saved) break;
-      const wait=(500*Math.pow(2,attempt))+Math.floor(Math.random()*400);
-      this.root().insertAdjacentHTML('beforeend','<p style="text-align:center;color:var(--gray-500)">Submitting… retry '+(attempt+1)+' of 4</p>');
+      const wait=Math.min(8000,(500*Math.pow(2,attempt)))+Math.floor(Math.random()*600);
+      this.root().insertAdjacentHTML('beforeend','<p style="text-align:center;color:var(--gray-500)">Submitting… retry '+(attempt+1)+' of 6</p>');
       await new Promise(r=>setTimeout(r,wait));
+    }
+    if(!resp || resp.error || !resp.data || !resp.data.saved){
+      try{ const q=JSON.parse(localStorage.getItem('cbt-pending-queue')||'[]'); q.push(payload); localStorage.setItem('cbt-pending-queue',JSON.stringify(q.slice(-10))); }catch(_){}
+    } else {
+      try{ localStorage.removeItem('cbt-pending-queue'); }catch(_){}
     }
     try{ localStorage.removeItem('cbt-draft-'+this.data.code); }catch(e){}
     if(!resp || resp.error || !resp.data || !resp.data.saved){
@@ -241,6 +249,18 @@ function openModal(){} function closeModal(){}
  };
 })();
 
+// ENTERPRISE V8: flush any queued (failed) submissions from a previous session.
+(async function(){
+  try{
+    const q=JSON.parse(localStorage.getItem('cbt-pending-queue')||'[]');
+    if(q.length && window.sb){
+      const rest=[];
+      for(const p of q){ try{ const r=await sb.rpc('cbt_submit',{p_payload:p}); if(!(r&&r.data&&r.data.saved)) rest.push(p); }catch(_){ rest.push(p); } }
+      localStorage.setItem('cbt-pending-queue',JSON.stringify(rest));
+      if(q.length!==rest.length) toast((q.length-rest.length)+' queued submission(s) delivered.','success');
+    }
+  }catch(_){}
+})();
 Exam.start();
 </script>
 </body></html>
