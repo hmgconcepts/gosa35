@@ -472,6 +472,7 @@ const SP={fees:[],student:null,
   async init(){ if(!sb)return; if(!window.SC_PROFILE || !SC_PROFILE.role){ setTimeout(()=>SP.init(),500); return; }
     var {data}=await sb.from('students').select('id,full_name,class').order('class').order('full_name').limit(2000);
     var sel=document.getElementById('sp-pick'); if(sel){ var groups={}; (data||[]).forEach(s=>{(groups[s.class||'Unassigned']=groups[s.class||'Unassigned']||[]).push(s);});
+      while(sel.options.length>1)sel.remove(1); [...sel.querySelectorAll('optgroup')].forEach(x=>x.remove());
       Object.keys(groups).sort().forEach(g=>{ var og=document.createElement('optgroup'); og.label=g; groups[g].forEach(s=>{var o=document.createElement('option');o.value=s.id;o.textContent=s.full_name;og.appendChild(o);}); sel.appendChild(og); }); }
     // deep-link or auto-load own profile
     var q=new URLSearchParams(location.search).get('student');

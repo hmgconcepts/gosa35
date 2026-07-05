@@ -462,14 +462,14 @@ const TO={
  async init(){
   const box=document.getElementById('to-view');
   if(!sb){box.innerHTML='<div class="card">Database not configured. Add Supabase keys in assets/js/config.js.</div>';return;}
-  const {data:{user}} = await sb.auth.getUser().catch(()=>({data:{user:null}}));
+  const {data:{user}} = await sb.auth.getUser().then(r=>r, ()=>({data:{user:null}}));
   if (!window.SC_PROFILE && window.App && !App.currentRole) { setTimeout(()=>TO.init(), 500); return; }
   const profile = window.SC_PROFILE || {};
   const role = String(profile.role || (window.App&&App.currentRole) || '').toLowerCase();
   const isTeacher = ['staff','teacher'].includes(role);
   let id = new URLSearchParams(location.search).get('staff');
   if(isTeacher){
-    const me = await sb.from('staff').select('id').or('email.eq.'+(user&&user.email?user.email:'' )+',user_id.eq.'+(user&&user.id?user.id:'00000000-0000-0000-0000-000000000000')).maybeSingle().catch(()=>({data:null}));
+    const me = await sb.from('staff').select('id').or('email.eq.'+(user&&user.email?user.email:'' )+',user_id.eq.'+(user&&user.id?user.id:'00000000-0000-0000-0000-000000000000')).maybeSingle().then(r=>r, ()=>({data:null}));
     id = me.data && me.data.id;
     if(!id){ box.innerHTML='<div class="card"><h3>Your staff profile is not linked yet</h3><p>Please ask the admin to make sure your Staff record email matches your login email.</p></div>'; return; }
   }

@@ -493,7 +493,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
 <script>
 const CTUI={ code:'', sig:'',
   v(id){ var e=document.getElementById(id); return e?e.value:''; },
-  async loadStudents(){ if(!sb)return; const sel=document.getElementById('ct-student'); const {data}=await sb.from('students').select('full_name').order('full_name').limit(1000); (data||[]).forEach(s=>{var o=document.createElement('option');o.value=s.full_name;o.textContent=s.full_name;sel.appendChild(o);}); },
+  async loadStudents(){ if(!sb)return; const sel=document.getElementById('ct-student'); const {data}=await sb.from('students').select('full_name').order('full_name').limit(1000); while(sel.options.length>1)sel.remove(1); var seen=new Set(); (data||[]).forEach(s=>{var v=String(s.full_name||'').trim(),k=v.toLowerCase(); if(!v||seen.has(k))return; seen.add(k); var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);}); },
   pickStudent(v){ if(v){document.getElementById('ct-name').value=v;} this.render(); },
   sigUpload(ev){ var f=ev.target.files[0]; if(!f)return; if(f.size>500*1024){toast('Signature should be under 500KB','warning');return;} var r=new FileReader(); r.onload=()=>{ CTUI.sig=r.result; CTUI.render(); }; r.readAsDataURL(f); },
   opts(){ return { name:this.v('ct-name'), title:this.v('ct-title'), signatory:this.v('ct-sig'), date:this.v('ct-date'), body:this.v('ct-body'),

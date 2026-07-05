@@ -465,7 +465,7 @@
 <script>
 const EN={ rows:[], exam:null,
   async init(){ if(!sb)return; const {data}=await sb.from('cbt_exams').select('id,title,is_entrance,pass_mark,code').order('created_at',{ascending:false}).limit(500);
-    var sel=document.getElementById('en-exam'); (data||[]).forEach(e=>{var o=document.createElement('option');o.value=e.id;o.textContent=e.title+(e.is_entrance?' (entrance)':'')+' · '+(e.code||'');o._e=e;sel.appendChild(o);}); },
+    var sel=document.getElementById('en-exam'); while(sel.options.length>1)sel.remove(1); var seenX=new Set(); (data||[]).forEach(e=>{ if(seenX.has(e.id))return; seenX.add(e.id); var o=document.createElement('option');o.value=e.id;o.textContent=e.title+(e.is_entrance?' (entrance)':'')+' · '+(e.code||'');o._e=e;sel.appendChild(o);}); },
   async load(){ if(!sb)return; var sel=document.getElementById('en-exam'); var id=sel.value; if(!id){document.getElementById('en-list').innerHTML='<p style="color:var(--gray-500)">Select an assessment.</p>';return;}
     var opt=sel.options[sel.selectedIndex]; this.exam=opt._e||{}; if(this.exam.pass_mark)document.getElementById('en-pass').value=this.exam.pass_mark;
     var {data}=await sb.from('cbt_results').select('*').eq('exam_id',id).order('percent',{ascending:false}).limit(5000); this.rows=data||[]; this.render(); },
