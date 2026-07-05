@@ -529,6 +529,17 @@ const Super = {
               '<img src="' + this.qrUrl(JSON.stringify({ id: idNo, name: person.full_name || '', type: person.type || 'student' }), 220) + '" style="width:108px;height:108px" alt="QR">' +
               '<div style="font-size:.66rem;font-weight:900;letter-spacing:1.5px;color:' + navy + ';margin-top:3px">SCAN TO VERIFY</div>' +
               '<div style="margin-top:8px;display:flex;align-items:center;gap:5px;justify-content:center"><img src="' + logo + '" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display=\'none\'"><div style="text-align:left"><div style="font-size:.55rem;font-weight:900;color:#0f172a;line-height:1">' + Super.esc((s.shortName || '').toUpperCase()) + '</div><div style="height:12px;width:64px;background:repeating-linear-gradient(90deg,#111 0 2px,transparent 2px 4px)"></div></div></div>' +
+            (function(){
+              /* ENTERPRISE V11 (issue 1): authorised signature on the card */
+              var st = window.SC_SETTINGS || {};
+              var raw = ''; try { raw = localStorage.getItem('sc-signature-url') || ''; } catch(_) {}
+              raw = raw || st.signature_url || '';
+              var pn = ''; try { pn = localStorage.getItem('sc-principal-name') || ''; } catch(_) {}
+              pn = pn || st.principal_name || 'Principal';
+              var sg = Super.idcard.driveDirect(raw);
+              return sg ? '<div style="margin-top:6px;text-align:center"><img src="' + Super.esc(sg) + '" referrerpolicy="no-referrer" style="max-width:86px;max-height:30px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)"><div style="font-size:.5rem;color:#334155;border-top:1px solid #94a3b8;margin-top:1px;padding-top:1px;font-weight:700">' + Super.esc(pn) + '</div></div>'
+                        : '<div style="margin-top:12px;text-align:center"><div style="font-size:.5rem;color:#334155;border-top:1px solid #94a3b8;width:86px;margin:0 auto;padding-top:1px;font-weight:700">' + Super.esc(pn) + '</div></div>';
+            })() +
             '</div></div>' +
           contactFooter + credit + '</div>';
       }

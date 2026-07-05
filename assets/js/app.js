@@ -394,6 +394,43 @@ const App = {
         menu can never appear in a different order on different pages.
      3. Runs before role filtering on every page load. */
   NAV_ORDER: ['dashboard','profile','student-profile','change-password','notifications','academic_setup','students','staff','parents','classes','subjects','departments','attendance','timetable','timetable-generator','sow','lesson_plans','results','report-cards','academic-records','transcripts','rubrics','cbt','cbt-prompts','cbt-multi','cbt-exam','entrance','assignments','digital_library','library','book_request','eresources','lms','announcements','events','school_calendar','messages','inbox','broadcast','complaints','voting','surveys','gallery','birthdays','fees','payments_online','finance','financial_aid','donations','hr','payroll','staff_loans','staff_bonus','appraisals','leave','substitutions','admissions','promotion','alumni','certificates','transfer_cert','idcards','flyer','document_builder','conduct','behaviour','health','counselling','support_plans','diary','gamification','hostel','cafeteria','menu','transport','fleet_tracking','visitors','checkin','front_desk','lost_found','parent_meeting','facility_booking','library_borrowers','career_counseling','helpdesk','directory','reports','analytics','inventory','storage','compliance','activity_log','admin-data','approvals','settings','teacher-overview','feature-guide','developer'],
+  /* ENTERPRISE V11 (issue 7): search bar at the top of the navigation pane.
+     Filters menu items live as you type; Esc or ✕ clears; only searches the
+     pages the current role can see. */
+  injectNavSearch() {
+    try {
+      const nav = document.querySelector('.app-nav'); if (!nav) return;
+      if (document.getElementById('nav-search-box')) return;
+      const wrap = document.createElement('div');
+      wrap.id = 'nav-search-box';
+      wrap.style.cssText = 'padding:8px 10px 4px;position:sticky;top:0;background:inherit;z-index:5';
+      wrap.innerHTML = '<div style="position:relative">' +
+        '<input id="nav-search" type="search" placeholder="🔎 Search pages…" autocomplete="off" ' +
+        'style="width:100%;padding:8px 30px 8px 12px;border:1px solid var(--gray-200,#e2e8f0);border-radius:10px;font-size:.85rem;background:var(--white,#fff);color:inherit">' +
+        '<button id="nav-search-clear" title="Clear" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer;font-size:.9rem;display:none">✕</button></div>' +
+        '<div id="nav-search-empty" style="display:none;font-size:.75rem;color:var(--gray-500,#64748b);padding:6px 2px">No pages match.</div>';
+      nav.insertBefore(wrap, nav.firstChild);
+      const inp = wrap.querySelector('#nav-search');
+      const clr = wrap.querySelector('#nav-search-clear');
+      const empty = wrap.querySelector('#nav-search-empty');
+      const apply = () => {
+        const q = inp.value.trim().toLowerCase();
+        clr.style.display = q ? '' : 'none';
+        let shown = 0;
+        nav.querySelectorAll('a[data-module-id]').forEach(a => {
+          const roleHidden = a.dataset.navRoleHidden === '1';
+          const match = !q || a.textContent.toLowerCase().includes(q) || (a.getAttribute('data-module-id') || '').replace(/[-_]/g, ' ').includes(q);
+          a.style.display = (roleHidden || !match) ? 'none' : '';
+          if (!roleHidden && match) shown++;
+        });
+        empty.style.display = (q && !shown) ? '' : 'none';
+      };
+      inp.addEventListener('input', apply);
+      inp.addEventListener('keydown', e => { if (e.key === 'Escape') { inp.value = ''; apply(); inp.blur(); } });
+      clr.addEventListener('click', () => { inp.value = ''; apply(); inp.focus(); });
+    } catch (e) {}
+  },
+
   normalizeNavOrder() {
     try {
       const nav = document.querySelector('.app-nav'); if (!nav) return;
@@ -417,6 +454,7 @@ const App = {
     document.body.dataset.roleReady = '1';
     document.body.dataset.currentRole = String(role || '').toLowerCase();
     App.normalizeNavOrder();
+    App.injectNavSearch();
     const links = [...document.querySelectorAll('[data-role-allow]')];
     const isAdmin = App.isAdminRole(role);
 
@@ -425,6 +463,7 @@ const App = {
       if (isAdmin) {
         // Admin/Super Admin always gets full access; never lock admin navigation.
         el.style.display = '';
+        el.dataset.navRoleHidden = '0';
         el.classList.remove('nav-locked');
       } else {
         // ENTERPRISE V9 (issue 3 — policy update by client): admin-only pages
@@ -433,6 +472,7 @@ const App = {
         // Determinism is preserved by normalizeNavOrder(): for a given role the
         // menu is always the same, complete set, in the same canonical order.
         el.style.display = ok ? '' : 'none';
+        el.dataset.navRoleHidden = ok ? '0' : '1';
         el.classList.remove('nav-locked');
       }
       if (!ok) {

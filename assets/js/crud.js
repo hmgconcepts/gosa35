@@ -177,7 +177,9 @@ const CRUD = {
     fees: { table:'fee_payments', title:'Fee payment', cols:[
       {key:'student_id',label:'Student',type:'ref',refTable:'students',refValue:'full_name',refExtra:['class','admission_no'],refStore:'id',groupBy:'class',searchable:true,required:true,autofill:{student_name:'full_name'}},
       {key:'student_name',label:'Student name (auto)',type:'text',readonly:true},
+      {key:'fee_total',label:'Total fee for the term (optional)',type:'number',help:'If entered, balance auto-computes when left blank.'},
       {key:'amount_paid',label:'Amount paid',type:'number',required:true},
+      {key:'balance',label:'Remaining balance',type:'number',help:'ENTERPRISE V11 (issue 13): shows on the e-receipt. Leave blank to auto-compute (total − paid).'},
       {key:'method',label:'Method',type:'select',options:['cash','transfer','pos','online']},
       {key:'reference',label:'Reference',type:'text'},{key:'term',label:'Term',type:'lookup',lookupKind:'term'},{key:'session',label:'Session',type:'lookup',lookupKind:'session'}
     ]},
@@ -625,7 +627,7 @@ const CRUD = {
         if (links && links.length > 0) {
           let childIds = links.map(l => l.student_id).filter(Boolean);
           if (requestedStudentId && childIds.includes(requestedStudentId)) childIds = [requestedStudentId];
-          const { data: kids } = await this.sb.from('students').select('id,full_name,class,class_name,admission_no').in('id', childIds).catch(()=>({data:[]}));
+          const { data: kids } = await this.sb.from('students').select('id,full_name,class,class_name,admission_no').in('id', childIds).then(r=>r, ()=>({data:[]}));
           const childNames = (kids || []).map(k => String(k.full_name || '').toLowerCase()).filter(Boolean);
           const childClasses = (kids || []).flatMap(k => [k.class, k.class_name]).map(x => String(x || '').toLowerCase()).filter(Boolean);
           const childAdm = (kids || []).map(k => String(k.admission_no || '').toLowerCase()).filter(Boolean);
@@ -789,6 +791,15 @@ const CRUD = {
   },
 
   async save(moduleId, id) {
+    try { return await this._saveInner(moduleId, id); }
+    catch (e) {
+      // ENTERPRISE V11 (issue 11): never fail silently — every unexpected
+      // exception during save now surfaces as a visible error toast.
+      console.error('[CRUD.save] unexpected error:', e);
+      toast('Could not save: ' + (e && e.message ? e.message : 'unexpected error — see console'), 'danger', 8000);
+    }
+  },
+  async _saveInner(moduleId, id) {
     const d = this.def(moduleId);
     if (!this.canWrite(moduleId)) { toast('Read-only for your role on this page.', 'warning', 5000); return; }
     if (!d || !this.sb) { toast('Database not configured.', 'warning'); return; }
@@ -827,6 +838,10 @@ const CRUD = {
     // trigger). Sending it caused: cannot insert a non-DEFAULT value into
     // column "net_pay". We now NEVER send it — the database computes it.
     if (d.table === 'payroll') { delete payload.net_pay; }
+    // ENTERPRISE V11 (issue 13): auto-compute fee balance when blank
+    if (d.table === 'fee_payments' && payload.balance == null && payload.fee_total != null) {
+      payload.balance = Math.max(0, (Number(payload.fee_total) || 0) - (Number(payload.amount_paid) || 0));
+    }
     // Issue 5: auto-compute appraisal average score + band
     if (d.table === 'staff_appraisals') {
       const keys = ['punctuality', 'teaching_quality', 'student_results', 'teamwork', 'conduct'];
@@ -840,7 +855,7 @@ const CRUD = {
     // (res declared below by the self-healing save wrapper)
     // parent_child duplicate guard: show a friendly message instead of Supabase unique constraint error.
     if (!id && d.table === 'parent_child' && payload.parent_id && payload.student_id) {
-      const ex = await this.sb.from('parent_child').select('id').eq('parent_id', payload.parent_id).eq('student_id', payload.student_id).maybeSingle().catch(()=>({data:null}));
+      const ex = await this.sb.from('parent_child').select('id').eq('parent_id', payload.parent_id).eq('student_id', payload.student_id).maybeSingle().then(r=>r, ()=>({data:null}));
       if (ex.data) { toast('This parent is already linked to this child. Choose another child or update the existing link.', 'warning', 7000); return; }
     }
     const runSave = async (pl) => id ? await this.sb.from(d.table).update(pl).eq('id', id) : await this.sb.from(d.table).insert(pl);
@@ -866,7 +881,14 @@ const CRUD = {
           await Notifications.create({ title: '📢 New Announcement: ' + (payload.title || d.title), body: payload.body || '', url: 'announcements.html', audience: payload.audience || 'all', channels: ['inapp','push'] });
         }
         if (moduleId === 'inbox' || moduleId === 'messages') {
-          await Notifications.create({ title: '💬 New Message: ' + (payload.title || d.title), body: payload.body || '', url: 'inbox.html', audience: 'all', channels: ['inapp','push'] });
+          // ENTERPRISE V11 (issue 16): deliver to the CHOSEN audience — a
+          // specific recipient gets a private notification; 'all'/role
+          // audiences broadcast accordingly. Previously hard-coded to 'all'
+          // yet stored the message as private → recipients saw nothing.
+          const aud = payload.recipient_id ? 'private' : (payload.audience || 'all');
+          const note = { title: '💬 New Message: ' + (payload.title || d.title), body: (payload.body || '').slice(0,160), url: 'inbox.html', audience: aud, channels: ['inapp','push'] };
+          if (payload.recipient_id) note.recipient_id = payload.recipient_id;
+          await Notifications.create(note);
         }
         // ENTERPRISE V6 (issue 8): every dashboard-worthy module now fires an
         // in-app + push notification so students/parents/staff see it at once.
@@ -1003,7 +1025,7 @@ const CRUD = {
     const sign = sig ? '<div style="margin-top:28px;text-align:center"><img src="' + esc(sig) + '" referrerpolicy="no-referrer" style="max-width:150px;max-height:70px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.15)"><br><b>' + esc(pn) + '</b><br>Official Signature</div>' : '';
     const logo = 'assets/img/logo.' + (sc.logoExt || 'svg');
     const rdate = CRUD.formatDate(f.created_at || new Date().toISOString());
-    const html = '<div style="width:620px;max-width:96vw;border:2px solid #111;padding:28px;font-family:Arial,sans-serif;color:#000;background:#fff"><div style="display:flex;align-items:center;justify-content:center;gap:12px"><img src="'+logo+'" style="width:62px;height:62px;object-fit:contain" onerror="this.style.display=\'none\'"><div><h2 style="text-align:center;margin:0">' + esc(sc.name || 'School') + '</h2><p style="text-align:center;margin:4px 0 0">E-RECEIPT</p></div></div><hr><p><b>Student:</b> ' + esc(f.student_name || '') + '</p><p><b>Amount:</b> ' + cur + Number(f.amount_paid || 0).toLocaleString() + '</p><p><b>Method:</b> ' + esc(f.method || '') + ' &nbsp; <b>Reference:</b> ' + esc(f.reference || f.id || '') + '</p><p><b>Term:</b> ' + esc(f.term || '') + ' &nbsp; <b>Date:</b> ' + esc(rdate) + '</p><p style="font-size:.8rem;color:#555">This receipt was generated electronically from the school portal.</p>' + sign + '</div>';
+    const html = '<div style="width:620px;max-width:96vw;border:2px solid #111;padding:28px;font-family:Arial,sans-serif;color:#000;background:#fff"><div style="display:flex;align-items:center;justify-content:center;gap:12px"><img src="'+logo+'" style="width:62px;height:62px;object-fit:contain" onerror="this.style.display=\'none\'"><div><h2 style="text-align:center;margin:0">' + esc(sc.name || 'School') + '</h2><p style="text-align:center;margin:4px 0 0">E-RECEIPT</p></div></div><hr><p><b>Student:</b> ' + esc(f.student_name || '') + '</p><p><b>Amount paid:</b> ' + cur + Number(f.amount_paid || 0).toLocaleString() + '</p>' + (f.balance != null ? '<p><b>Remaining balance:</b> ' + cur + Number(f.balance || 0).toLocaleString() + (Number(f.balance)===0?' <span style="color:#16a34a;font-weight:700">(FULLY PAID)</span>':'') + '</p>' : '') + '<p><b>Method:</b> ' + esc(f.method || '') + ' &nbsp; <b>Reference:</b> ' + esc(f.reference || f.id || '') + '</p><p><b>Term:</b> ' + esc(f.term || '') + ' &nbsp; <b>Date:</b> ' + esc(rdate) + '</p><p style="font-size:.8rem;color:#555">This receipt was generated electronically from the school portal.</p>' + sign + '</div>';
     const w = window.open('', '_blank');
     if (!w) { toast('Popup blocked! Please allow popups.', 'warning'); return; }
     w.document.open();
@@ -1045,11 +1067,11 @@ const CRUD = {
     // Staff DOB is stored privacy-safe as day+month only — we synthesize a
     // sortable date (year 2000) so they appear in the month groups.
     const [studRes, staffRes, staffDm, parentRes, existingRes] = await Promise.all([
-      this.sb.from('students').select('full_name,class,date_of_birth').not('date_of_birth', 'is', null).catch(()=>({data:[]})),
-      this.sb.from('staff').select('full_name,role,date_of_birth').not('date_of_birth', 'is', null).catch(()=>({data:[]})),
-      this.sb.from('staff').select('full_name,role,dob_day,dob_month').not('dob_month', 'is', null).catch(()=>({data:[]})),
-      this.sb.from('parents').select('full_name,occupation,date_of_birth').not('date_of_birth', 'is', null).catch(()=>({data:[]})),
-      this.sb.from('birthdays').select('person_name').catch(()=>({data:[]}))
+      this.sb.from('students').select('full_name,class,date_of_birth').not('date_of_birth', 'is', null).then(r=>r, ()=>({data:[]})),
+      this.sb.from('staff').select('full_name,role,date_of_birth').not('date_of_birth', 'is', null).then(r=>r, ()=>({data:[]})),
+      this.sb.from('staff').select('full_name,role,dob_day,dob_month').not('dob_month', 'is', null).then(r=>r, ()=>({data:[]})),
+      this.sb.from('parents').select('full_name,occupation,date_of_birth').not('date_of_birth', 'is', null).then(r=>r, ()=>({data:[]})),
+      this.sb.from('birthdays').select('person_name').then(r=>r, ()=>({data:[]}))
     ]);
     const have = new Set((existingRes.data || []).map(b => b.person_name));
     const rows = [];

@@ -127,9 +127,12 @@ const Notifications = {
       if (this.sb && id) {
         const { data: { user } } = await this.sb.auth.getUser();
         if (user) {
-          const { data: n } = await this.sb.from('notifications').select('read_by').eq('id', id).maybeSingle();
-          const read_by = (n && Array.isArray(n.read_by)) ? n.read_by : [];
-          if (!read_by.includes(user.id)) { read_by.push(user.id); await this.sb.from('notifications').update({ read_by }).eq('id', id); }
+          try { await this.sb.rpc('notif_mark_read', { p_id: id }); }
+          catch(_) {
+            const { data: n } = await this.sb.from('notifications').select('read_by').eq('id', id).maybeSingle();
+            const read_by = (n && Array.isArray(n.read_by)) ? n.read_by : [];
+            if (!read_by.includes(user.id)) { read_by.push(user.id); await this.sb.from('notifications').update({ read_by }).eq('id', id).then(r=>r,()=>{}); }
+          }
         }
       }
     } catch(e) {}
@@ -148,6 +151,32 @@ const Notifications = {
       .limit(limit);
     if (error) return [];
     return (data || []).filter(n => Notifications.allowedForMe(n));
+  },
+
+  /* ENTERPRISE V11 (issues 16 & 19) — ROOT CAUSE FIX.
+     allowedForMe() was CALLED but NEVER DEFINED: the TypeError inside
+     .filter() made every notification fetch throw, so recipients saw
+     nothing and the bell badge never updated. Audience semantics:
+     'all' → everyone; 'private' → creator/recipient only;
+     role names (student/parent/staff/teacher…) → that role;
+     recipient_id → that exact user. */
+  allowedForMe(n) {
+    try {
+      if (!n) return false;
+      const uid  = (window.SC_PROFILE && SC_PROFILE.id) || '';
+      const role = String((window.SC_PROFILE && SC_PROFILE.role) || (window.App && App.currentRole) || '').toLowerCase();
+      const aud  = String(n.audience == null ? 'all' : n.audience).toLowerCase().trim();
+      const isAdmin = window.App && App.isAdminRole && App.isAdminRole(role);
+      if (isAdmin) return true;                                   // admins see everything
+      if (n.recipient_id && uid && n.recipient_id === uid) return true;
+      if (!aud || aud === 'all' || aud === 'everyone' || aud === 'any') return true;
+      if (aud === 'private') return !!(uid && (n.created_by === uid || n.recipient_id === uid));
+      if (aud === role) return true;
+      if ((aud === 'staff' || aud === 'teachers') && (role === 'staff' || role === 'teacher')) return true;
+      if ((aud === 'parents') && role === 'parent') return true;
+      if ((aud === 'students') && role === 'student') return true;
+      return false;
+    } catch (e) { return true; }  // fail-open: better to show than to hide
   },
 
   async refreshUnreadCount() {
@@ -171,14 +200,17 @@ const Notifications = {
     const items = await this.fetchRecent(50);
     for (const n of items) {
       const read_by = n.read_by || [];
-      if (!read_by.includes(user.id)) read_by.push(user.id);
-      await this.sb.from('notifications').update({ read_by }).eq('id', n.id);
+      if (read_by.includes(user.id)) continue;
+      // ENTERPRISE V11 (issue 19): non-staff cannot UPDATE notifications under
+      // RLS — use the security-definer RPC so parents/students can mark read.
+      try { await this.sb.rpc('notif_mark_read', { p_id: n.id }); }
+      catch(_) { read_by.push(user.id); await this.sb.from('notifications').update({ read_by }).eq('id', n.id).then(r=>r,()=>{}); }
     }
     await this.refreshUnreadCount();
   },
 
   /* ---------- Create + Broadcast ---------- */
-  async create({ title, body, url, audience = 'all', priority = 'normal', channels = ['inapp'] }) {
+  async create({ title, body, url, audience = 'all', priority = 'normal', channels = ['inapp'], recipient_id = null }) {
     if (!this.sb) return { error: 'No database' };
     const row = {
       title: (title || '').trim(),
@@ -190,6 +222,9 @@ const Notifications = {
       read_by: [],
       created_at: new Date().toISOString()
     };
+    // ENTERPRISE V11 (issue 16): targeted delivery + sender stamp
+    if (recipient_id) row.recipient_id = recipient_id;
+    if (window.SC_PROFILE && SC_PROFILE.id) row.created_by = SC_PROFILE.id;
     const { data, error } = await this.sb.from('notifications').insert(row).select().single();
     if (error) return { error: error.message };
 
