@@ -247,7 +247,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="hostel.html" data-module-id="hostel" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🛏️</span>
           <span>Hostel</span>
-        </a><a href="transport.html" data-module-id="transport" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="transport.html" data-module-id="transport" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class="">
           <span class="app-nav-icon">🚌</span>
           <span>Transport</span>
         </a><a href="alumni.html" data-module-id="alumni" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -286,7 +286,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="rubrics.html" data-module-id="rubrics" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
           <span class="app-nav-icon">📐</span>
           <span>Grading Rubrics</span>
-        </a><a href="transcripts.html" data-module-id="transcripts" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="transcripts.html" data-module-id="transcripts" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Academic Transcripts</span>
         </a><a href="transfer_cert.html" data-module-id="transfer_cert" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -298,7 +298,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="voting.html" data-module-id="voting" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🗳️</span>
           <span>Voting</span>
-        </a><a href="health.html" data-module-id="health" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="health.html" data-module-id="health" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent" class="">
           <span class="app-nav-icon">🩺</span>
           <span>Health</span>
         </a><a href="conduct.html" data-module-id="conduct" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -319,7 +319,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="cafeteria.html" data-module-id="cafeteria" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🍽️</span>
           <span>Cafeteria</span>
-        </a><a href="financial_aid.html" data-module-id="financial_aid" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="financial_aid.html" data-module-id="financial_aid" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent" class="">
           <span class="app-nav-icon">🎗️</span>
           <span>Financial Aid</span>
         </a><a href="front_desk.html" data-module-id="front_desk" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -458,5 +458,5 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
   if (window.CRUD) CRUD.init(sb);
 </script>
 <script>
-const AT={students:[], async init(){document.getElementById('at-date').value=new Date().toISOString().slice(0,10); try{const {data}=await sb.from('classes').select('name').order('name'); const sel=document.getElementById('at-class'); (data||[]).forEach(c=>{var o=document.createElement('option');o.value=c.name;o.textContent=c.name;sel.appendChild(o);});}catch(e){}}, async load(){ const cls=document.getElementById('at-class').value, box=document.getElementById('at-register'); if(!cls){box.innerHTML='<p>Choose a class.</p>';return;} const {data,error}=await sb.from('students').select('id,full_name,admission_no,class').eq('class',cls).order('full_name').limit(300); if(error){box.innerHTML='<div class="card">'+esc(error.message)+'</div>';return;} this.students=data||[]; box.innerHTML='<div class="card"><h3>'+esc(cls)+' Register</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>Student</th><th>Admission No</th><th>Status</th></tr></thead><tbody>'+this.students.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.full_name)+'</td><td>'+esc(s.admission_no||'')+'</td><td><select class="form-select" id="ats-'+s.id+'"><option value="present">Present</option><option value="absent">Absent</option><option value="late">Late</option><option value="excused">Excused</option></select></td></tr>').join('')+'</tbody></table></div></div>';}, async saveAll(){ if(!this.students.length){toast('Load a class first','warning');return;} const date=document.getElementById('at-date').value||new Date().toISOString().slice(0,10); const rows=this.students.map(s=>({student_id:s.id,student_name:s.full_name,class:s.class,date:date,status:document.getElementById('ats-'+s.id).value,recorded_by:(window.SC_PROFILE&&SC_PROFILE.id)||null})); const {error}=await sb.from('attendance').upsert(rows,{onConflict:'student_id,date'}); if(error){toast(error.message,'danger');return;} toast('Attendance saved for '+rows.length+' student(s)','success'); }}; document.addEventListener('DOMContentLoaded',()=>AT.init()); AT.init();
+const AT={students:[], async init(){document.getElementById('at-date').value=new Date().toISOString().slice(0,10); try{const {data}=await sb.from('classes').select('name').order('name'); const sel=document.getElementById('at-class'); (function(){var seen=new Set();(data||[]).forEach(c=>{var v=String(c.name==null?'':c.name).trim(),k=v.toLowerCase();if(!v||seen.has(k))return;seen.add(k);var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});})();}catch(e){}}, async load(){ const cls=document.getElementById('at-class').value, box=document.getElementById('at-register'); if(!cls){box.innerHTML='<p>Choose a class.</p>';return;} const {data,error}=await sb.from('students').select('id,full_name,admission_no,class').eq('class',cls).order('full_name').limit(300); if(error){box.innerHTML='<div class="card">'+esc(error.message)+'</div>';return;} this.students=data||[]; box.innerHTML='<div class="card"><h3>'+esc(cls)+' Register</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>Student</th><th>Admission No</th><th>Status</th></tr></thead><tbody>'+this.students.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.full_name)+'</td><td>'+esc(s.admission_no||'')+'</td><td><select class="form-select" id="ats-'+s.id+'"><option value="present">Present</option><option value="absent">Absent</option><option value="late">Late</option><option value="excused">Excused</option></select></td></tr>').join('')+'</tbody></table></div></div>';}, async saveAll(){ if(!this.students.length){toast('Load a class first','warning');return;} const date=document.getElementById('at-date').value||new Date().toISOString().slice(0,10); const rows=this.students.map(s=>({student_id:s.id,student_name:s.full_name,class:s.class,date:date,status:document.getElementById('ats-'+s.id).value,recorded_by:(window.SC_PROFILE&&SC_PROFILE.id)||null})); const {error}=await sb.from('attendance').upsert(rows,{onConflict:'student_id,date'}); if(error){toast(error.message,'danger');return;} toast('Attendance saved for '+rows.length+' student(s)','success'); }}; document.addEventListener('DOMContentLoaded',()=>AT.init()); AT.init();
 </script></body></html>
