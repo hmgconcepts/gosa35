@@ -244,7 +244,7 @@ function openModal(){} function closeModal(){}
   const q=this.qs()[this.idx]; if(!q) return;
   const secs=this.sections(); const current=q.section||q.subject||'General';
   const multi=secs.length>1;
-  const tabs=multi?'<div style="position:sticky;top:0;z-index:5;background:white;display:flex;gap:6px;flex-wrap:wrap;margin:-4px -4px 12px;padding:8px 4px 10px;border-bottom:2px solid var(--gray-200)">'+secs.map(sec=>{ const st=Exam.sectionStats(sec); return '<button class="btn btn-sm '+(sec===current?'btn-primary':'btn-outline')+'" onclick="Exam.goSubject(\''+esc(sec)+'\')">'+esc(sec)+' <span style="font-size:.68rem;opacity:.85">('+st.a+'/'+st.t+')</span></button>'; }).join('')+'</div>':'';
+  const tabs=multi?'<div style="position:sticky;top:0;z-index:5;background:white;display:flex;gap:6px;flex-wrap:wrap;margin:-4px -4px 12px;padding:8px 4px 10px;border-bottom:2px solid var(--gray-200)">'+secs.map(sec=>{ const st=Exam.sectionStats(sec); const key=encodeURIComponent(sec); return '<button class="btn btn-sm '+(sec===current?'btn-primary':'btn-outline')+'" onclick="Exam.goSubject(decodeURIComponent(\''+key+'\'))">'+esc(sec)+' <span style="font-size:.68rem;opacity:.85">('+st.a+'/'+st.t+')</span></button>'; }).join('')+'</div>':'';
   this._oldRender();
   const root=this.root(); const card=root.querySelector('.card'); if(!card) return;
   card.insertAdjacentHTML('afterbegin',tabs);
