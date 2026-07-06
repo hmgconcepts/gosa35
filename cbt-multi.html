@@ -89,10 +89,10 @@ const MM = {
     try { const { data } = await sb.from('school_settings').select('*').eq('id',1).maybeSingle();
       const terms = (data && data.terms) || ['First Term','Second Term','Third Term'];
       const sessions = (data && data.sessions) || [];
-      const uT=new Set(); (Array.isArray(terms)?terms:[]).forEach(t=>{t=String(t==null?'':t).trim();const k=t.toLowerCase();if(!t||uT.has(k))return;uT.add(k);const o=document.createElement('option');o.textContent=t;document.getElementById('mm-term').appendChild(o);});
-      const uS=new Set(); (Array.isArray(sessions)?sessions:[]).forEach(t=>{t=String(t==null?'':t).trim();const k=t.toLowerCase();if(!t||uS.has(k))return;uS.add(k);const o=document.createElement('option');o.textContent=t;document.getElementById('mm-session').appendChild(o);});
+      (Array.isArray(terms)?terms:[]).forEach(t=>{const o=document.createElement('option');o.textContent=t;document.getElementById('mm-term').appendChild(o);});
+      (Array.isArray(sessions)?sessions:[]).forEach(t=>{const o=document.createElement('option');o.textContent=t;document.getElementById('mm-session').appendChild(o);});
     } catch(_){
-      ['First Term','Second Term','Third Term'].forEach(t=>{if([...document.getElementById('mm-term').options].some(x=>x.textContent===t))return;const o=document.createElement('option');o.textContent=t;document.getElementById('mm-term').appendChild(o);});
+      ['First Term','Second Term','Third Term'].forEach(t=>{const o=document.createElement('option');o.textContent=t;document.getElementById('mm-term').appendChild(o);});
     }
   },
   async publish(){

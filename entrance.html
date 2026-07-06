@@ -498,7 +498,7 @@ const EN={ rows:[], exam:null,
         var pn=localStorage.getItem('sc-principal-name')||st.principal_name||'Principal';
         var sigImg=sig?'<img src="'+sig+'" referrerpolicy="no-referrer" style="height:44px;max-width:140px;object-fit:contain;display:block;margin:0 auto -4px;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)">':'';
         return '<div style="display:flex;justify-content:space-between;margin-top:26px;font-size:.8rem;text-align:center">'+
-          (function(){ var on=localStorage.getItem('sc-officer-name')||st.officer_name||''; var orw=localStorage.getItem('sc-officer-sig')||st.officer_signature_url||''; var ou=(window.Super&&Super.idcard&&Super.idcard.driveDirect)?Super.idcard.driveDirect(orw):orw; var oi=ou?'<img src="'+ou+'" referrerpolicy="no-referrer" style="height:44px;max-width:140px;object-fit:contain;display:block;margin:0 auto -4px;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)">':''; return '<div style="width:200px">'+oi+'<div style="border-top:1.5px solid #111;padding-top:4px;font-weight:700">'+(on?esc(on.toUpperCase())+'<br><span style="font-weight:400;font-size:.68rem">EXAMINATION OFFICER</span>':'EXAMINATION OFFICER')+'</div></div>'; })()+
+          '<div style="width:200px;border-top:1.5px solid #111;padding-top:4px;font-weight:700">EXAMINATION OFFICER</div>'+
           '<div style="width:200px">'+sigImg+'<div style="border-top:1.5px solid #111;padding-top:4px;font-weight:700">'+esc(pn.toUpperCase())+'</div></div></div>';
       })()+
       '<p style="margin-top:14px;font-size:.75rem;color:#94a3b8">Ref: '+esc(r.cert_code||r.id.slice(0,8))+' · Generated '+(function(){var d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();})()+'</p></div>'; },
@@ -536,7 +536,7 @@ const EN={ rows:[], exam:null,
       '<p style="max-width:520px;margin:4px auto;font-style:italic;color:#475569;font-size:.88rem">We commend your effort and dedication.<br>We look forward to your continued success.</p>'+
       rosette+
       '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:42px;font-size:.76rem;color:'+navy+';font-weight:700">'+
-        (function(){ var on=localStorage.getItem('sc-officer-name')||st.officer_name||''; var orw=localStorage.getItem('sc-officer-sig')||st.officer_signature_url||''; var ou=(window.Super&&Super.idcard&&Super.idcard.driveDirect)?Super.idcard.driveDirect(orw):orw; var oi=ou?'<img src="'+ou+'" referrerpolicy="no-referrer" style="height:46px;max-width:150px;object-fit:contain;display:block;margin:0 auto -4px;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)">':''; return '<div style="width:190px">'+oi+'<div style="border-top:1.5px solid '+navy+';padding-top:4px">'+(on?esc(on.toUpperCase())+'<br><span style="font-weight:400;font-size:.62rem">EXAMINATION OFFICER</span>':'EXAMINATION OFFICER')+'</div></div>'; })()+
+        '<div style="width:190px"><div style="border-top:1.5px solid '+navy+';padding-top:4px">EXAMINATION OFFICER</div></div>'+
         '<div style="width:190px">'+sigBlock+'<div style="border-top:1.5px solid '+navy+';padding-top:4px">'+esc(pn.toUpperCase())+'</div></div></div>'+
       '<div style="margin-top:16px;font-size:.78rem;color:'+navy+';font-weight:700">DATE: <span style="border-bottom:1px solid '+navy+';padding:0 32px">'+dmy+'</span></div>'+
       '<p style="margin-top:12px;font-size:.66rem;color:#94a3b8">Verification code: <b>'+esc(code)+'</b> · verify at verify-certificate.html</p>'+
