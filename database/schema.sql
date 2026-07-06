@@ -49,6 +49,10 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 alter table public.profiles enable row level security;
+alter table public.profiles add column if not exists date_of_birth date;
+alter table public.profiles add column if not exists dob_day int;
+alter table public.profiles add column if not exists dob_month text;
+
 
 -- =====================================================================
 -- ENTERPRISE V3 EARLY HELPERS (must exist before any RLS policy uses them)

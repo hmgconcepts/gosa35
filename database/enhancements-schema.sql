@@ -20,6 +20,10 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 alter table public.profiles enable row level security;
+alter table public.profiles add column if not exists date_of_birth date;
+alter table public.profiles add column if not exists dob_day int;
+alter table public.profiles add column if not exists dob_month text;
+
 create table if not exists public.students (
   id uuid primary key default uuid_generate_v4(), admission_no text unique,
   full_name text not null, class text, arm text, gender text,
