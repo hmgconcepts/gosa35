@@ -248,6 +248,9 @@
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
+        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+          <span class="app-nav-icon">🎓</span>
+          <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Promotion</span>
@@ -488,7 +491,17 @@ const EN={ rows:[], exam:null,
       '<tr><td><b>Score:</b></td><td>'+r.score+' / '+r.total+'</td><td><b>Percentage:</b></td><td>'+Number(r.percent).toFixed(1)+'%</td></tr>'+
       '<tr><td><b>Correct:</b></td><td>'+(r.correct_count||0)+'</td><td><b>Wrong:</b></td><td>'+(r.wrong_count||0)+'</td></tr>'+
       '<tr><td><b>Outcome:</b></td><td colspan=3><b style="color:'+(ok?'#16a34a':'#dc2626')+'">'+(ok?'QUALIFIED FOR ADMISSION':'NOT QUALIFIED')+'</b></td></tr></table>'+
-      '<p style="margin-top:18px;font-size:.75rem;color:#94a3b8">Ref: '+esc(r.cert_code||r.id.slice(0,8))+' · Generated '+new Date().toLocaleDateString()+'</p></div>'; },
+      (function(){
+        var st=window.SC_SETTINGS||{};
+        var raw=localStorage.getItem('sc-signature-url')||st.signature_url||'';
+        var sig=(window.Super&&Super.idcard&&Super.idcard.driveDirect)?Super.idcard.driveDirect(raw):raw;
+        var pn=localStorage.getItem('sc-principal-name')||st.principal_name||'Principal';
+        var sigImg=sig?'<img src="'+sig+'" referrerpolicy="no-referrer" style="height:44px;max-width:140px;object-fit:contain;display:block;margin:0 auto -4px;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)">':'';
+        return '<div style="display:flex;justify-content:space-between;margin-top:26px;font-size:.8rem;text-align:center">'+
+          '<div style="width:200px;border-top:1.5px solid #111;padding-top:4px;font-weight:700">EXAMINATION OFFICER</div>'+
+          '<div style="width:200px">'+sigImg+'<div style="border-top:1.5px solid #111;padding-top:4px;font-weight:700">'+esc(pn.toUpperCase())+'</div></div></div>';
+      })()+
+      '<p style="margin-top:14px;font-size:.75rem;color:#94a3b8">Ref: '+esc(r.cert_code||r.id.slice(0,8))+' · Generated '+(function(){var d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();})()+'</p></div>'; },
   certHTML(r){
     /* ENTERPRISE V8 (issue 6): premium GOLD certificate — same sophistication
        as the Certificates page premium layout. */

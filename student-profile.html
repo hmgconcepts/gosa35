@@ -262,6 +262,9 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
+        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+          <span class="app-nav-icon">🎓</span>
+          <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Promotion</span>
@@ -476,7 +479,7 @@ const SP={fees:[],student:null,
     var {data}=await sb.from('students').select('id,full_name,class').order('class').order('full_name').limit(2000);
     var sel=document.getElementById('sp-pick'); if(sel){ var groups={}; (data||[]).forEach(s=>{(groups[s.class||'Unassigned']=groups[s.class||'Unassigned']||[]).push(s);});
       while(sel.options.length>1)sel.remove(1); [...sel.querySelectorAll('optgroup')].forEach(x=>x.remove());
-      Object.keys(groups).sort().forEach(g=>{ var og=document.createElement('optgroup'); og.label=g; groups[g].forEach(s=>{var o=document.createElement('option');o.value=s.id;o.textContent=s.full_name;og.appendChild(o);}); sel.appendChild(og); }); }
+      Object.keys(groups).sort().forEach(g=>{ var og=document.createElement('optgroup'); og.label=g; var seenG=new Set(); groups[g].forEach(s=>{ if(seenG.has(s.id))return; seenG.add(s.id); var o=document.createElement('option');o.value=s.id;o.textContent=s.full_name;og.appendChild(o);}); sel.appendChild(og); }); }
     // deep-link or auto-load own profile
     var q=new URLSearchParams(location.search).get('student');
     if(q && !['parent','student'].includes((window.SC_PROFILE||{}).role)){ if(sel)sel.value=q; this.load(q); }

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Front Desk / Dispatch • God of Seed Academy</title>
-<meta name="description" content="God of Seed Academy — Front Desk / Dispatch. Free school management platform by HMG Concepts.">
+<title>External Exam Registrations • God of Seed Academy</title>
+<meta name="description" content="God of Seed Academy — Inventory &amp; Assets. Free school management platform by HMG Concepts.">
 <meta name="keywords" content="God of Seed Academy, school management, GOSA, HMG Concepts">
 <meta name="theme-color" content="#0506ae">
 <link rel="icon" type="image/png" href="assets/img/logo.png">
@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<meta property="og:title" content="Front Desk / Dispatch • God of Seed Academy">
+<meta property="og:title" content="Inventory &amp; Assets • God of Seed Academy">
 <meta property="og:description" content="God of Seed Academy — Free school management by HMG Concepts">
 <meta property="og:image" content="assets/img/logo.png">
 <meta property="og:type" content="website">
@@ -427,7 +427,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
   <main class="app-main">
     <header class="app-topbar">
       <button class="mobile-toggle" onclick="App.toggleSidebar()" title="Menu">☰</button>
-      <h1 class="app-page-title">Front Desk / Dispatch</h1>
+      <h1 class="app-page-title">Inventory &amp; Assets</h1>
       <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
         
         <button class="btn btn-sm btn-outline" onclick="if(window.Super)Super.chatbot.explainPage()" title="About this page">ℹ️ Help</button>
@@ -437,26 +437,27 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
       </div>
     </header>
     <div class="app-content">
+      <div class="card" style="background:#eef2ff;border-color:#c7d2fe;margin-bottom:14px"><b>📚 What is this page?</b> One register for ALL external examinations — <b>WAEC/NECO SSCE, UTME (JAMB), IGCSE (Cambridge), Common Entrance (NCEE), BECE, GCE</b> and more. Add each candidate with their subjects/courses, fees (with balance), passport link and status. Use <b>⬇ Export CSV / 📄 Export PDF</b> to extract all details for the exam body.</div>
       
       <div class="card" style="margin-bottom:16px;background:#eef2ff;border-color:#c7d2fe">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer" onclick="var b=document.getElementById('pg-more');b.style.display=b.style.display==='none'?'block':'none'">
-        <div><strong>ℹ️ What is this page?</strong> <span style="color:var(--gray-700)">Gatekeeper logging for walk-ins, dispatches, and calls. A comprehensive administrative reception ledger tracking institutional visitors, daily package dispatches, walk-in inquiries, and official phone logs to enforce rigorous campus security.</span></div>
+        <div><strong>ℹ️ What is this page?</strong> <span style="color:var(--gray-700)">Asset tracking and physical facility logging. A dedicated physical asset ledger tracking institutional equipment, laboratory apparatus, classroom furniture, and maintenance supplies. Records initial quantities, unit valuations, storage locations, and current asset conditions.</span></div>
         <span style="color:var(--primary)">▼</span>
       </div>
       <div id="pg-more" style="display:none;margin-top:10px">
-        <p style="margin:4px 0;color:var(--gray-700)"><strong>Who uses it:</strong> Staff and Admin.</p>
+        <p style="margin:4px 0;color:var(--gray-700)"><strong>Who uses it:</strong> Admin and Super Admin.</p>
         <p style="margin:8px 0 4px;color:var(--gray-700)"><strong>How to use it:</strong></p>
-        <ol style="margin:0;padding-left:20px;color:var(--gray-700);line-height:1.7"><li>Click Add new.</li><li>Select inquiry type (Call, Walk-in, Dispatch).</li><li>Record visitor identity and purpose.</li><li>Timestamp arrival and departure metrics.</li></ol>
+        <ol style="margin:0;padding-left:20px;color:var(--gray-700);line-height:1.7"><li>Click Add new.</li><li>Input asset description and serial number.</li><li>Log physical quantity and storage location.</li><li>Perform regular asset condition audits.</li></ol>
         
         
         <p style="margin:10px 0 0;font-size:.85rem;color:var(--gray-500)">Tip: click the <strong>ℹ️ Help</strong> button in the top bar, or the 💬 assistant, for the full explanation of any page.</p>
       </div></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
-        <button class="btn btn-primary" onclick="CRUD.openForm('front_desk')" data-staff-only>+ Add new</button>
-        <button class="btn btn-outline" onclick="CRUD.renderList('front_desk')">↻ Refresh</button>
-        <button class="btn btn-outline" onclick="CRUD.exportCSV('front_desk')" data-staff-only>⬇ Export CSV</button>
-        <button class="btn btn-outline" onclick="CRUD.exportPDF('front_desk')" data-staff-only>📄 Export PDF</button>
-        <button class="btn btn-outline" onclick="CRUD.importCSV('front_desk')" data-admin-only>⬆ Import CSV</button>
+        <button class="btn btn-primary" onclick="CRUD.openForm('exam_registrations')" data-staff-only>+ Add new</button>
+        <button class="btn btn-outline" onclick="CRUD.renderList('exam_registrations')">↻ Refresh</button>
+        <button class="btn btn-outline" onclick="CRUD.exportCSV('exam_registrations')" data-staff-only>⬇ Export CSV</button>
+        <button class="btn btn-outline" onclick="CRUD.exportPDF('exam_registrations')" data-staff-only>📄 Export PDF</button>
+        <button class="btn btn-outline" onclick="CRUD.importCSV('exam_registrations')" data-admin-only>⬆ Import CSV</button>
         
         
         
@@ -464,8 +465,8 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         
       </div>
       
-      <div class="table-wrap"><table id="front_desk-table"><thead><tr><th>Loading…</th></tr></thead><tbody><tr><td><span class="pulse">Loading…</span></td></tr></tbody></table></div>
-      <script>document.addEventListener('DOMContentLoaded',function(){ if(window.CRUD) CRUD.renderList('front_desk'); });</script>
+      <div class="table-wrap"><table id="exam_registrations-table"><thead><tr><th>Loading…</th></tr></thead><tbody><tr><td><span class="pulse">Loading…</span></td></tr></tbody></table></div>
+      <script>document.addEventListener('DOMContentLoaded',function(){ if(window.CRUD) CRUD.renderList('exam_registrations'); });</script>
     </div>
     <footer style="padding:20px 28px;border-top:1px solid var(--gray-200);font-size:0.82rem;color:var(--gray-500);text-align:center">
       © 2026 God of Seed Academy · Built by <a href="https://cssadewale.pages.dev" target="_blank" rel="noopener">Adewale Samson Adeagbo</a> · Powered by <a href="https://hmgconcepts.pages.dev/" target="_blank" rel="noopener">HMG Concepts</a> · <a href="developer.html">About the developer</a>

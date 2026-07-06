@@ -262,6 +262,9 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
+        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+          <span class="app-nav-icon">🎓</span>
+          <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Promotion</span>
@@ -450,7 +453,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
           <div class="form-group"><label>Professional template</label>
             <select class="form-select" id="ic-template" onchange="ICUI.render()">
               <option value="horizontal">Horizontal (classic)</option>
-              <option value="premium">Premium (like sample — navy/QR)</option><option value="vertical">Vertical (lanyard / portrait)</option>
+              <option value="premium">Premium (like sample — navy/QR)</option><option value="executive">Executive (green & gold)</option><option value="minimal">Minimal (Swiss clean)</option><option value="gradient">Gradient (vibrant modern)</option><option value="badge">Badge (portrait conference)</option><option value="smart">Smart Card (fintech chip)</option><option value="heritage">Heritage (classic crest)</option><option value="vertical">Vertical (lanyard / portrait)</option>
               <option value="corporate">Corporate (dark premium)</option>
             </select>
           </div>
@@ -508,8 +511,8 @@ const ICUI={ cur:{}, all:[], kind:'student',
     this.load(); this.render(); },
   async load(){ const sel=document.getElementById('ic-student'); if(!sb||!sel)return;
     while(sel.options.length>1)sel.remove(1);
-    if(this.kind==='staff'){ const {data}=await sb.from('staff').select('id,full_name,staff_no,role,department,staff_type,gender,phone,photo_url').order('full_name').limit(1000); ICUI.all=data||[]; (data||[]).forEach(s=>{ const o=document.createElement('option'); o.value=JSON.stringify(s); o.textContent=s.full_name+' ('+(s.role||s.staff_type||'')+')'; sel.appendChild(o); }); }
-    else { const {data}=await sb.from('students').select('id,full_name,class,arm,admission_no,gender,photo_url,date_of_birth').order('full_name').limit(1000); ICUI.all=data||[]; (data||[]).forEach(s=>{ const o=document.createElement('option'); o.value=JSON.stringify(s); o.textContent=s.full_name+' ('+(s.class||'')+')'; sel.appendChild(o); }); } },
+    if(this.kind==='staff'){ const {data}=await sb.from('staff').select('id,full_name,staff_no,role,department,staff_type,gender,phone,photo_url').order('full_name').limit(1000); ICUI.all=data||[]; const seenA=new Set(); (data||[]).forEach(s=>{ if(seenA.has(s.id))return; seenA.add(s.id); const o=document.createElement('option'); o.value=JSON.stringify(s); o.textContent=s.full_name+' ('+(s.role||s.staff_type||'')+')'; sel.appendChild(o); }); }
+    else { const {data}=await sb.from('students').select('id,full_name,class,arm,admission_no,gender,photo_url,date_of_birth').order('full_name').limit(1000); ICUI.all=data||[]; const seenB=new Set(); (data||[]).forEach(s=>{ if(seenB.has(s.id))return; seenB.add(s.id); const o=document.createElement('option'); o.value=JSON.stringify(s); o.textContent=s.full_name+' ('+(s.class||'')+')'; sel.appendChild(o); }); } },
   pick(v){ if(!v)return; const s=JSON.parse(v); this.cur=s;
     document.getElementById('ic-name').value=s.full_name||'';
     document.getElementById('ic-class').value=(this.kind==='staff'?(s.staff_type||''):(s.class||''));
