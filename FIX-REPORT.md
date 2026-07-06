@@ -287,3 +287,13 @@ Every defect above was fixed **at the source (generator)**, not just on the demo
 - Verifier checks the repaired workflows directly in the generated site: dropdown de-duplication, multi-subject CBT tabs, high-concurrency CBT SQL, birthdays for all roles, Digital Library delete, family-safe report cards, in-app message delivery, ID-card print fallback, modern/static output readiness and no AI API dependency.
 - V4 workflow verifier passed: 16/16 checks.
 - JS syntax and route/local-reference audits passed.
+
+---
+
+## 2026-07-06 V13 / SchoolConnect V5 CBT subject-tab repair
+
+- Replaced the fragile post-render CBT tab injection with a full subject-aware renderer in `cbt-exam.html`.
+- Students now get native top subject tabs, subject-only question maps, and previous/next controls that stay inside the selected subject.
+- Added robust subject detection from `section`, `subject`, `subject_section` or `exam_subject`.
+- Updated CBT CSV parsing to preserve section/subject columns.
+- Added `verify-v5-cbt-tabs.js`; direct simulation passed 7/7 checks.
