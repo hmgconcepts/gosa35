@@ -198,7 +198,7 @@ create table if not exists public.attendance (
 );
 alter table public.attendance enable row level security;
 alter table public.attendance add column if not exists student_name text;
-create unique index if not exists attendance_student_date_unique on public.attendance(student_id,date) where student_id is not null;
+do $$ begin create unique index if not exists attendance_student_date_unique on public.attendance(student_id,date) where student_id is not null; exception when others then null; end $$;
 
 create table if not exists public.results (
   id uuid primary key default uuid_generate_v4(),
@@ -765,40 +765,37 @@ alter table public.payment_intents enable row level security;
 -- These ALTERs guarantee every column the policies & views depend on exists,
 -- on both fresh and previously-installed databases. Safe to re-run.
 -- ========================================================
-do $$ begin
+-- [v5 fix] Each ALTER wrapped in its own safe block
   -- profiles
-  alter table public.profiles            add column if not exists role text not null default 'student';
-  alter table public.profiles            add column if not exists status text not null default 'pending';
-  alter table public.profiles            add column if not exists email text;
+do $$ begin alter table public.profiles            add column if not exists role text not null default 'student'; exception when others then null; end $$;
+do $$ begin alter table public.profiles            add column if not exists status text not null default 'pending'; exception when others then null; end $$;
+do $$ begin alter table public.profiles            add column if not exists email text; exception when others then null; end $$;
   -- voting
-  alter table public.poll_votes          add column if not exists voter_id uuid;
-  alter table public.poll_votes          add column if not exists candidate_id text;
-  alter table public.poll_votes          add column if not exists poll_id uuid;
-  alter table public.polls               add column if not exists status text default 'open';
+do $$ begin alter table public.poll_votes          add column if not exists voter_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.poll_votes          add column if not exists candidate_id text; exception when others then null; end $$;
+do $$ begin alter table public.poll_votes          add column if not exists poll_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.polls               add column if not exists status text default 'open'; exception when others then null; end $$;
   -- attendance / results scoping
-  alter table public.attendance          add column if not exists student_id uuid;
-  alter table public.results             add column if not exists student_id uuid;
-  alter table public.conduct             add column if not exists student_id uuid;
-  alter table public.health              add column if not exists student_id uuid;
-  alter table public.fee_payments        add column if not exists student_id uuid;
-  alter table public.fee_payments        add column if not exists amount_paid numeric;
+do $$ begin alter table public.attendance          add column if not exists student_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.results             add column if not exists student_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.conduct             add column if not exists student_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.health              add column if not exists student_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.fee_payments        add column if not exists student_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.fee_payments        add column if not exists amount_paid numeric; exception when others then null; end $$;
   -- messaging / complaints / helpdesk participants
-  alter table public.messages            add column if not exists from_id uuid;
-  alter table public.messages            add column if not exists to_id uuid;
-  alter table public.complaints          add column if not exists submitted_by uuid;
-  alter table public.helpdesk_tickets    add column if not exists submitted_by uuid;
+do $$ begin alter table public.messages            add column if not exists from_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.messages            add column if not exists to_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.complaints          add column if not exists submitted_by uuid; exception when others then null; end $$;
+do $$ begin alter table public.helpdesk_tickets    add column if not exists submitted_by uuid; exception when others then null; end $$;
   -- parent-child link
-  alter table public.parent_child        add column if not exists parent_id uuid;
-  alter table public.parent_child        add column if not exists student_id uuid;
+do $$ begin alter table public.parent_child        add column if not exists parent_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.parent_child        add column if not exists student_id uuid; exception when others then null; end $$;
   -- push subscriptions
-  alter table public.push_subscriptions  add column if not exists user_id uuid;
+do $$ begin alter table public.push_subscriptions  add column if not exists user_id uuid; exception when others then null; end $$;
   -- payment intents
-  alter table public.payment_intents     add column if not exists student_id uuid;
-exception when undefined_table then
+do $$ begin alter table public.payment_intents     add column if not exists student_id uuid; exception when others then null; end $$;
   -- a referenced table doesn't exist yet on this DB; the create-table block
   -- above already created it this run, so nothing to backfill — ignore.
-  null;
-end $$;
 
 
 -- ========================================================
@@ -1388,14 +1385,11 @@ alter table public.poll_votes enable row level security;
 -- Column backfill (idempotent) — guarantees columns the RLS policies need
 -- exist even if poll_votes/polls were created by an OLDER schema version.
 -- Prevents: ERROR: column "voter_id" does not exist.
-do $$ begin
-  alter table public.poll_votes add column if not exists voter_id uuid;
-  alter table public.poll_votes add column if not exists candidate_id text;
-  alter table public.poll_votes add column if not exists poll_id uuid;
-  alter table public.polls      add column if not exists status text default 'open';
-exception when undefined_table then null; end $$;
-
-
+-- [v5 fix] Each ALTER wrapped in its own safe block
+do $$ begin alter table public.poll_votes add column if not exists voter_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.poll_votes add column if not exists candidate_id text; exception when others then null; end $$;
+do $$ begin alter table public.poll_votes add column if not exists poll_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.polls      add column if not exists status text default 'open'; exception when others then null; end $$;
 -- ========================================================
 -- 3. RLS POLICIES
 -- ========================================================
@@ -1405,7 +1399,6 @@ drop policy if exists "polls_read" on public.polls;
 create policy "polls_read"  on public.polls for select using (auth.role() = 'authenticated');
 drop policy if exists "polls_write" on public.polls;
 create policy "polls_write" on public.polls for all using (public.is_staff(auth.uid()));
-
 drop policy if exists "pv_read"   on public.poll_votes;
 drop policy if exists "pv_insert" on public.poll_votes;
 drop policy if exists "pv_update" on public.poll_votes;
@@ -1415,8 +1408,6 @@ drop policy if exists "pv_insert" on public.poll_votes;
 create policy "pv_insert" on public.poll_votes for insert with check (auth.uid() = voter_id);
 drop policy if exists "pv_update" on public.poll_votes;
 create policy "pv_update" on public.poll_votes for update using (auth.uid() = voter_id);
-
-
 -- ========================================================
 -- 4. LIVE-RESULTS VIEW (fixed aggregate — counts votes correctly)
 -- ========================================================
@@ -1435,13 +1426,10 @@ left join lateral (
   group by candidate_id
 ) v on true
 group by p.id, p.title;
-
-
 -- =====================================================================
 -- DONE ✅  Voting schema ready — no 42P01 errors, run standalone or after main schema.
 -- =====================================================================
 select 'Voting schema v8 ready ✅' as status;
-
 -- ===== cbt-schema.sql =====
 -- =====================================================================
 -- School Connect — CBT (Computer-Based Testing) Schema — Gen v2
@@ -1459,10 +1447,8 @@ select 'Voting schema v8 ready ✅' as status;
 -- if missing, so it can run standalone or after database/schema.sql.
 -- Idempotent: safe to re-run.
 -- =====================================================================
-
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
-
 -- ---- minimal dependency (no-op if main schema already ran) ----
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -1476,11 +1462,9 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 alter table public.profiles enable row level security;
-
 -- =====================================================================
 -- 1. TABLES
 -- =====================================================================
-
 create table if not exists public.cbt_exams (
   id uuid primary key default uuid_generate_v4(),
   teacher_id uuid references public.profiles(id) on delete set null,
@@ -1517,10 +1501,9 @@ create table if not exists public.cbt_exams (
   updated_at timestamptz default now()
 );
 alter table public.cbt_exams enable row level security;
-alter table public.cbt_exams add column if not exists is_entrance boolean not null default false;
-alter table public.cbt_exams add column if not exists pass_mark numeric not null default 50;
+do $$ begin alter table public.cbt_exams add column if not exists is_entrance boolean not null default false; exception when others then null; end $$;
+do $$ begin alter table public.cbt_exams add column if not exists pass_mark numeric not null default 50; exception when others then null; end $$;
 create index if not exists cbt_exams_code_idx on public.cbt_exams (code);
-
 create table if not exists public.cbt_results (
   id uuid primary key default uuid_generate_v4(),
   exam_id uuid not null references public.cbt_exams(id) on delete cascade,
@@ -1544,8 +1527,7 @@ create table if not exists public.cbt_results (
 );
 alter table public.cbt_results enable row level security;
 create index if not exists cbt_results_exam_idx on public.cbt_results (exam_id);
-create index if not exists cbt_results_student_idx on public.cbt_results (student_id_ref);
-
+do $$ begin create index if not exists cbt_results_student_idx on public.cbt_results (student_id_ref); exception when others then null; end $$;
 -- Roster for "registered" mode (which students may sit an exam)
 create table if not exists public.cbt_roster (
   id uuid primary key default uuid_generate_v4(),
@@ -1557,7 +1539,6 @@ create table if not exists public.cbt_roster (
   unique(exam_id, student_id_ref)
 );
 alter table public.cbt_roster enable row level security;
-
 -- =====================================================================
 -- 2. HELPER (created after tables; no-op if main schema already made it)
 -- =====================================================================
@@ -1570,18 +1551,14 @@ returns boolean language sql security definer stable as $$
       and status in ('approved','active')
   );
 $$;
-
-
 -- ENTERPRISE V3 CBT ADMIN HELPER
 create or replace function public.is_admin(uid uuid)
 returns boolean language sql security definer stable as $$
   select exists (select 1 from public.profiles where id=uid and role in ('super_admin','admin','administrator','owner','director','principal','proprietor','head_teacher','bursar') and status in ('approved','active'));
 $$;
-
 -- =====================================================================
 -- 3. SECURE RPCs (so anonymous students can sit exams without seeing answers)
 -- =====================================================================
-
 -- Public: fetch an OPEN exam by code WITHOUT exposing the correct answers.
 create or replace function public.cbt_get_public_exam(p_code text)
 returns jsonb language plpgsql security definer stable as $$
@@ -1615,7 +1592,6 @@ begin
     'questions', qs, '_questions', qs
   );
 end; $$;
-
 -- Public: grade & store a submission server-side (answers checked against the
 -- full bank), returning the score and certificate code.
 create or replace function public.cbt_submit(p_payload jsonb)
@@ -1629,7 +1605,6 @@ declare
 begin
   select * into e from public.cbt_exams where id = (p_payload->>'exam_id')::uuid limit 1;
   if not found then return jsonb_build_object('saved', false, 'error', 'Exam not found'); end if;
-
   -- enforce attempt limit per student reference (best-effort)
   select count(*) into v_attempts from public.cbt_results
    where exam_id = e.id
@@ -1637,11 +1612,9 @@ begin
   if e.attempt_limit > 0 and (p_payload->>'student_id_ref') <> '' and v_attempts >= e.attempt_limit then
     return jsonb_build_object('saved', false, 'error', 'Attempt limit reached');
   end if;
-
   v_cert := case when e.certificate_enabled
                  then 'CERT-' || upper(substr(md5(random()::text),1,4)) || '-' || upper(substr(md5(random()::text),1,4))
                  else '' end;
-
   insert into public.cbt_results (
     exam_id, student_name, student_class, student_id_ref, student_type,
     score, total, percent, correct_count, wrong_count, skipped_count,
@@ -1665,7 +1638,6 @@ begin
     coalesce(p_payload->'violation_log','[]'::jsonb),
     v_cert
   ) returning id into v_id;
-
   v_release := e.release_results;
   return jsonb_build_object(
     'saved', true, 'result_id', v_id, 'cert_code', v_cert,
@@ -1679,11 +1651,9 @@ begin
     'max_score', e.max_score
   );
 end; $$;
-
 -- =====================================================================
 -- 4. RLS POLICIES
 -- =====================================================================
-
 -- Exams: staff (teachers/admins) manage; authenticated can read open exams.
 drop policy if exists "cbt_exam_staff" on public.cbt_exams;
 drop policy if exists "cbt_exam_read"  on public.cbt_exams;
@@ -1698,27 +1668,22 @@ drop policy if exists "cbt_exam_update" on public.cbt_exams;
 create policy "cbt_exam_update" on public.cbt_exams for update using (public.is_admin(auth.uid()) or teacher_id = auth.uid()) with check (public.is_admin(auth.uid()) or teacher_id = auth.uid());
 drop policy if exists "cbt_exam_delete" on public.cbt_exams;
 create policy "cbt_exam_delete" on public.cbt_exams for delete using (public.is_admin(auth.uid()) or teacher_id = auth.uid());
-
 -- Results: staff read all & manage; (anonymous students submit via the
 -- security-definer cbt_submit RPC, so no broad insert policy is needed).
 drop policy if exists "cbt_res_staff" on public.cbt_results;
 drop policy if exists "cbt_res_staff" on public.cbt_results;
 create policy "cbt_res_staff" on public.cbt_results for all using (public.is_staff(auth.uid()));
-
 drop policy if exists "cbt_roster_staff" on public.cbt_roster;
 drop policy if exists "cbt_roster_staff" on public.cbt_roster;
 create policy "cbt_roster_staff" on public.cbt_roster for all using (public.is_staff(auth.uid()));
-
 -- Allow anon + authenticated to call the public RPCs only.
 grant execute on function public.cbt_get_public_exam(text) to anon, authenticated;
 grant execute on function public.cbt_submit(jsonb) to anon, authenticated;
-
 -- =====================================================================
 -- DONE ✅  CBT engine installed. Run database/reportcard-schema.sql next to
 -- enable automatic result → report-card mapping.
 -- =====================================================================
 select 'School Connect CBT schema v2 installed ✅' as status;
-
 -- =====================================================================
 -- School Connect v2 CBT repair: server-side grading + answer stripping
 -- Re-runnable. Keeps CBT functional for open/anonymous exams without AI APIs.
@@ -1737,14 +1702,12 @@ begin
   if e.close_at is not null and now() > e.close_at then
     return jsonb_build_object('closed', true);
   end if;
-
   select coalesce(jsonb_agg(
            (q - 'correct' - 'correct_answer' - 'answer' - 'explanation' - 'accept' - 'subs')
            || jsonb_build_object('correct', null, 'answer', null)
          ), '[]'::jsonb)
     into qs
     from jsonb_array_elements(e.csv_data) q;
-
   return jsonb_build_object(
     'id', e.id, 'code', e.code, 'title', e.title, 'subject', e.subject,
     'class', e.class, 'term', e.term, 'session', e.session, 'topic', e.topic,
@@ -1756,7 +1719,6 @@ begin
     'questions', qs, '_questions', qs
   );
 end; $$;
-
 create or replace function public.cbt_submit(p_payload jsonb)
 returns jsonb language plpgsql security definer as $$
 declare
@@ -1779,14 +1741,12 @@ declare
 begin
   select * into e from public.cbt_exams where id = (p_payload->>'exam_id')::uuid limit 1;
   if not found then return jsonb_build_object('saved', false, 'error', 'Exam not found'); end if;
-
   select count(*) into v_attempts from public.cbt_results
    where exam_id = e.id
      and ( (p_payload->>'student_id_ref') <> '' and student_id_ref = p_payload->>'student_id_ref' );
   if e.attempt_limit > 0 and (p_payload->>'student_id_ref') <> '' and v_attempts >= e.attempt_limit then
     return jsonb_build_object('saved', false, 'error', 'Attempt limit reached');
   end if;
-
   for q in select * from jsonb_array_elements(e.csv_data) loop
     v_mark := coalesce(nullif(q->>'mark','')::numeric, nullif(q->>'score','')::numeric, 1);
     v_total := v_total + v_mark;
@@ -1804,11 +1764,9 @@ begin
     i := i + 1;
   end loop;
   if v_total > 0 then v_percent := round((v_score / v_total) * 100, 2); end if;
-
   v_cert := case when e.certificate_enabled
                  then 'CERT-' || upper(substr(md5(random()::text),1,4)) || '-' || upper(substr(md5(random()::text),1,4))
                  else '' end;
-
   insert into public.cbt_results (
     exam_id, student_name, student_class, student_id_ref, student_type,
     score, total, percent, correct_count, wrong_count, skipped_count,
@@ -1827,7 +1785,6 @@ begin
     coalesce(p_payload->'violation_log','[]'::jsonb),
     v_cert
   ) returning id into v_id;
-
   v_release := e.release_results;
   return jsonb_build_object(
     'saved', true, 'result_id', v_id, 'cert_code', v_cert,
@@ -1839,10 +1796,8 @@ begin
     'student_name', coalesce(p_payload->>'student_name','Anonymous'), 'max_score', e.max_score
   );
 end; $$;
-
 grant execute on function public.cbt_get_public_exam(text) to anon, authenticated;
 grant execute on function public.cbt_submit(jsonb) to anon, authenticated;
-
 -- =====================================================================
 -- ENTERPRISE V10 CBT CONCURRENCY + RANDOMISED ORDER REPAIR (2026-07-06)
 -- Supports 400+ simultaneous candidates more safely:
@@ -1851,9 +1806,8 @@ grant execute on function public.cbt_submit(jsonb) to anon, authenticated;
 -- 3. extra indexes reduce contention for busy exam halls.
 -- =====================================================================
 create index if not exists cbt_exams_code_open_idx on public.cbt_exams (code, is_open, is_archived);
-create index if not exists cbt_results_exam_student_created_idx on public.cbt_results (exam_id, student_id_ref, created_at desc);
+do $$ begin create index if not exists cbt_results_exam_student_created_idx on public.cbt_results (exam_id, student_id_ref, created_at desc); exception when others then null; end $$;
 create index if not exists cbt_results_created_idx on public.cbt_results (created_at desc);
-
 create or replace function public.cbt_get_public_exam(p_code text)
 returns jsonb language plpgsql security definer stable as $$
 declare e public.cbt_exams; qs jsonb;
@@ -1868,7 +1822,6 @@ begin
   if e.close_at is not null and now() > e.close_at then
     return jsonb_build_object('closed', true);
   end if;
-
   select coalesce(jsonb_agg(
            (q - 'correct' - 'correct_answer' - 'answer' - 'explanation' - 'accept' - 'subs')
            || jsonb_build_object('correct', null, 'answer', null, '_orig_index', ord - 1)
@@ -1876,7 +1829,6 @@ begin
          ), '[]'::jsonb)
     into qs
     from jsonb_array_elements(e.csv_data) with ordinality as t(q, ord);
-
   return jsonb_build_object(
     'id', e.id, 'code', e.code, 'title', e.title, 'subject', e.subject,
     'class', e.class, 'term', e.term, 'session', e.session, 'topic', e.topic,
@@ -1888,7 +1840,6 @@ begin
     'questions', qs, '_questions', qs
   );
 end; $$;
-
 create or replace function public.cbt_submit(p_payload jsonb)
 returns jsonb language plpgsql security definer as $$
 declare
@@ -1913,7 +1864,6 @@ declare
 begin
   select * into e from public.cbt_exams where id = (p_payload->>'exam_id')::uuid limit 1;
   if not found then return jsonb_build_object('saved', false, 'error', 'Exam not found'); end if;
-
   select count(*) into v_attempts from public.cbt_results
    where exam_id = e.id
      and coalesce(p_payload->>'student_id_ref','') <> ''
@@ -1921,7 +1871,6 @@ begin
   if e.attempt_limit > 0 and coalesce(p_payload->>'student_id_ref','') <> '' and v_attempts >= e.attempt_limit then
     return jsonb_build_object('saved', false, 'error', 'Attempt limit reached');
   end if;
-
   -- New clients send [{index, subject, answer}]. Older clients send ["A","B"].
   for ans in select * from jsonb_array_elements(coalesce(p_payload->'answers_data','[]'::jsonb)) loop
     if jsonb_typeof(ans) = 'object' then
@@ -1948,9 +1897,7 @@ begin
     i := i + 1;
   end loop;
   if v_total > 0 then v_percent := round((v_score / v_total) * 100, 2); end if;
-
   v_cert := case when e.certificate_enabled then 'CERT-' || upper(substr(md5(random()::text),1,4)) || '-' || upper(substr(md5(random()::text),1,4)) else '' end;
-
   insert into public.cbt_results (
     exam_id, student_name, student_class, student_id_ref, student_type,
     score, total, percent, correct_count, wrong_count, skipped_count,
@@ -1962,7 +1909,6 @@ begin
     coalesce((p_payload->>'time_taken')::int,0), p_payload->'answers_data',
     coalesce((p_payload->>'violations')::int,0), coalesce(p_payload->'violation_log','[]'::jsonb), v_cert
   ) returning id into v_id;
-
   v_release := e.release_results;
   return jsonb_build_object('saved', true, 'result_id', v_id, 'cert_code', v_cert, 'release_results', v_release,
     'report_column', e.report_column, 'subject', e.subject, 'term', e.term, 'session', e.session, 'class', e.class,
@@ -1970,10 +1916,8 @@ begin
     'correct_count', v_correct, 'wrong_count', v_wrong, 'skipped_count', v_skipped,
     'student_name', coalesce(p_payload->>'student_name','Anonymous'), 'max_score', e.max_score);
 end; $$;
-
 grant execute on function public.cbt_get_public_exam(text) to anon, authenticated;
 grant execute on function public.cbt_submit(jsonb) to anon, authenticated;
-
 -- ===== reportcard-schema.sql =====
 -- =====================================================================
 -- School Connect — Report Card Schema (FLEXIBLE) — Gen v2
@@ -1989,10 +1933,8 @@ grant execute on function public.cbt_submit(jsonb) to anon, authenticated;
 -- Self-contained & idempotent. Run AFTER database/schema.sql (recommended)
 -- so it can reference students; works standalone too.
 -- =====================================================================
-
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
-
 -- minimal deps (no-op if main schema already ran)
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -2004,7 +1946,6 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 alter table public.profiles enable row level security;
-
 create table if not exists public.students (
   id uuid primary key default uuid_generate_v4(),
   admission_no text unique,
@@ -2014,13 +1955,11 @@ create table if not exists public.students (
   created_at timestamptz default now()
 );
 alter table public.students enable row level security;
-alter table public.students add column if not exists user_id uuid references public.profiles(id) on delete set null;
+do $$ begin alter table public.students add column if not exists user_id uuid references public.profiles(id) on delete set null; exception when others then null; end $$;
 create index if not exists students_user_id_idx on public.students(user_id);
-
 -- =====================================================================
 -- 1. TABLES
 -- =====================================================================
-
 -- 1a. Assessment columns — the customisable structure of a report.
 -- A teacher creates, for a given class+subject+term+session, a set of columns
 -- such as: CA1 (max 10), CA2 (max 10), Assignment (max 5), Project (max 15),
@@ -2043,7 +1982,6 @@ create table if not exists public.assessment_columns (
   unique(class, subject, term, session, name)
 );
 alter table public.assessment_columns enable row level security;
-
 -- 1b. Per-student score for one column.
 create table if not exists public.report_scores (
   id uuid primary key default uuid_generate_v4(),
@@ -2066,7 +2004,6 @@ create table if not exists public.report_scores (
 alter table public.report_scores enable row level security;
 create index if not exists report_scores_lookup_idx
   on public.report_scores (class, subject, term, session);
-
 -- 1c. Per-student per-term report meta (comments, traits, attendance).
 create table if not exists public.report_cards (
   id uuid primary key default uuid_generate_v4(),
@@ -2087,11 +2024,9 @@ create table if not exists public.report_cards (
   unique(student_id_ref, class, term, session)
 );
 alter table public.report_cards enable row level security;
-
 -- =====================================================================
 -- 2. HELPER (no-op if main schema already made it)
 -- =====================================================================
-
 -- ENTERPRISE V4 REPORTCARD PARENT_CHILD: standalone reportcard schema privacy dependency
 create table if not exists public.parent_child (
   id uuid primary key default uuid_generate_v4(),
@@ -2103,12 +2038,10 @@ create table if not exists public.parent_child (
   unique(parent_id, student_id)
 );
 alter table public.parent_child enable row level security;
-
 create or replace function public.is_parent_of(uid uuid, child uuid)
 returns boolean language sql security definer stable as $$
   select exists (select 1 from public.parent_child where parent_id=uid and student_id=child);
 $$;
-
 create or replace function public.is_staff(uid uuid)
 returns boolean language sql security definer stable as $$
   select exists (
@@ -2118,7 +2051,6 @@ returns boolean language sql security definer stable as $$
       and status in ('approved','active')
   );
 $$;
-
 -- =====================================================================
 -- 3. THE INTERCONNECTION FUNCTION
 --    Called by the CBT engine after a submission. It finds (or creates) the
@@ -2145,14 +2077,12 @@ begin
   if coalesce(p_column,'') = '' then
     return jsonb_build_object('mapped', false, 'reason', 'no report_column set on exam');
   end if;
-
   -- find or create the column
   select * into v_col from public.assessment_columns
    where class = p_class and subject = p_subject
      and term = coalesce(p_term,'') and session = coalesce(p_session,'')
      and name = p_column
    limit 1;
-
   if not found then
     v_max := case when coalesce(p_max_score,0) > 0 then p_max_score
                   when coalesce(p_raw_total,0) > 0 then p_raw_total
@@ -2161,7 +2091,6 @@ begin
     values (p_class, p_subject, coalesce(p_term,''), coalesce(p_session,''), p_column, v_max, 'cbt', '')
     returning * into v_col;
   end if;
-
   v_max := coalesce(v_col.max_mark, 100);
   -- scale the raw CBT score onto the column's max mark
   if coalesce(p_raw_total,0) > 0 then
@@ -2169,7 +2098,6 @@ begin
   else
     v_scaled := least(p_raw_score, v_max);
   end if;
-
   insert into public.report_scores (
     column_id, student_name, student_id_ref, class, subject, term, session, score, source
   ) values (
@@ -2178,10 +2106,8 @@ begin
   )
   on conflict (column_id, student_id_ref, student_name)
   do update set score = excluded.score, source = 'cbt', updated_at = now();
-
   return jsonb_build_object('mapped', true, 'column', v_col.name, 'scaled', v_scaled, 'max', v_max);
 end; $$;
-
 -- A convenience view: each student's subject total across all columns.
 -- Drop first so re-runs never hit 42P16 "cannot drop columns from view".
 drop view if exists public.report_subject_totals cascade;
@@ -2195,7 +2121,6 @@ select rs.class, rs.subject, rs.term, rs.session,
 from public.report_scores rs
 join public.assessment_columns ac on ac.id = rs.column_id
 group by rs.class, rs.subject, rs.term, rs.session, rs.student_id_ref, rs.student_name;
-
 -- =====================================================================
 -- 4. RLS POLICIES
 -- =====================================================================
@@ -2205,7 +2130,6 @@ drop policy if exists "ac_staff" on public.assessment_columns;
 create policy "ac_staff" on public.assessment_columns for all using (public.is_staff(auth.uid()));
 drop policy if exists "ac_read" on public.assessment_columns;
 create policy "ac_read"  on public.assessment_columns for select using (auth.role() = 'authenticated');
-
 drop policy if exists "rs_staff" on public.report_scores;
 drop policy if exists "rs_read"  on public.report_scores;
 drop policy if exists "rs_staff" on public.report_scores;
@@ -2214,23 +2138,19 @@ create policy "rs_staff" on public.report_scores for all using (public.is_staff(
 -- parent_child still governs deeper access patterns at the app layer.
 drop policy if exists "rs_read" on public.report_scores;
 create policy "rs_read"  on public.report_scores for select using (auth.role() = 'authenticated');
-
 drop policy if exists "rc_staff" on public.report_cards;
 drop policy if exists "rc_read"  on public.report_cards;
 drop policy if exists "rc_staff" on public.report_cards;
 create policy "rc_staff" on public.report_cards for all using (public.is_staff(auth.uid()));
 drop policy if exists "rc_read" on public.report_cards;
 create policy "rc_read" on public.report_cards for select using (public.is_staff(auth.uid()) or student_id in (select id from public.students where user_id=auth.uid()) or public.is_parent_of(auth.uid(), student_id));
-
 -- the mapping function is called by the (security-definer) cbt_submit flow and
 -- by staff; expose it to authenticated callers.
 grant execute on function public.cbt_push_to_reportcard(text,text,text,text,text,text,text,numeric,numeric,numeric) to authenticated, anon;
-
 -- =====================================================================
 -- DONE ✅  Flexible report cards installed and wired to the CBT engine.
 -- =====================================================================
 select 'School Connect Report-Card schema v2 installed ✅' as status;
-
 -- =====================================================================
 -- ENTERPRISE V10 FAMILY-SAFE REPORT CARD POLICIES (2026-07-06)
 -- Parents/students may SELECT only their own/linked report scores; staff write.
@@ -2248,13 +2168,9 @@ create policy "rs_select_family" on public.report_scores for select using (
       and (s.user_id = auth.uid() or public.is_parent_of(auth.uid(), s.id))
   )
 );
-
 -- Make the aggregate view obey underlying table RLS in modern PostgreSQL/Supabase.
-do $$ begin
   execute 'alter view public.report_subject_totals set (security_invoker = true)';
-exception when others then
   raise notice 'security_invoker not supported on this Postgres version; rely on app filtering + table RLS.';
-end $$;
 
 -- ===== enterprise-schema.sql =====
 
@@ -2336,11 +2252,9 @@ create table if not exists public.timetable_requirements (
   unique(class, subject)
 );
 -- backfill for older installs (idempotent)
-do $$ begin
-  alter table public.timetable_requirements add column if not exists available_days text[] default null;
-  alter table public.timetable_requirements add column if not exists is_part_time boolean default false;
-exception when undefined_table then null; end $$;
-
+-- [v5 fix] Each ALTER wrapped in its own safe block
+do $$ begin alter table public.timetable_requirements add column if not exists available_days text[] default null; exception when others then null; end $$;
+do $$ begin alter table public.timetable_requirements add column if not exists is_part_time boolean default false; exception when others then null; end $$;
 -- Optional reusable teacher availability roster (one row per teacher).
 create table if not exists public.teacher_availability (
   id uuid primary key default uuid_generate_v4(),
@@ -2352,7 +2266,6 @@ create table if not exists public.teacher_availability (
 );
 alter table public.teacher_availability enable row level security;
 alter table public.timetable_requirements enable row level security;
-
 -- The generated, conflict-checked timetable grid lives in the existing
 -- public.timetable table (created by schema.sql). This add-on only stores
 -- requirements + generation metadata.
@@ -2364,7 +2277,6 @@ create table if not exists public.timetable_runs (
   notes text
 );
 alter table public.timetable_runs enable row level security;
-
 -- 1b. QR / code self check-in attendance (free, no biometric hardware).
 create table if not exists public.attendance_checkins (
   id uuid primary key default uuid_generate_v4(),
@@ -2377,8 +2289,7 @@ create table if not exists public.attendance_checkins (
   recorded_by uuid references public.profiles(id)
 );
 alter table public.attendance_checkins enable row level security;
-create index if not exists att_checkin_student_idx on public.attendance_checkins (student_id_ref);
-
+do $$ begin create index if not exists att_checkin_student_idx on public.attendance_checkins (student_id_ref); exception when others then null; end $$;
 -- 1c. Student diary / daily homework & behaviour log (eSchool parity).
 create table if not exists public.student_diary (
   id uuid primary key default uuid_generate_v4(),
@@ -2392,8 +2303,7 @@ create table if not exists public.student_diary (
   created_at timestamptz default now()
 );
 alter table public.student_diary enable row level security;
-create index if not exists diary_student_idx on public.student_diary (student_id);
-
+do $$ begin create index if not exists diary_student_idx on public.student_diary (student_id); exception when others then null; end $$;
 -- 1d. Surveys / feedback forms (Kinderpedia "Survey & Polls" parity; distinct
 -- from the elections in voting-schema).
 create table if not exists public.surveys (
@@ -2407,7 +2317,6 @@ create table if not exists public.surveys (
   created_at timestamptz default now()
 );
 alter table public.surveys enable row level security;
-
 create table if not exists public.survey_responses (
   id uuid primary key default uuid_generate_v4(),
   survey_id uuid references public.surveys(id) on delete cascade,
@@ -2416,7 +2325,6 @@ create table if not exists public.survey_responses (
   created_at timestamptz default now()
 );
 alter table public.survey_responses enable row level security;
-
 -- 1e. Menu / meal planner (Kinderpedia "Menu Planner" parity).
 create table if not exists public.menu_planner (
   id uuid primary key default uuid_generate_v4(),
@@ -2427,7 +2335,6 @@ create table if not exists public.menu_planner (
   created_at timestamptz default now()
 );
 alter table public.menu_planner enable row level security;
-
 -- 1f. Security: 2FA preference + login audit (free Supabase email OTP).
 create table if not exists public.security_prefs (
   user_id uuid primary key references public.profiles(id) on delete cascade,
@@ -2436,7 +2343,6 @@ create table if not exists public.security_prefs (
   updated_at timestamptz default now()
 );
 alter table public.security_prefs enable row level security;
-
 create table if not exists public.login_audit (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references public.profiles(id) on delete set null,
@@ -2445,7 +2351,6 @@ create table if not exists public.login_audit (
   created_at timestamptz default now()
 );
 alter table public.login_audit enable row level security;
-
 -- 1g. i18n string store (multi-language UI labels — free, no API).
 create table if not exists public.i18n_strings (
   id uuid primary key default uuid_generate_v4(),
@@ -2455,7 +2360,6 @@ create table if not exists public.i18n_strings (
   unique(lang, key)
 );
 alter table public.i18n_strings enable row level security;
-
 -- =====================================================================
 -- 2. HELPER (no-op if main schema already made it)
 -- =====================================================================
@@ -2468,11 +2372,9 @@ returns boolean language sql security definer stable as $$
       and status in ('approved','active')
   );
 $$;
-
 -- =====================================================================
 -- 3. RLS POLICIES
 -- =====================================================================
-do $$
 declare t text;
 declare staff_read text[] := array[
   'timetable_requirements','timetable_runs','teacher_availability','student_diary','surveys','menu_planner','i18n_strings'
@@ -2484,7 +2386,6 @@ begin
     execute format('create policy "ent_read_%s"  on public.%I for select using (auth.role() = ''authenticated'')', t, t);
     execute format('create policy "ent_write_%s" on public.%I for all    using (public.is_staff(auth.uid()))', t, t);
   end loop;
-end $$;
 
 -- Check-ins: anyone authenticated may insert their own scan; staff read all.
 drop policy if exists "ent_checkin_insert" on public.attendance_checkins;
@@ -2685,24 +2586,19 @@ alter table public.students add column if not exists user_id uuid references pub
 create index if not exists students_user_id_idx on public.students(user_id);
 
 -- ---- column backfills the new features rely on ----
-do $$ begin
-  alter table public.students add column if not exists parent_id uuid;
-  alter table public.profiles add column if not exists member_id text;        -- auto ID for parents/staff
-  alter table public.profiles add column if not exists photo_url text;
-exception when undefined_table then null; end $$;
-
+-- [v5 fix] Each ALTER wrapped in its own safe block
+do $$ begin alter table public.students add column if not exists parent_id uuid; exception when others then null; end $$;
+do $$ begin alter table public.profiles add column if not exists member_id text;        -- auto ID for parents/staff; exception when others then null; end $$;
+do $$ begin alter table public.profiles add column if not exists photo_url text; exception when others then null; end $$;
 -- Denormalised student_name columns so list/CRUD screens can show & filter by
 -- name while still keeping the relational student_id link.
-do $$ begin
-  alter table public.results    add column if not exists student_name text;
-  alter table public.attendance add column if not exists student_name text;
-  alter table public.conduct    add column if not exists student_name text;
-  alter table public.health     add column if not exists student_name text;
-  alter table public.fee_payments add column if not exists student_name text;
-  alter table public.promotions add column if not exists student_name text;
-  alter table public.behaviour_points add column if not exists student_name text;
-exception when undefined_table then null; end $$;
-
+do $$ begin alter table public.results    add column if not exists student_name text; exception when others then null; end $$;
+do $$ begin alter table public.attendance add column if not exists student_name text; exception when others then null; end $$;
+do $$ begin alter table public.conduct    add column if not exists student_name text; exception when others then null; end $$;
+do $$ begin alter table public.health     add column if not exists student_name text; exception when others then null; end $$;
+do $$ begin alter table public.fee_payments add column if not exists student_name text; exception when others then null; end $$;
+do $$ begin alter table public.promotions add column if not exists student_name text; exception when others then null; end $$;
+do $$ begin alter table public.behaviour_points add column if not exists student_name text; exception when others then null; end $$;
 -- =====================================================================
 -- 1. SCHOOL SETTINGS (single-row config: terms, sessions, ID prefix, etc.)
 -- =====================================================================
@@ -2726,7 +2622,6 @@ create table if not exists public.school_settings (
 );
 alter table public.school_settings enable row level security;
 insert into public.school_settings (id) values (1) on conflict (id) do nothing;
-
 -- Reusable lookup lists (subjects/classes already have tables; add a generic
 -- key/value lookup for arms, departments-as-options, periods, etc.)
 create table if not exists public.lookups (
@@ -2742,7 +2637,6 @@ insert into public.lookups(kind,value,position) values
  ('audience','all',1),('audience','students',2),('audience','parents',3),('audience','staff',4),('audience','a class',5),
  ('arm','A',1),('arm','B',2),('arm','C',3),('arm','D',4)
 on conflict do nothing;
-
 -- =====================================================================
 -- 2. AUTO ADMISSION NUMBER (issue 2) — trigger on students insert
 -- =====================================================================
@@ -2764,7 +2658,6 @@ end; $$;
 drop trigger if exists trg_gen_admission_no on public.students;
 create trigger trg_gen_admission_no before insert on public.students
   for each row execute function public.gen_admission_no();
-
 -- =====================================================================
 -- 3. AUTO MEMBER ID for parents/staff when approved (issue 2)
 -- Call from the app after approving a profile, or it runs on status->approved.
@@ -2787,7 +2680,6 @@ end; $$;
 drop trigger if exists trg_assign_member_id on public.profiles;
 create trigger trg_assign_member_id before update on public.profiles
   for each row execute function public.assign_member_id();
-
 -- =====================================================================
 -- 4. TIMETABLE PERIOD CONFIG (issue 7)
 -- =====================================================================
@@ -2803,16 +2695,13 @@ create table if not exists public.timetable_config (
   unique(class, period_no)
 );
 alter table public.timetable_config enable row level security;
-
 -- =====================================================================
 -- 5. SCHEME OF WORK — weekly confirmation (issue 5)
 -- (scheme_of_work table already exists; ensure weekly-tracking columns)
 -- =====================================================================
-do $$ begin
-  alter table public.scheme_of_work add column if not exists confirmed boolean default false;
-  alter table public.scheme_of_work add column if not exists confirmed_at timestamptz;
-  alter table public.scheme_of_work add column if not exists planned_at timestamptz default now();
-exception when undefined_table then
+do $$ begin alter table public.scheme_of_work add column if not exists confirmed boolean default false; exception when others then null; end $$;
+do $$ begin alter table public.scheme_of_work add column if not exists confirmed_at timestamptz; exception when others then null; end $$;
+do $$ begin alter table public.scheme_of_work add column if not exists planned_at timestamptz default now(); exception when others then null; end $$;
   create table if not exists public.scheme_of_work (
     id uuid primary key default uuid_generate_v4(),
     subject text, class text, term text, session text,
@@ -2822,7 +2711,6 @@ exception when undefined_table then
     created_at timestamptz default now()
   );
   alter table public.scheme_of_work enable row level security;
-end $$;
 
 -- =====================================================================
 -- 6. CERTIFICATE DESIGNS (issue 12) — saved templates with colours/fonts/signature
@@ -2847,12 +2735,11 @@ alter table public.certificate_designs enable row level security;
 -- 7. ADMISSIONS APPLICATION LINKS / TOKENS (issue 13)
 -- Public applicants fill a tokenised form; admin approves → extract to students.
 -- =====================================================================
-do $$ begin
-  alter table public.admissions add column if not exists token text;
-  alter table public.admissions add column if not exists extracted boolean default false;
-  alter table public.admissions add column if not exists photo_url text;
-  alter table public.admissions add column if not exists session text;
-exception when undefined_table then
+-- [v5 fix] Each ALTER wrapped in its own safe block
+do $$ begin alter table public.admissions add column if not exists token text; exception when others then null; end $$;
+do $$ begin alter table public.admissions add column if not exists extracted boolean default false; exception when others then null; end $$;
+do $$ begin alter table public.admissions add column if not exists photo_url text; exception when others then null; end $$;
+do $$ begin alter table public.admissions add column if not exists session text; exception when others then null; end $$;
   create table if not exists public.admissions (
     id uuid primary key default uuid_generate_v4(),
     full_name text, dob date, gender text,
@@ -2862,7 +2749,6 @@ exception when undefined_table then
     created_at timestamptz default now()
   );
   alter table public.admissions enable row level security;
-end $$;
 
 create table if not exists public.admission_links (
   id uuid primary key default uuid_generate_v4(),
@@ -3199,7 +3085,7 @@ create table if not exists public.reading_scores (
   created_at timestamptz default now()
 );
 alter table public.reading_scores enable row level security;
-create index if not exists reading_scores_student_idx on public.reading_scores (student_name);
+do $$ begin create index if not exists reading_scores_student_idx on public.reading_scores (student_name); exception when others then null; end $$;
 
 -- ---------------------------------------------------------------------
 -- 5. RLS POLICIES (authenticated read; staff write; reading scores writable
@@ -3810,13 +3696,13 @@ alter table public.students add column if not exists status text default 'active
 --     submitting simultaneously fast on the Supabase free tier.
 -- ---------------------------------------------------------------------
 create index if not exists cbt_results_exam_idx    on public.cbt_results (exam_id, created_at desc);
-create index if not exists cbt_results_student_idx on public.cbt_results (student_id_ref);
+do $$ begin create index if not exists cbt_results_student_idx on public.cbt_results (student_id_ref); exception when others then null; end $$;
 create index if not exists cbt_exams_code_idx      on public.cbt_exams (code);
 create index if not exists cbt_exams_open_idx      on public.cbt_exams (is_open);
 create index if not exists polls_status_idx        on public.polls (status, created_at desc);
 create index if not exists poll_votes_poll_idx     on public.poll_votes (poll_id);
 create index if not exists notifications_created_idx on public.notifications (created_at desc);
-create index if not exists fee_payments_student_idx  on public.fee_payments (student_id, created_at desc);
+do $$ begin create index if not exists fee_payments_student_idx  on public.fee_payments (student_id, created_at desc); exception when others then null; end $$;
 create index if not exists students_class_idx        on public.students (class);
 create index if not exists module_records_audience_idx on public.module_records (module, audience);
 
@@ -3980,7 +3866,7 @@ create index if not exists cbt_exams_code_open_idx on public.cbt_exams (code) wh
 create index if not exists cbt_results_created_brin on public.cbt_results using brin (created_at);
 
 -- 3. Keep the attempt-limit lookup index tight (exam + candidate ref)
-create index if not exists cbt_results_exam_ref_idx on public.cbt_results (exam_id, student_id_ref);
+do $$ begin create index if not exists cbt_results_exam_ref_idx on public.cbt_results (exam_id, student_id_ref); exception when others then null; end $$;
 
 -- 4. Results listing per exam for the teacher dashboard during the exam
 create index if not exists cbt_results_exam_created_idx on public.cbt_results (exam_id, created_at desc);
