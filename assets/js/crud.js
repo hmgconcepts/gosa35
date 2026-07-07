@@ -956,7 +956,14 @@ const CRUD = {
           parent_meeting: { icon:'👥', label:'PTA Meeting',          url:'parent_meeting.html', audience:'parent' },
           hostel:         { icon:'🛏️', label:'Hostel Update',        url:'hostel.html' },
           assignments:    { icon:'📝', label:'New Assignment',       url:'assignments.html', audience:'student' },
-          school_calendar:{ icon:'📅', label:'Calendar Update',      url:'school_calendar.html' }
+          school_calendar:{ icon:'📅', label:'Calendar Update',      url:'school_calendar.html' },
+          digital_library:{ icon:'📚', label:'New Reading',          url:'digital_library.html', audience:'student' },
+          results:        { icon:'📊', label:'Result Update',        url:'results.html', audience:'parent' },
+          fees:           { icon:'💰', label:'Fee/Payment Update',    url:'fees.html', audience:'parent' },
+          report_cards:   { icon:'🧾', label:'Report Card Update',   url:'report-cards.html', audience:'parent' },
+          cbt:            { icon:'🧪', label:'CBT/Exam Update',       url:'cbt-exam.html', audience:'student' },
+          entrance:       { icon:'🎯', label:'Assessment Update',    url:'entrance.html', audience:'student' },
+          attendance:     { icon:'📋', label:'Attendance Update',    url:'attendance.html', audience:'parent' }
         };
         const nm = notifyMap[this.canonicalId(moduleId)] || notifyMap[moduleId];
         if (nm) {
@@ -1070,48 +1077,42 @@ const CRUD = {
     if (!this.sb) return;
     const { data: f } = await this.sb.from('fee_payments').select('*').eq('id', id).maybeSingle();
     if (!f) return;
-    // ENTERPRISE FINAL V2 (#7): receipt now matches samples/sample-e-receipt.html exactly.
     let stu = null;
     try { if (f.student_id) { const r = await this.sb.from('students').select('full_name,class,admission_no').eq('id', f.student_id).maybeSingle(); stu = r.data; } } catch(_) {}
-    const sc = window.SCHOOL || {}; const stg = window.SC_SETTINGS || {};
+    const sc = window.SCHOOL || {}, stg = window.SC_SETTINGS || {};
     const cur = sc.currency || '₦';
+    const fmtMoney = n => cur + Number(n || 0).toLocaleString();
     const rawSig = localStorage.getItem('sc-signature-url') || stg.signature_url || sc.signatureUrl || sc.signature_url || '';
     const sig = (window.Super && Super.idcard && Super.idcard.driveDirect) ? Super.idcard.driveDirect(rawSig) : rawSig;
     const pn = localStorage.getItem('sc-principal-name') || stg.principal_name || sc.principalName || sc.principal_name || 'Bursar / Principal';
-    // #8/#16: balance — manual entry respected; else auto-computed from fee_total
-    let bal = f.balance;
-    if (bal == null && f.fee_total != null) bal = Math.max(0, (Number(f.fee_total) || 0) - (Number(f.amount_paid) || 0));
+    const total = Number(f.fee_total || 0) || 0;
+    const paid = Number(f.amount_paid || 0) || 0;
+    const bal = Math.max(0, (f.balance != null ? Number(f.balance) : (total ? total - paid : 0)) || 0);
+    // Persist auto-computed balance back to DB so every record and future e-receipt reflects it.
+    try { if (f.balance == null || Number(f.balance) !== bal) await this.sb.from('fee_payments').update({ balance: bal }).eq('id', id); } catch(_) {}
     const rdate = CRUD.formatDate(f.created_at || new Date().toISOString());
-    const row = (k, v) => '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #cbd5e1;font-size:.9rem"><span>' + esc(k) + '</span><b style="color:#0f172a;text-align:right">' + v + '</b></div>';
-    const html = '<div style="width:520px;max-width:96vw;border:2px solid #111;padding:26px;background:#fff;font-family:Arial,sans-serif;color:#111">' +
-      '<div style="display:flex;align-items:center;justify-content:center;gap:12px;border-bottom:2px solid #111;padding-bottom:10px">' +
-        '<img src="assets/img/logo.' + (sc.logoExt || 'svg') + '" style="width:58px;height:58px;border-radius:12px;object-fit:contain" onerror="this.style.display=\'none\'">' +
-        '<div style="text-align:center"><h2 style="margin:0;font-size:1.15rem">' + esc(sc.name || 'School') + '</h2>' +
-        '<p style="margin:2px 0 0;font-size:.72rem;color:#334155">' + esc(sc.address || '') + (sc.phone ? ' · ' + esc(sc.phone) : '') + (sc.email ? ' · ' + esc(sc.email) : '') + '</p>' +
-        '<p style="margin:2px 0 0;font-size:.72rem;letter-spacing:3px;font-weight:800">OFFICIAL E-RECEIPT</p></div></div>' +
+    const logo = '<img src="assets/img/logo.' + (sc.logoExt || 'svg') + '" class="logo" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'logo\',textContent:\'' + esc((sc.shortName||sc.name||'S').slice(0,2).toUpperCase()) + '\'}))">';
+    const row = (k, v) => '<div class="row"><span>' + esc(k) + '</span><b>' + v + '</b></div>';
+    const html = '<div class="receipt">' +
+      '<div class="rh">' + logo + '<div style="text-align:center"><h2>' + esc(sc.name || 'School') + '</h2><p class="sub">' + esc(sc.address || '') + (sc.phone ? ' · ' + esc(sc.phone) : '') + (sc.email ? ' · ' + esc(sc.email) : '') + '</p><p class="sub" style="letter-spacing:3px;font-weight:800">OFFICIAL E-RECEIPT</p></div></div>' +
       row('Receipt No.', esc(f.reference || ('RCP-' + String(f.id || '').slice(0, 8).toUpperCase()))) +
       row('Date', esc(rdate)) +
       row('Student', esc((stu && stu.full_name) || f.student_name || '') + ((stu && stu.class) ? ' (' + esc(stu.class) + ')' : '')) +
       ((stu && stu.admission_no) ? row('Admission No.', esc(stu.admission_no)) : '') +
       row('Term / Session', esc(f.term || '-') + ' · ' + esc(f.session || '-')) +
       row('Payment Method', esc(f.method || '-') + (f.reference ? ' · Ref: ' + esc(f.reference) : '')) +
-      (f.fee_total != null ? row('Total Fee for Term', cur + Number(f.fee_total).toLocaleString()) : '') +
-      '<div style="background:#f0fdf4;border:1px dashed #16a34a;border-radius:10px;padding:10px;text-align:center;margin-top:12px"><div style="font-size:.75rem;color:#334155">AMOUNT PAID</div><div style="font-size:1.5rem;font-weight:900;color:#16a34a">' + cur + Number(f.amount_paid || 0).toLocaleString() + '</div></div>' +
-      (bal != null ? (Number(bal) === 0
-        ? '<div style="background:#f0fdf4;border:1px solid #16a34a;border-radius:10px;padding:8px;text-align:center;margin-top:8px;font-size:.9rem;color:#16a34a;font-weight:800">Remaining Balance: ' + cur + '0 — FULLY PAID ✔</div>'
-        : '<div style="background:#fef2f2;border:1px dashed #dc2626;border-radius:10px;padding:8px;text-align:center;margin-top:8px;font-size:.9rem">Remaining Balance: <b style="color:#dc2626;font-size:1.1rem">' + cur + Number(bal).toLocaleString() + '</b></div>') : '') +
-      '<div style="margin-top:22px;text-align:center;font-size:.8rem">' +
-        (sig ? '<img src="' + esc(sig) + '" referrerpolicy="no-referrer" style="max-width:150px;max-height:60px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)">' : '') +
-        '<div style="border-top:1px solid #111;width:180px;margin:2px auto 0;padding-top:2px"><b>' + esc(pn) + '</b> — Bursar / Principal</div></div>' +
-      '<p style="margin-top:12px;font-size:.62rem;color:#94a3b8;text-align:center">Generated electronically by ' + esc(sc.name || '') + ' · School Connect</p></div>';
+      (total ? row('Total Fee for Term', fmtMoney(total)) : '') +
+      '<div class="paid"><div style="font-size:.75rem;color:#334155">AMOUNT PAID</div><div class="amt">' + fmtMoney(paid) + '</div></div>' +
+      (bal === 0 ? '<div class="bal full">Remaining Balance: ' + cur + '0 — FULLY PAID ✔</div>' : '<div class="bal">Remaining Balance: <b>' + fmtMoney(bal) + '</b></div>') +
+      '<div class="sig">' + (sig ? '<img src="' + esc(sig) + '" referrerpolicy="no-referrer" style="max-width:150px;max-height:60px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)">' : '<span class="script">' + esc((pn||'').split(/\s+/).map(x=>x[0]||'').join('').slice(0,3) || 'Sign') + '</span>') + '<div style="border-top:1px solid #111;width:180px;margin:2px auto 0;padding-top:2px"><b>' + esc(pn) + '</b> — Bursar / Principal</div></div>' +
+      '<p class="note">SAMPLE e-receipt (Fees → row → Print E-Receipt). Real receipts carry your school logo, the authorised signature saved in Settings (background auto-removed), amounts in your currency and dd/mm/yyyy dates. Generated by School Connect · HMG Concepts.</p></div>';
+    const css = '<style>body{font-family:Arial,sans-serif;color:#111;background:#f1f5f9;margin:0;padding:18px;display:flex;justify-content:center}.receipt{width:520px;max-width:100%;border:2px solid #111;padding:26px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.15)}.rh{display:flex;align-items:center;justify-content:center;gap:12px;border-bottom:2px solid #111;padding-bottom:10px}.logo{width:58px;height:58px;border-radius:12px;background:linear-gradient(135deg,#1e2a5e,#4f46e5);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.5rem;object-fit:contain}h2{margin:0;font-size:1.15rem}.sub{margin:2px 0 0;font-size:.72rem;color:#334155}.row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #cbd5e1;font-size:.9rem}.row b{color:#0f172a;text-align:right}.paid{background:#f0fdf4;border:1px dashed #16a34a;border-radius:10px;padding:10px;text-align:center;margin-top:12px}.paid .amt{font-size:1.5rem;font-weight:900;color:#16a34a}.bal{background:#fef2f2;border:1px dashed #dc2626;border-radius:10px;padding:8px;text-align:center;margin-top:8px;font-size:.9rem}.bal b{color:#dc2626;font-size:1.1rem}.full{background:#f0fdf4;border:1px solid #16a34a;color:#16a34a;font-weight:800}.sig{margin-top:22px;text-align:center;font-size:.8rem}.sig .script{font-family:\'Segoe Script\',cursive;font-size:1.3rem;color:#1e2a5e}.note{margin-top:12px;font-size:.62rem;color:#94a3b8;text-align:center}@media print{body{background:#fff;padding:0}.receipt{box-shadow:none}}</style>';
     const w = window.open('', '_blank');
     if (!w) { toast('Popup blocked! Please allow popups.', 'warning'); return; }
     w.document.open();
-    w.document.write('<!DOCTYPE html><html><head><title>E-Receipt</title><base href="'+document.baseURI.replace(/[^/]*$/,'')+'"></head><body style="display:flex;justify-content:center;padding:20px">' + html + '<script>window.onload=function(){var i=[].slice.call(document.images),n=i.length;if(!n)return window.print();var d=function(){if(--n<=0)setTimeout(function(){window.print()},300)};i.forEach(function(m){if(m.complete)d();else{m.onload=d;m.onerror=d}})};<\/script></body></html>');
-    w.document.close();
-    w.focus();
+    w.document.write('<!DOCTYPE html><html><head><title>E-Receipt</title><base href="'+document.baseURI.replace(/[^/]*$/,'')+'">' + css + '</head><body>' + html + '<script>window.onload=function(){var i=[].slice.call(document.images),n=i.length;if(!n)return window.print();var d=function(){if(--n<=0)setTimeout(function(){window.print()},300)};i.forEach(function(m){if(m.complete)d();else{m.onload=d;m.onerror=d}});setTimeout(function(){window.print()},2200)};<\/script></body></html>');
+    w.document.close(); w.focus();
   },
-
   async remove(moduleId, id) {
     const d = this.def(moduleId);
     if (!this.canWrite(moduleId)) { toast('Read-only for your role on this page.', 'warning', 5000); return; }
