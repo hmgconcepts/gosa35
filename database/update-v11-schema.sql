@@ -28,7 +28,7 @@ begin
   v_default := regexp_replace(coalesce(v_default,''), '''([^'']*)''.*', '\1');
   if v_default is not null and v_default <> '' then
     update public.school_settings
-       set admission_prefix = 'GOSA'
+       set admission_prefix = v_default
      where id = 1
        and (admission_prefix is null or admission_prefix in ('', 'SCH', 'STD'));
   end if;
@@ -67,3 +67,19 @@ create policy "notif_insert_family" on public.notifications for insert
   with check (auth.role() = 'authenticated' and (public.is_staff(auth.uid()) or coalesce(audience,'') in ('private')));
 
 select 'update-v11-schema applied ✔' as status;
+
+-- ENTERPRISE V14/V6: fee balance is always computed at database level.
+create or replace function public.compute_fee_payment_balance()
+returns trigger language plpgsql as $$
+begin
+  if new.fee_total is not null then
+    new.balance := greatest(0, coalesce(new.fee_total,0) - coalesce(new.amount_paid,0));
+  elsif new.balance is null then
+    new.balance := 0;
+  end if;
+  return new;
+end $$;
+drop trigger if exists trg_compute_fee_payment_balance on public.fee_payments;
+create trigger trg_compute_fee_payment_balance
+before insert or update of fee_total, amount_paid, balance on public.fee_payments
+for each row execute function public.compute_fee_payment_balance();

@@ -298,6 +298,24 @@ create table if not exists public.fee_payments (
   created_at timestamptz default now()
 );
 alter table public.fee_payments enable row level security;
+alter table public.fee_payments add column if not exists fee_total numeric;
+alter table public.fee_payments add column if not exists balance numeric;
+alter table public.fee_payments add column if not exists student_name text;
+create or replace function public.compute_fee_payment_balance()
+returns trigger language plpgsql as $$
+begin
+  if new.fee_total is not null then
+    new.balance := greatest(0, coalesce(new.fee_total,0) - coalesce(new.amount_paid,0));
+  elsif new.balance is null then
+    new.balance := 0;
+  end if;
+  return new;
+end $$;
+drop trigger if exists trg_compute_fee_payment_balance on public.fee_payments;
+create trigger trg_compute_fee_payment_balance
+before insert or update of fee_total, amount_paid, balance on public.fee_payments
+for each row execute function public.compute_fee_payment_balance();
+
 
 create table if not exists public.finance_entries (
   id uuid primary key default uuid_generate_v4(),
@@ -1115,7 +1133,7 @@ grant execute on function public.verify_certificate(text) to anon, authenticated
 -- ENTERPRISE V4: school_settings must exist before any ALTER/POLICY uses it
 create table if not exists public.school_settings (
   id int primary key default 1,
-  admission_prefix text default 'GOSA',
+  admission_prefix text default 'SCH',
   admission_next int default 1,
   staff_prefix text default 'STF',
   staff_next int default 1,
