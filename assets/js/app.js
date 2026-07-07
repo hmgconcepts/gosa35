@@ -281,7 +281,8 @@ const App = {
           if (data) {
             if (data.role_access && typeof data.role_access === 'object') { this.roleAccessMap = data.role_access; try { localStorage.setItem('sc-role-access-map', JSON.stringify(data.role_access)); } catch(e) {} }
             if (data.role_write && typeof data.role_write === 'object') { this.roleWriteMap = data.role_write; try { localStorage.setItem('sc-role-write-map', JSON.stringify(data.role_write)); } catch(e) {} }
-            this.applyRoleNav(this.currentRole || (window.SC_PROFILE && SC_PROFILE.role) || 'student');
+            // Only re-apply nav if we already know the real role (avoid premature 'student' fallback)
+            if (this.currentRole) { this.applyRoleNav(this.currentRole); }
           }
         }).catch(()=>{});
       } catch(e) {}

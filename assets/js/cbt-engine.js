@@ -61,7 +61,9 @@ const CBT = {
     // so tabs still appear for students.
     const breakdown = exam && exam.anti_cheat_config && Array.isArray(exam.anti_cheat_config.subject_breakdown)
       ? exam.anti_cheat_config.subject_breakdown : [];
-    if (breakdown.length > 1 && new Set(qs.map(q => q.section || q.subject || 'General')).size <= 1) {
+    if (breakdown.length > 1) {
+      const isMulti = exam && String(exam.subject||'').toLowerCase().startsWith('multi-subject');
+      if (new Set(qs.map(q => q.section || q.subject || 'General')).size <= 1 || isMulti) {
       breakdown.forEach(b => {
         const start = Number(b.start) || 0;
         const end = b.end != null ? Number(b.end) : (start + (Number(b.count) || 0) - 1);
@@ -69,6 +71,7 @@ const CBT = {
           if (qs[i]) { qs[i].section = b.name || ('Subject ' + (breakdown.indexOf(b)+1)); qs[i].subject = qs[i].section; }
         }
       });
+      }
     }
     // ENTERPRISE V6 (issue 13): UTME-style multi-subject exams must keep each
     // subject's questions GROUPED — never mixed together randomly. Randomise

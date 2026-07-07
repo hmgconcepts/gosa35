@@ -11,6 +11,7 @@ const Notifications = {
   bellBound: false,
 
   /* ---------- Init ---------- */
+  _esc(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); },
   async init(supabaseClient, serviceWorkerRegistration) {
     this.sb = supabaseClient;
     this.sw = serviceWorkerRegistration || null;
@@ -23,6 +24,8 @@ const Notifications = {
     await this.startRealtimeListener();
     await this.refreshUnreadCount();
     if (!this._pollTimer) this._pollTimer = setInterval(() => this.refreshUnreadCount().catch(()=>{}), 30000);
+    // Pre-load dropdown content so it's ready when user clicks the bell
+    try { this.loadDropdownItems(); } catch(_) {}
     return this;
   },
 
@@ -121,8 +124,8 @@ const Notifications = {
       }
       list.innerHTML = items.map(n => `
         <div class="notif-item" onclick="Notifications.openItem('${n.id}', '${String(n.url || '').replace(/'/g, "\'")}')">
-          <div class="notif-item-title">${esc(n.title)}</div>
-          <div class="notif-item-msg">${esc(n.body || '')}</div>
+          <div class="notif-item-title">${(typeof esc==='function'?esc:Notifications._esc)(n.title)}</div>
+          <div class="notif-item-msg">${(typeof esc==='function'?esc:Notifications._esc)(n.body || '')}</div>
           <div class="notif-item-time">${timeAgo(n.created_at)}</div>
         </div>`).join('');
     } catch (err) {
