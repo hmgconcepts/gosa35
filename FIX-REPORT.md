@@ -297,3 +297,14 @@ Every defect above was fixed **at the source (generator)**, not just on the demo
 - Added robust subject detection from `section`, `subject`, `subject_section` or `exam_subject`.
 - Updated CBT CSV parsing to preserve section/subject columns.
 - Added `verify-v5-cbt-tabs.js`; direct simulation passed 7/7 checks.
+
+---
+
+## 2026-07-06 V14 / SchoolConnect V6 enterprise output fixes
+
+- Added Examination Officer name/signature fields to Entrance & Assessments and used them on result slips, entrance certificates and admission letters.
+- E-receipt printing now follows the sample e-receipt layout/classes and persists computed balance to the payment record.
+- Added database-level fee balance trigger in SQL files.
+- Report card, class broadsheet and subject broadsheet outputs now use sample-style layouts.
+- Expanded notifications for academic, fee, library and attendance updates.
+- Added V6 enterprise verifier; passed 12/12 checks.
