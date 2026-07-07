@@ -9,8 +9,10 @@
 <meta name="theme-color" content="#1c72e7">
 <link rel="icon" type="image/png" href="assets/img/logo.png">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <meta property="og:title" content="CBT / Online Exams • God of Seed Academy">
 <meta property="og:description" content="God of Seed Academy — Free school management by HMG Concepts">
@@ -453,6 +455,8 @@
 <script src="assets/js/super.js"></script>
 <script src="assets/js/enterprise.js"></script>
 <script src="assets/js/crud.js"></script>
+<script src="assets/js/report-engine.js"></script>
+<script src="assets/js/analytics.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(reg => { Notifications.init(sb, reg); Voting.init(sb); });
@@ -529,10 +533,62 @@ window.CBTUI = {
         <textarea class="form-input" id="ex-csv" rows="5" style="margin-top:8px;font-family:monospace;font-size:.8rem" placeholder="Question,A,B,C,D,CorrectAnswer,..."></textarea>
         <small style="color:var(--gray-500)">Need the format? Click "CSV Template" on the page.</small>
       </div>
+      <div class="form-group" style="grid-column:1/-1;border-top:1px solid var(--gray-200,#e2e8f0);padding-top:14px">
+        <label style="font-weight:800;font-size:1rem">✍️ Or Add Questions Manually</label>
+        <p style="color:var(--gray-500);font-size:.85rem;margin-bottom:10px">Type questions one by one. They will be added to the CSV above.</p>
+        <div id="manual-q-builder" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px">
+          <div class="grid grid-2" style="gap:10px">
+            <div class="form-group"><label>Question *</label><textarea class="form-input" id="mq-question" rows="2" placeholder="Type the question text"></textarea></div>
+            <div class="form-group"><label>Question Type</label><select class="form-select" id="mq-type"><option value="mcq">Multiple Choice (MCQ)</option><option value="true_false">True/False</option><option value="short_answer">Short Answer</option><option value="fill_blank">Fill in the Blank</option></select></div>
+            <div class="form-group"><label>Option A</label><input class="form-input" id="mq-a" placeholder="Option A"></div>
+            <div class="form-group"><label>Option B</label><input class="form-input" id="mq-b" placeholder="Option B"></div>
+            <div class="form-group"><label>Option C</label><input class="form-input" id="mq-c" placeholder="Option C"></div>
+            <div class="form-group"><label>Option D</label><input class="form-input" id="mq-d" placeholder="Option D"></div>
+            <div class="form-group"><label>Correct Answer *</label><input class="form-input" id="mq-answer" placeholder="e.g. A or True or the answer text"></div>
+            <div class="form-group"><label>Mark</label><input class="form-input" type="number" id="mq-mark" value="1" min="1"></div>
+            <div class="form-group"><label>Explanation (optional)</label><input class="form-input" id="mq-explain" placeholder="Why this is the answer"></div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button type="button" class="btn btn-primary btn-sm" onclick="CBTUI.addManualQuestion()">➕ Add Question</button>
+            <span id="mq-count" style="color:var(--gray-500);font-size:.85rem;line-height:2.4"></span>
+          </div>
+        </div>
+      </div>
     `, '<button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="CBTUI.save()">Create exam</button>');
     CBTUI.loadPickers();
   },
   _readFile(ev){ const f=ev.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{document.getElementById('ex-csv').value=r.result;}; r.readAsText(f); },
+  _manualCount:0,
+  addManualQuestion(){
+    const q=document.getElementById('mq-question')?.value?.trim();
+    const type=document.getElementById('mq-type')?.value||'mcq';
+    const a=document.getElementById('mq-a')?.value?.trim()||'';
+    const b=document.getElementById('mq-b')?.value?.trim()||'';
+    const c=document.getElementById('mq-c')?.value?.trim()||'';
+    const d=document.getElementById('mq-d')?.value?.trim()||'';
+    const ans=document.getElementById('mq-answer')?.value?.trim();
+    const mark=document.getElementById('mq-mark')?.value||'1';
+    const explain=document.getElementById('mq-explain')?.value?.trim()||'';
+    if(!q){toast('Enter a question.','warning');return;}
+    if(!ans){toast('Enter the correct answer.','warning');return;}
+    const csvEl=document.getElementById('ex-csv');
+    const existing=csvEl.value.trim();
+    // Build CSV row: question,type,a,b,c,d,answer,explanation,mark
+    const esc=v=>'"'+String(v||'').replace(/"/g,'""')+'"';
+    const row=[esc(q),esc(type),esc(a),esc(b),esc(c),esc(d),esc(ans),esc(explain),mark].join(',');
+    if(!existing || !existing.includes('question')){
+      csvEl.value='question,type,a,b,c,d,answer,explanation,mark\n'+row;
+    } else {
+      csvEl.value=existing+'\n'+row;
+    }
+    this._manualCount++;
+    document.getElementById('mq-count').textContent=this._manualCount+' question(s) added manually';
+    // Clear inputs for next question
+    document.getElementById('mq-question').value='';
+    ['mq-a','mq-b','mq-c','mq-d','mq-answer','mq-explain'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('mq-mark').value='1';
+    toast('Question added! Add more or create the exam.','success',2000);
+  },
   async save(){
     if(!sb){ toast('Database not configured.','warning'); return; }
     const csv = document.getElementById('ex-csv').value.trim();
