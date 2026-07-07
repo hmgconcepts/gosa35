@@ -1,4 +1,12 @@
--- =====================================================================-- School Connect — UNIFIED DATABASE SCHEMA (All-in-One)-- Run this SINGLE file in your Supabase SQL Editor.-- It is fully IDEMPOTENT — safe to run multiple times.-- =====================================================================-- Enable required extensionscreate extension if not exists "uuid-ossp";
+-- =====================================================================
+-- School Connect — UNIFIED DATABASE SCHEMA v4 (All-in-One)
+-- Run this SINGLE file in Supabase SQL Editor.
+-- Fully IDEMPOTENT — safe to run multiple times.
+-- =====================================================================
+
+create extension if not exists "uuid-ossp";
+
+
 -- ===== schema.sql =====
 -- =====================================================================
 -- School Connect — Database Schema (Gen v8)
@@ -2805,7 +2813,7 @@ do $$ begin
   alter table public.scheme_of_work add column if not exists confirmed_at timestamptz;
   alter table public.scheme_of_work add column if not exists planned_at timestamptz default now();
 exception when undefined_table then
-  create table public.scheme_of_work (
+  create table if not exists public.scheme_of_work (
     id uuid primary key default uuid_generate_v4(),
     subject text, class text, term text, session text,
     week int, topic text, status text default 'pending',
@@ -2845,7 +2853,7 @@ do $$ begin
   alter table public.admissions add column if not exists photo_url text;
   alter table public.admissions add column if not exists session text;
 exception when undefined_table then
-  create table public.admissions (
+  create table if not exists public.admissions (
     id uuid primary key default uuid_generate_v4(),
     full_name text, dob date, gender text,
     parent_name text, parent_email text, parent_phone text,
@@ -3138,7 +3146,7 @@ begin
     alter table public.promotions add column if not exists average numeric;
     alter table public.promotions add column if not exists status  text default 'draft';
   else
-    create table public.promotions (
+    create table if not exists public.promotions (
       id uuid primary key default uuid_generate_v4(),
       student_name text,
       from_class text,
@@ -3484,7 +3492,7 @@ $$;
 do $$
 begin
   if to_regclass('public.payroll') is null then
-    create table public.payroll (
+    create table if not exists public.payroll (
       id uuid primary key default uuid_generate_v4(),
       created_at timestamptz default now()
     );
@@ -3582,7 +3590,7 @@ alter table public.staff_appraisals enable row level security;
 do $$
 begin
   if to_regclass('public.parent_child') is null then
-    create table public.parent_child (
+    create table if not exists public.parent_child (
       id uuid primary key default uuid_generate_v4(),
       parent_id uuid,
       student_id uuid,
