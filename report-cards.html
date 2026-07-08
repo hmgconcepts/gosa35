@@ -5,14 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Report Cards • God of Seed Academy</title>
 <meta name="description" content="God of Seed Academy — Report Cards. Free school management platform by HMG Concepts.">
-<meta name="keywords" content="God of Seed Academy, school management, GoSA, HMG Concepts">
+<meta name="keywords" content="God of Seed Academy, school management, GOSA, HMG Concepts">
 <meta name="theme-color" content="#0506ae">
 <link rel="icon" type="image/png" href="assets/img/logo.png">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="assets/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <meta property="og:title" content="Report Cards • God of Seed Academy">
 <meta property="og:description" content="God of Seed Academy — Free school management by HMG Concepts">
@@ -36,7 +34,7 @@ body{font-family:var(--font)!important;background:#f8fafc}
 .app-nav a{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:10px;min-height:42px;padding:8px 10px;border-radius:12px;color:#475569;text-decoration:none;font-size:.875rem;font-weight:700;line-height:1.2;white-space:normal;word-break:normal;transition:background .18s ease,color .18s ease,transform .18s ease}
 .app-nav a:hover{background:#f1f5f9;color:var(--primary);transform:translateX(2px)}
 .app-nav a.active{background:var(--gradient);color:#fff;box-shadow:0 8px 20px rgba(79,70,229,.22)}
-body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{display:none!important}.app-nav a[style*="display: none"]{display:none!important}
+body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!important}.app-nav a[style*="display: none"]{display:none!important}
 .app-nav a.nav-locked{opacity:.62}.app-nav a.nav-locked .app-nav-icon{filter:grayscale(.35)}.app-nav a.nav-locked::after{content:'🔒';font-size:.72rem;opacity:.65;justify-self:end}.app-nav a.nav-locked.active{opacity:1}
 .app-nav-icon{width:32px;height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;font-size:1.05rem;line-height:1;border-radius:10px;background:rgba(79,70,229,.09);color:var(--primary);flex-shrink:0;overflow:hidden}
 .app-nav a.active .app-nav-icon{background:rgba(255,255,255,.22);color:#fff}
@@ -107,14 +105,23 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{display:none!importa
         <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{textContent:('G'),style:'width:40px;height:40px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900'}))">
         <div>
           <strong>God of Seed Academy</strong>
-          <div style="font-size:0.7rem;color:var(--gray-500)">GoSA</div>
+          <div style="font-size:0.7rem;color:var(--gray-500)">GOSA</div>
         </div>
       </div>
       <nav class="app-nav">
         <a href="dashboard.html" data-module-id="dashboard" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🏠</span>
           <span>Dashboard</span>
-        </a><a href="academic_setup.html" data-module-id="academic_setup" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="profile.html" data-module-id="profile" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
+          <span class="app-nav-icon">👤</span>
+          <span>My Profile</span>
+        </a><a href="change-password.html" data-module-id="change-password" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
+          <span class="app-nav-icon">🔐</span>
+          <span>Change Password</span>
+        </a><a href="cbt-multi.html" data-module-id="cbt-multi" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher student" class="">
+          <span class="app-nav-icon">🧪</span>
+          <span>Multi-Subject CBT</span>
+<a href="academic_setup.html" data-module-id="academic_setup" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">⚙️</span>
           <span>Academic Setup</span>
         </a><a href="students.html" data-module-id="students" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -183,6 +190,9 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{display:none!importa
         </a><a href="fees.html" data-module-id="fees" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent" class="">
           <span class="app-nav-icon">💰</span>
           <span>Fees</span>
+        </a><a href="payment-history.html" data-module-id="payment-history" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+          <span class="app-nav-icon">🧾</span>
+          <span>Payment History</span>
         </a><a href="timetable.html" data-module-id="timetable" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🗓️</span>
           <span>Timetable</span>
@@ -252,6 +262,9 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{display:none!importa
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
+        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+          <span class="app-nav-icon">🎓</span>
+          <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Promotion</span>
@@ -467,7 +480,6 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{display:none!importa
 <script src="assets/js/enterprise.js"></script>
 <script src="assets/js/crud.js"></script>
 <script src="assets/js/report-engine.js"></script>
-<script src="assets/js/analytics.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(reg => { Notifications.init(sb, reg); Voting.init(sb); });
@@ -544,21 +556,14 @@ const RC = {
     const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='report-'+this.ctx.class+'-'+this.ctx.subject+'.csv'; a.click();
   },
   /* ---- Issue 6: printable termly outputs (report card / broadsheet / scoresheet) ---- */
-  _print(title, html){ const w=window.open('','_blank'); if(!w){toast('Popup blocked! Please allow popups.','warning');return;} const sc=(window.SCHOOL||{}); const st=window.SC_SETTINGS||{}; const rawSig=localStorage.getItem('sc-signature-url')||st.signature_url||'', pn=localStorage.getItem('sc-principal-name')||st.principal_name||'Principal'; const sig=(window.Super&&Super.idcard&&Super.idcard.driveDirect)?Super.idcard.driveDirect(rawSig):rawSig; const sign=sig?'<div style="text-align:center;margin-top:28px"><img src="'+sig+'" referrerpolicy="no-referrer" style="max-width:150px;max-height:70px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)"><br><b>'+pn+'</b><br>Official Signature</div>':''; w.document.open(); w.document.write('<!DOCTYPE html><html><head><title>'+title+'</title><base href="'+document.baseURI.replace(/[^/]*$/,'')+'"><style>body{font-family:system-ui,sans-serif;padding:24px;color:#0f172a;background:#fff}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #cbd5e1;padding:6px 8px;font-size:13px;text-align:left}th{background:#f1f5f9}h1,h2{margin:4px 0}.hd{text-align:center;border-bottom:3px solid '+(sc.themePrimary||'#4f46e5')+';padding-bottom:10px;margin-bottom:14px}</style></head><body><div class="hd"><h1>'+esc(sc.name||"School")+'</h1><p>'+esc(sc.motto||'')+'</p><h2>'+title+'</h2></div>'+html+sign+'<p style="margin-top:30px;font-size:11px;color:#94a3b8;text-align:center">Powered by HMG Concepts</p><scr'+"ipt>setTimeout(()=>window.print(),500);</scr"+"ipt></body></html>'); w.document.close(); w.focus(); },
+  _print(title, html){ const w=window.open('','_blank'); if(!w){toast('Popup blocked! Please allow popups.','warning');return;} const sc=(window.SCHOOL||{}); const st=window.SC_SETTINGS||{}; const rawSig=localStorage.getItem('sc-signature-url')||st.signature_url||'', pn=localStorage.getItem('sc-principal-name')||st.principal_name||'Principal'; const sig=(window.Super&&Super.idcard&&Super.idcard.driveDirect)?Super.idcard.driveDirect(rawSig):rawSig; const sign=sig?'<div style="text-align:center;margin-top:28px"><img src="'+sig+'" referrerpolicy="no-referrer" style="max-width:150px;max-height:70px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)"><br><b>'+pn+'</b><br>Official Signature</div>':''; w.document.open(); w.document.write('<!DOCTYPE html><html><head><title>'+title+'</title><base href="'+document.baseURI.replace(/[^/]*$/,'')+'"><style>body{font-family:system-ui,sans-serif;padding:24px;color:#0f172a;background:#fff}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #cbd5e1;padding:6px 8px;font-size:13px;text-align:left}th{background:#f1f5f9}h1,h2{margin:4px 0}.hd{text-align:center;border-bottom:3px solid '+(sc.themePrimary||'#4f46e5')+';padding-bottom:10px;margin-bottom:14px}</style></head><body><div class="hd"><h1>'+esc(sc.name||"School")+'</h1><p>'+esc(sc.motto||'')+'</p><h2>'+title+'</h2></div>'+html+sign+'<p style="margin-top:30px;font-size:11px;color:#94a3b8;text-align:center">Powered by HMG Concepts</p><script>setTimeout(()=>window.print(),500);<\/script></body></html>'); w.document.close(); w.focus(); },
   async reportCard(){ if(!sb){toast('Database not configured','warning');return;} const name=document.getElementById('rc-student').value.trim(); if(!name){toast('Enter a student name','warning');return;}
     const term=this.ctx.term||document.getElementById('rc-term').value, ses=this.ctx.session||document.getElementById('rc-session').value, cls=this.ctx.class||document.getElementById('rc-class').value;
     const {data}=await sb.from('report_subject_totals').select('*').eq('student_name',name).eq('term',term).eq('session',ses);
-    let rows=(data||[]);
-    const sc=window.SCHOOL||{};
-    let html='<div class="report-sheet"><div class="head"><img class="logo" src="assets/img/logo.'+(sc.logoExt||'svg')+'" onerror="this.style.display=\'none\'"><div class="school"><h1>'+esc(sc.name||'School')+'</h1><p>'+esc(sc.address||'')+' · '+esc(sc.phone||'')+' · '+esc(sc.email||'')+'</p><p style="font-style:italic;color:#7c2d12">Motto: '+esc(sc.motto||'')+'</p></div><div class="photo">Student<br>Photo</div></div>';
-    html+='<div class="title">TERMINAL REPORT SHEET — '+esc(term||'TERM')+', '+esc(ses||'SESSION')+'</div>';
-    html+='<table class="info"><tr><td><b>Name:</b> '+esc(name)+'</td><td><b>Class:</b> '+esc(cls||'')+'</td><td><b>Term/Session:</b> '+esc(term)+' / '+esc(ses)+'</td></tr></table>';
-    if(!rows.length){ html+='<p style="padding:20px;text-align:center;color:var(--gray-500)">No recorded scores yet for this student/term.</p>'; }
-    else { let go=0,ob=0; html+='<table class="scores" style="margin-top:8px"><thead><tr><th class="left">SUBJECT</th><th>OBTAINED</th><th>OBTAINABLE</th><th>%</th><th>GRADE</th><th>REMARK</th></tr></thead><tbody>'+rows.map(r=>{go+=Number(r.obtained||0);ob+=Number(r.obtainable||0);var pct=Number(r.obtainable||0)?((Number(r.obtained||0)/Number(r.obtainable||0))*100):0;return '<tr><td class="left">'+esc(r.subject)+'</td><td>'+Number(r.obtained||0).toFixed(1)+'</td><td>'+Number(r.obtainable||0).toFixed(1)+'</td><td>'+pct.toFixed(1)+'%</td><td class="grade">'+RC.grade(pct)+'</td><td>'+RC.remark(pct)+'</td></tr>';}).join('')+'</tbody></table>'; var pct=ob?((go/ob)*100).toFixed(1):0; html+='<table class="info" style="margin-top:8px"><tr><td><b>Total Score:</b> '+go.toFixed(1)+' / '+ob.toFixed(1)+'</td><td><b>Average:</b> '+pct+'%</td><td><b>Overall Grade:</b> '+RC.grade(pct)+'</td></tr></table>'; }
-    html+='<div class="sig"><div>____________________<br>Class Teacher</div><div>____________________<br>Head of School</div></div>';
-    html+='<p class="note">Official school report card. Generated by School Connect · Powered by HMG Concepts.</p></div>';
-    if(window.ReportEngine){ ReportEngine.init(sb); ReportEngine.print('Student Report Card — '+name, html, false); }
-    else { RC._print('Termly Report Card', html); }
+    let rows=(data||[]); let html='<p><strong>Student:</strong> '+esc(name)+' &nbsp; <strong>Class:</strong> '+esc(cls)+' &nbsp; <strong>Term:</strong> '+esc(term)+' &nbsp; <strong>Session:</strong> '+esc(ses)+'</p>';
+    if(!rows.length){ html+='<p>No recorded scores yet for this student/term.</p>'; }
+    else { let go=0,ob=0; html+='<table><thead><tr><th>Subject</th><th>Obtained</th><th>Obtainable</th><th>%</th><th>Grade</th></tr></thead><tbody>'+rows.map(r=>{go+=Number(r.obtained||0);ob+=Number(r.obtainable||0);return '<tr><td>'+esc(r.subject)+'</td><td>'+r.obtained+'</td><td>'+r.obtainable+'</td><td>'+r.percent+'%</td><td>'+RC.grade(r.percent)+'</td></tr>';}).join('')+'</tbody></table>'; var pct=ob?((go/ob)*100).toFixed(1):0; html+='<p style="margin-top:12px"><strong>Overall:</strong> '+go.toFixed(1)+' / '+ob.toFixed(1)+' ('+pct+'%) — Grade '+RC.grade(pct)+'</p>'; html+='<div style="margin-top:24px;display:flex;justify-content:space-between"><div>____________________<br>Class Teacher</div><div>____________________<br>Head of School</div></div>'; }
+    RC._print('Termly Report Card', html);
   },
   async broadsheet(){ if(!sb){toast('Database not configured','warning');return;} const cls=this.ctx.class||document.getElementById('rc-class').value, term=this.ctx.term||document.getElementById('rc-term').value, ses=this.ctx.session||document.getElementById('rc-session').value;
     if(!cls){toast('Enter a class','warning');return;}
@@ -579,143 +584,13 @@ const RC = {
 }; document.addEventListener('DOMContentLoaded',()=>RC.init()); RC.init();
 </script>
 <script>
-// ENTERPRISE V15/V7: server-scoped family report-card renderer.
+// School Connect v3: high-fidelity exports from Report Cards page.
 (function(){
- if(!window.RC) return;
- RC.familyReportRows = async function(studentId, term, session){
-   if(!studentId) throw new Error('No linked student selected.');
-   const res = await sb.rpc('get_family_report_card', { p_student_id: studentId, p_term: term || '', p_session: session || '' });
-   if(res.error) throw new Error(res.error.message || 'Could not load secured report card rows. Run database/reportcard-schema.sql.');
-   return res.data || [];
- };
- RC.printFamilyReport = async function(studentId, studentName, klass){
-   try{
-     const term=document.getElementById('rc-term').value||'', session=document.getElementById('rc-session').value||'';
-     const rows=await RC.familyReportRows(studentId, term, session);
-     const sc=window.SCHOOL||{}; const total=rows.reduce((a,r)=>a+Number(r.obtained||0),0), max=rows.reduce((a,r)=>a+Number(r.obtainable||0),0); const avg=max?((total/max)*100):0;
-     const html='<div class="report-sheet sample-report"><div class="head"><img class="logo" src="assets/img/logo.'+(sc.logoExt||'svg')+'" onerror="this.style.display=\'none\'"><div class="school"><h1>'+esc(sc.name||'School')+'</h1><p>'+esc(sc.address||'')+' · '+esc(sc.phone||'')+' · '+esc(sc.email||'')+'</p><p style="font-style:italic;color:#7c2d12">Motto: '+esc(sc.motto||'')+'</p></div><div class="photo">Student<br>Photo</div></div><div class="title">TERMINAL REPORT SHEET — '+esc(term||'TERM')+', '+esc(session||'SESSION')+'</div><table class="info"><tr><td><b>Name:</b> '+esc(studentName)+'</td><td><b>Class:</b> '+esc(klass||'')+'</td><td><b>Access:</b> Read-only family copy</td></tr></table><table class="scores" style="margin-top:8px"><thead><tr><th class="left">SUBJECT</th><th>OBTAINED</th><th>OBTAINABLE</th><th>%</th><th>GRADE</th><th>REMARK</th></tr></thead><tbody>'+ (rows.length?rows.map(r=>'<tr><td class="left">'+esc(r.subject||'')+'</td><td>'+Number(r.obtained||0).toFixed(1)+'</td><td>'+Number(r.obtainable||0).toFixed(1)+'</td><td>'+Number(r.percent||0).toFixed(1)+'%</td><td class="grade">'+esc(r.grade||'')+'</td><td>'+esc(r.remark||'')+'</td></tr>').join(''):'<tr><td colspan="6">No report-card scores found for this term/session.</td></tr>')+'</tbody></table><table class="info" style="margin-top:8px"><tr><td><b>Total Score:</b> '+total.toFixed(1)+' / '+max.toFixed(1)+'</td><td><b>Average:</b> '+avg.toFixed(1)+'%</td><td><b>Permission:</b> Read-only</td></tr></table><p class="note">Secured family report card — generated only for linked child/student account.</p></div>';
-     ReportEngine.init(sb); ReportEngine.print('Student Report Card — '+studentName, html, false);
-   }catch(e){ toast(e.message||String(e),'danger',8000); }
- };
- RC.applyFamilyMode = async function(){
-   const role=String((window.SC_PROFILE&&SC_PROFILE.role)||(window.App&&App.currentRole)||'').toLowerCase().replace(/\s+/g,'_');
-   if(!['parent','student'].includes(role)) return;
-   ['rc-cols','rc-grid'].forEach(id=>{const el=document.getElementById(id); if(el) el.style.display='none';});
-   document.querySelectorAll('#rc-cols input,#rc-cols button,#rc-grid input,#rc-grid button,[data-staff-only]').forEach(el=>{el.disabled=true; el.style.display='none';});
-   let host=document.getElementById('rc-family-safe'); if(!host){host=document.createElement('div');host.id='rc-family-safe';host.className='card';host.style.cssText='margin-bottom:16px;border-left:5px solid var(--primary)';const app=document.querySelector('.app-content'); if(app)app.insertBefore(host, app.firstElementChild&&app.firstElementChild.nextSibling);} 
-   if(role==='student'){
-     const res=await sb.from('students').select('id,full_name,class,admission_no').eq('user_id',SC_PROFILE.id).maybeSingle(); const st=res.data;
-     if(!st){host.innerHTML='<h3>🧾 My Report Card</h3><p>Your login is not linked to a student record yet.</p>';return;}
-     host.innerHTML='<h3>🧾 My Report Card — Read Only</h3><p><b>'+esc(st.full_name)+'</b> · '+esc(st.class||'')+'</p><button class="btn btn-primary" onclick="RC.printFamilyReport(\''+st.id+'\',\''+esc(st.full_name).replace(/'/g,'&#39;')+'\',\''+esc(st.class||'').replace(/'/g,'&#39;')+'\')">Generate my report card</button>';
-   } else {
-     const links=await sb.from('parent_child').select('student_id').eq('parent_id',SC_PROFILE.id).then(r=>r,()=>({data:[]})); const ids=(links.data||[]).map(x=>x.student_id).filter(Boolean);
-     const kids=ids.length?(await sb.from('students').select('id,full_name,class,admission_no').in('id',ids)).data||[]:[];
-     if(!kids.length){host.innerHTML='<h3>🧾 Children Report Cards</h3><p>No child is linked to this parent account.</p>';return;}
-     host.innerHTML='<h3>🧾 Children Report Cards — Read Only</h3><p>Only linked children are listed. No write access is available.</p><select class="form-select" id="rc-child-safe">'+kids.map(k=>'<option value="'+esc(k.id)+'" data-name="'+esc(k.full_name)+'" data-class="'+esc(k.class||'')+'">'+esc(k.full_name)+' — '+esc(k.class||'')+'</option>').join('')+'</select><button class="btn btn-primary" style="margin-top:10px" onclick="var s=document.getElementById(\'rc-child-safe\');var o=s.selectedOptions[0];RC.printFamilyReport(s.value,o.dataset.name,o.dataset.class)">Generate child report card</button>';
-   }
- };
- const old=RC.reportCard; RC.reportCard=function(){ if(RC.familyMode&&RC.familyMode()){ const s=document.getElementById('rc-child-safe'); if(s){ const o=s.selectedOptions[0]; return RC.printFamilyReport(s.value,o.dataset.name,o.dataset.class); } return RC.applyFamilyMode(); } return old.apply(RC,arguments); };
- document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>RC.applyFamilyMode(),1200)); setTimeout(()=>RC.applyFamilyMode(),1800);
-})();
-</script>
-<script>
-// School Connect v10: high-fidelity, family-safe Report Cards.
-(function(){
-  if(!window.RC) return;
-  const adminRoles=['super_admin','admin','principal','proprietor','head_teacher','bursar','staff','teacher'];
-  RC.role=function(){return String((window.SC_PROFILE&&SC_PROFILE.role)||(window.App&&App.currentRole)||'').toLowerCase().replace(/\s+/g,'_');};
-  RC.familyMode=function(){return ['parent','student'].includes(this.role());};
+  if(!window.ReportEngine || !window.RC) return;
   RC._reportCtx = function(){ return { class:document.getElementById('rc-class').value, subject:document.getElementById('rc-subject').value, term:document.getElementById('rc-term').value, session:document.getElementById('rc-session').value, student:document.getElementById('rc-student').value }; };
-  RC._oldLoad=RC.load;
-  RC._oldSaveScore=RC.saveScore;
-  RC.load=function(){ if(this.familyMode()){ toast('Report cards are read-only for parents/students. Use the “Generate my report card” button only.','warning',6500); return; } return this._oldLoad(); };
-  RC.saveScore=function(){ if(this.familyMode()){ toast('Read-only: parents/students cannot edit report cards.','warning'); return; } return this._oldSaveScore.apply(this,arguments); };
-  RC.applyFamilyMode=async function(){
-    const r=this.role(); if(!['parent','student'].includes(r)) return;
-    const cols=document.getElementById('rc-cols'), grid=document.getElementById('rc-grid'); if(cols)cols.style.display='none'; if(grid)grid.style.display='none';
-    document.querySelectorAll('[data-staff-only], #rc-class, #rc-subject').forEach(el=>{ if(el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='BUTTON') el.disabled=true; else el.style.display='none'; });
-    let host=document.getElementById('rc-family-safe');
-    if(!host){
-      host=document.createElement('div'); host.id='rc-family-safe'; host.className='card'; host.style.cssText='margin-bottom:16px;border-left:5px solid var(--primary)';
-      const app=document.querySelector('.app-content'); if(app) app.insertBefore(host, app.firstElementChild&&app.firstElementChild.nextSibling);
-    }
-    if(r==='student'){
-      let st=null; try{ const res=await sb.from('students').select('id,full_name,class,admission_no').eq('user_id',SC_PROFILE.id).maybeSingle(); st=res.data; }catch(_){ }
-      if(!st){ host.innerHTML='<h3>🧾 My Report Card</h3><p>Your login is not linked to a student record yet. Ask the school admin to link your student profile.</p>'; return; }
-      document.getElementById('rc-student').value=st.full_name; document.getElementById('rc-class').value=st.class||'';
-      host.innerHTML='<h3>🧾 My Report Card — Read Only</h3><p>Student: <b>'+esc(st.full_name)+'</b> · '+esc(st.class||'')+'</p><button class="btn btn-primary" onclick="RC.reportCard()">Generate my report card</button>';
-    }
-    if(r==='parent'){
-      let kids=[]; try{ const links=await sb.from('parent_child').select('student_id').eq('parent_id',SC_PROFILE.id); const ids=(links.data||[]).map(x=>x.student_id).filter(Boolean); if(ids.length){ const res=await sb.from('students').select('id,full_name,class,admission_no').in('id',ids); kids=res.data||[]; } }catch(_){ }
-      if(!kids.length){ host.innerHTML='<h3>🧾 Children Report Cards</h3><p>No child is linked to this parent account yet.</p>'; return; }
-      host.innerHTML='<h3>🧾 Children Report Cards — Read Only</h3><p>Select one of your linked children. You cannot view or edit any other student\'s report card.</p><select class="form-select" id="rc-child-safe">'+kids.map(k=>'<option value="'+esc(k.full_name)+'" data-class="'+esc(k.class||'')+'">'+esc(k.full_name)+' — '+esc(k.class||'')+'</option>').join('')+'</select><button class="btn btn-primary" style="margin-top:10px" onclick="var s=document.getElementById(\'rc-child-safe\');document.getElementById(\'rc-student\').value=s.value;document.getElementById(\'rc-class\').value=s.selectedOptions[0].dataset.class||\'\';RC.reportCard()">Generate child report card</button>';
-      document.getElementById('rc-student').value=kids[0].full_name; document.getElementById('rc-class').value=kids[0].class||'';
-    }
-  };
-  RC.reportCard = async function(){
-    const c=this._reportCtx(); try{
-      const role=this.role();
-      if(role==='student'){
-        const st=await sb.from('students').select('full_name,class').eq('user_id',SC_PROFILE.id).maybeSingle();
-        if(!st.data){ toast('Your account is not linked to a student record.','warning'); return; }
-        c.student=st.data.full_name; c.class=c.class||st.data.class;
-      }
-      if(role==='parent'){
-        const links=await sb.from('parent_child').select('student_id').eq('parent_id',SC_PROFILE.id); const ids=(links.data||[]).map(x=>x.student_id).filter(Boolean);
-        const kids=ids.length?(await sb.from('students').select('full_name,class').in('id',ids)).data||[]:[];
-        if(!kids.length){ toast('No child linked to this parent account.','warning'); return; }
-        if(!kids.some(k=>String(k.full_name).toLowerCase()===String(c.student).toLowerCase())){ toast('Access denied: you can only view your linked children.','danger',7000); return; }
-        const k=kids.find(k=>String(k.full_name).toLowerCase()===String(c.student).toLowerCase()); c.class=c.class||k.class;
-      }
-      if(!c.student){toast('Enter/select a student name for report card.','warning');return;}
-      ReportEngine.init(sb); const html=await ReportEngine.renderStudent(c); ReportEngine.print('Student Report Card — '+c.student, html, false);
-    }catch(e){toast(e.message||String(e),'danger',6000);}
-  };
-  RC.broadsheet = async function(){ if(this.familyMode()){toast('Broadsheets are staff-only.','warning');return;} const c=this._reportCtx(); if(!c.class){toast('Select a class.','warning');return;} try{ReportEngine.init(sb); const html=await ReportEngine.renderClass(c); ReportEngine.print('Class Broadsheet — '+c.class, html, true);}catch(e){toast(e.message||String(e),'danger',6000);} };
-  RC.scoresheet = async function(){ if(this.familyMode()){toast('Scoresheets are staff-only.','warning');return;} const c=this._reportCtx(); if(!c.class||!c.subject){toast('Select class and subject.','warning');return;} try{ReportEngine.init(sb); const html=await ReportEngine.renderSubject(c); ReportEngine.print('Subject Broadsheet — '+c.subject, html, true);}catch(e){toast(e.message||String(e),'danger',6000);} };
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>RC.applyFamilyMode(),900)); setTimeout(()=>RC.applyFamilyMode(),1500);
+  RC.reportCard = async function(){ const c=this._reportCtx(); try{ const role=String((window.SC_PROFILE&&SC_PROFILE.role)||'').toLowerCase(); if(role==='student'){ const st=await sb.from('students').select('full_name,class').eq('user_id',SC_PROFILE.id).maybeSingle(); if(st.data){ c.student=st.data.full_name; c.class=c.class||st.data.class; } } if(role==='parent'){ const links=await sb.from('parent_child').select('student_id').eq('parent_id',SC_PROFILE.id); const ids=(links.data||[]).map(x=>x.student_id); const kids=ids.length?(await sb.from('students').select('full_name,class').in('id',ids)).data||[]:[]; if(!kids.some(k=>String(k.full_name).toLowerCase()===String(c.student).toLowerCase())){ if(kids[0]){ c.student=kids[0].full_name; c.class=c.class||kids[0].class; } else { toast('No child linked to this parent account.','warning'); return; } } } if(!c.student){toast('Enter/select a student name for report card.','warning');return;} ReportEngine.init(sb); const html=await ReportEngine.renderStudent(c); ReportEngine.print('Student Report Card — '+c.student, html, false);}catch(e){toast(e.message||String(e),'danger',6000);} };
+  RC.broadsheet = async function(){ const c=this._reportCtx(); if(!c.class){toast('Select a class.','warning');return;} try{ReportEngine.init(sb); const html=await ReportEngine.renderClass(c); ReportEngine.print('Class Broadsheet — '+c.class, html, true);}catch(e){toast(e.message||String(e),'danger',6000);} };
+  RC.scoresheet = async function(){ const c=this._reportCtx(); if(!c.class||!c.subject){toast('Select class and subject.','warning');return;} try{ReportEngine.init(sb); const html=await ReportEngine.renderSubject(c); ReportEngine.print('Subject Broadsheet — '+c.subject, html, true);}catch(e){toast(e.message||String(e),'danger',6000);} };
 })();
 </script>
-
-<script>
-// ENTERPRISE V15/V7: server-scoped family report-card renderer.
-(function(){
- if(!window.RC) return;
- RC.familyReportRows = async function(studentId, term, session){
-   if(!studentId) throw new Error('No linked student selected.');
-   const res = await sb.rpc('get_family_report_card', { p_student_id: studentId, p_term: term || '', p_session: session || '' });
-   if(res.error) throw new Error(res.error.message || 'Could not load secured report card rows. Run database/reportcard-schema.sql.');
-   return res.data || [];
- };
- RC.printFamilyReport = async function(studentId, studentName, klass){
-   try{
-     const term=document.getElementById('rc-term').value||'', session=document.getElementById('rc-session').value||'';
-     const rows=await RC.familyReportRows(studentId, term, session);
-     const sc=window.SCHOOL||{}; const total=rows.reduce((a,r)=>a+Number(r.obtained||0),0), max=rows.reduce((a,r)=>a+Number(r.obtainable||0),0); const avg=max?((total/max)*100):0;
-     const html='<div class="report-sheet sample-report"><div class="head"><img class="logo" src="assets/img/logo.'+(sc.logoExt||'svg')+'" onerror="this.style.display=\'none\'"><div class="school"><h1>'+esc(sc.name||'School')+'</h1><p>'+esc(sc.address||'')+' · '+esc(sc.phone||'')+' · '+esc(sc.email||'')+'</p><p style="font-style:italic;color:#7c2d12">Motto: '+esc(sc.motto||'')+'</p></div><div class="photo">Student<br>Photo</div></div><div class="title">TERMINAL REPORT SHEET — '+esc(term||'TERM')+', '+esc(session||'SESSION')+'</div><table class="info"><tr><td><b>Name:</b> '+esc(studentName)+'</td><td><b>Class:</b> '+esc(klass||'')+'</td><td><b>Access:</b> Read-only family copy</td></tr></table><table class="scores" style="margin-top:8px"><thead><tr><th class="left">SUBJECT</th><th>OBTAINED</th><th>OBTAINABLE</th><th>%</th><th>GRADE</th><th>REMARK</th></tr></thead><tbody>'+ (rows.length?rows.map(r=>'<tr><td class="left">'+esc(r.subject||'')+'</td><td>'+Number(r.obtained||0).toFixed(1)+'</td><td>'+Number(r.obtainable||0).toFixed(1)+'</td><td>'+Number(r.percent||0).toFixed(1)+'%</td><td class="grade">'+esc(r.grade||'')+'</td><td>'+esc(r.remark||'')+'</td></tr>').join(''):'<tr><td colspan="6">No report-card scores found for this term/session.</td></tr>')+'</tbody></table><table class="info" style="margin-top:8px"><tr><td><b>Total Score:</b> '+total.toFixed(1)+' / '+max.toFixed(1)+'</td><td><b>Average:</b> '+avg.toFixed(1)+'%</td><td><b>Permission:</b> Read-only</td></tr></table><p class="note">Secured family report card — generated only for linked child/student account.</p></div>';
-     ReportEngine.init(sb); ReportEngine.print('Student Report Card — '+studentName, html, false);
-   }catch(e){ toast(e.message||String(e),'danger',8000); }
- };
- RC.applyFamilyMode = async function(){
-   const role=String((window.SC_PROFILE&&SC_PROFILE.role)||(window.App&&App.currentRole)||'').toLowerCase().replace(/\s+/g,'_');
-   if(!['parent','student'].includes(role)) return;
-   ['rc-cols','rc-grid'].forEach(id=>{const el=document.getElementById(id); if(el) el.style.display='none';});
-   document.querySelectorAll('#rc-cols input,#rc-cols button,#rc-grid input,#rc-grid button,[data-staff-only]').forEach(el=>{el.disabled=true; el.style.display='none';});
-   let host=document.getElementById('rc-family-safe'); if(!host){host=document.createElement('div');host.id='rc-family-safe';host.className='card';host.style.cssText='margin-bottom:16px;border-left:5px solid var(--primary)';const app=document.querySelector('.app-content'); if(app)app.insertBefore(host, app.firstElementChild&&app.firstElementChild.nextSibling);} 
-   if(role==='student'){
-     const res=await sb.from('students').select('id,full_name,class,admission_no').eq('user_id',SC_PROFILE.id).maybeSingle(); const st=res.data;
-     if(!st){host.innerHTML='<h3>🧾 My Report Card</h3><p>Your login is not linked to a student record yet.</p>';return;}
-     host.innerHTML='<h3>🧾 My Report Card — Read Only</h3><p><b>'+esc(st.full_name)+'</b> · '+esc(st.class||'')+'</p><button class="btn btn-primary" onclick="RC.printFamilyReport(\''+st.id+'\',\''+esc(st.full_name).replace(/'/g,'&#39;')+'\',\''+esc(st.class||'').replace(/'/g,'&#39;')+'\')">Generate my report card</button>';
-   } else {
-     const links=await sb.from('parent_child').select('student_id').eq('parent_id',SC_PROFILE.id).then(r=>r,()=>({data:[]})); const ids=(links.data||[]).map(x=>x.student_id).filter(Boolean);
-     const kids=ids.length?(await sb.from('students').select('id,full_name,class,admission_no').in('id',ids)).data||[]:[];
-     if(!kids.length){host.innerHTML='<h3>🧾 Children Report Cards</h3><p>No child is linked to this parent account.</p>';return;}
-     host.innerHTML='<h3>🧾 Children Report Cards — Read Only</h3><p>Only linked children are listed. No write access is available.</p><select class="form-select" id="rc-child-safe">'+kids.map(k=>'<option value="'+esc(k.id)+'" data-name="'+esc(k.full_name)+'" data-class="'+esc(k.class||'')+'">'+esc(k.full_name)+' — '+esc(k.class||'')+'</option>').join('')+'</select><button class="btn btn-primary" style="margin-top:10px" onclick="var s=document.getElementById(\'rc-child-safe\');var o=s.selectedOptions[0];RC.printFamilyReport(s.value,o.dataset.name,o.dataset.class)">Generate child report card</button>';
-   }
- };
- const old=RC.reportCard; RC.reportCard=function(){ if(RC.familyMode&&RC.familyMode()){ const s=document.getElementById('rc-child-safe'); if(s){ const o=s.selectedOptions[0]; return RC.printFamilyReport(s.value,o.dataset.name,o.dataset.class); } return RC.applyFamilyMode(); } return old.apply(RC,arguments); };
- document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>RC.applyFamilyMode(),1200)); setTimeout(()=>RC.applyFamilyMode(),1800);
-})();
-</script>
-
 </body></html>
