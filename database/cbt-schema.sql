@@ -245,15 +245,28 @@ drop policy if exists "cbt_exam_read"  on public.cbt_exams;
 drop policy if exists "cbt_exam_insert" on public.cbt_exams;
 drop policy if exists "cbt_exam_update" on public.cbt_exams;
 drop policy if exists "cbt_exam_delete" on public.cbt_exams;
+drop policy if exists "cbt_exam_read" on public.cbt_exams;
 create policy "cbt_exam_read" on public.cbt_exams for select using (auth.role() = 'authenticated');
+drop policy if exists "cbt_exam_insert" on public.cbt_exams;
 create policy "cbt_exam_insert" on public.cbt_exams for insert with check (public.is_staff(auth.uid()));
+drop policy if exists "cbt_exam_update" on public.cbt_exams;
 create policy "cbt_exam_update" on public.cbt_exams for update using (public.is_admin(auth.uid()) or teacher_id = auth.uid()) with check (public.is_admin(auth.uid()) or teacher_id = auth.uid());
+drop policy if exists "cbt_exam_delete" on public.cbt_exams;
 create policy "cbt_exam_delete" on public.cbt_exams for delete using (public.is_admin(auth.uid()) or teacher_id = auth.uid());
 
 -- Results: staff read all & manage; (anonymous students submit via the
 -- security-definer cbt_submit RPC, so no broad insert policy is needed).
 drop policy if exists "cbt_res_staff" on public.cbt_results;
 create policy "cbt_res_staff" on public.cbt_results for all using (public.is_staff(auth.uid()));
+drop policy if exists "cbt_res_family_read" on public.cbt_results;
+create policy "cbt_res_family_read" on public.cbt_results for select using (
+  public.is_staff(auth.uid())
+  or exists (
+    select 1 from public.students s
+    where (s.admission_no = cbt_results.student_id_ref or lower(s.full_name) = lower(cbt_results.student_name))
+      and (s.user_id = auth.uid() or public.is_parent_of(auth.uid(), s.id))
+  )
+);
 
 drop policy if exists "cbt_roster_staff" on public.cbt_roster;
 create policy "cbt_roster_staff" on public.cbt_roster for all using (public.is_staff(auth.uid()));
