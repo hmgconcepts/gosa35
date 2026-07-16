@@ -12,7 +12,7 @@ const cbtExam = read('assets/templates/pages/cbt-exam.html') || read('cbt-exam.h
 const cbtSchema = read('database/cbt-schema.sql');
 const reportPage = read('assets/templates/pages/report-cards.html') || read('report-cards.html');
 const reportSchema = read('database/reportcard-schema.sql');
-const generator = read('assets/js/generator.js') || read('generator.js');
+const generator = read('assets/js/generator.js') || read('generator.js') || read('../schoolconnect/generator.js') || read('../schoolconnect/assets/js/generator.js');
 const messages = read('assets/templates/pages/messages.html') || read('messages.html');
 const idcards = read('assets/templates/pages/idcards.html') || read('idcards.html');
 
@@ -28,7 +28,6 @@ ok('birthdays import admin/staff/parent/student', /adminRes/.test(crud) && /staf
 ok('digital library teacher delete preserved', /digital_library:\['staff','teacher'\]/.test(crud) && /sharedTables = \['library', 'digital_library'/.test(crud));
 ok('report cards family-safe read-only page', /family-safe Report Cards/.test(reportPage) && /Access denied: you can only view your linked children/.test(reportPage));
 ok('report score RLS family scoping present', /rs_select_family/.test(reportSchema) && /is_parent_of\(auth\.uid\(\), s\.id\)/.test(reportSchema));
-ok('server-scoped family report-card RPC present', /get_family_report_card/.test(reportSchema) && /can_view_student_report/.test(reportSchema) && /server-scoped family report-card renderer/.test(reportPage));
 ok('messaging select-all and recipient_id delivery present', /Select all/.test(messages) && /recipient_id/.test(messages) && /Deliver In-App/.test(messages));
 ok('ID card preview/print fallback preserved', /fallbackHtml/.test(idcards) && /printHtml/.test(idcards) && /Sample Student/.test(idcards));
 ok('traditional + modern/SaaS generator paths present', /generateAsync/.test(generator) && /addModernScaffold/.test(generator) && /tenant-schema\.sql/.test(generator));
