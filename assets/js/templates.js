@@ -345,18 +345,18 @@ ${T.setupRequiredBanner()}
       'students','classes','subjects','attendance','results','report_cards','academic_records',
       'cbt','cbt_prompts','entrance','assignments','timetable','timetable_generator','sow',
       'lesson_plans','library','digital_library','eresources','announcements','events','messages','inbox',
-      'complaints','broadcast','diary','checkin','behaviour','conduct','health','support_plans',
+      'complaints','broadcast','diary','checkin','checkin_staff','checkin-staff','behaviour','conduct','health','support_plans',
       'certificates','reports','directory','rubrics','counselling','substitutions','helpdesk','book_request'
     ]);
     const parentSet = new Set([
       'dashboard','profile','change_password','notifications','feature_guide','student_profile','fees','payments_online','results',
       'report_cards','attendance','assignments','diary','timetable','announcements','events','messages','inbox',
-      'complaints','eresources','certificates','school_calendar'
+      'complaints','eresources','certificates','school_calendar','voting'
     ]);
     const studentSet = new Set([
       'dashboard','profile','change_password','notifications','feature_guide','student_profile','cbt_exam','assignments','digital_library',
       'eresources','timetable','results','report_cards','attendance','announcements','events','messages','inbox',
-      'complaints','certificates','diary','school_calendar'
+      'complaints','certificates','diary','school_calendar','voting'
     ]);
 
     const roles = [admin];
@@ -380,7 +380,7 @@ ${T.setupRequiredBanner()}
       career_counseling:'🧭', document_builder:'🧾', fleet_tracking:'🛰️', facility_booking:'🏟️', compliance:'✅',
       activity_log:'🧮', lesson_plans:'🗒️', behaviour:'🏅', support_plans:'🧩',
       donations:'💝', substitutions:'🔁', helpdesk:'🆘', payments_online:'💳', notifications:'🔔',
-      'report_cards':'🧾', 'admin-data':'🗄️', flyer:'📰', approvals:'✅', 'timetable-generator':'🗓️', checkin:'📲', diary:'📔', surveys:'🗒️', menu:'🍽️', settings:'⚙️',
+      'report_cards':'🧾', 'admin-data':'🗄️', flyer:'📰', approvals:'✅', 'timetable-generator':'🗓️', checkin:'📲', 'checkin-staff':'⏰', 'checkin_staff':'⏰', diary:'📔', surveys:'🗒️', menu:'🍽️', settings:'⚙️',
       digital_library:'📚', 'cbt-prompts':'🧩', entrance:'🎯', storage:'🗄️', developer:'👨‍💻',
       payroll:'🧾', staff_loans:'🏦', staff_bonus:'🎁', appraisals:'⭐', 'student-profile':'👤', academic_records:'📄',
       rubrics:'📐', transcripts:'🎓', transfer_cert:'📄', counselling:'💬'
@@ -410,7 +410,7 @@ ${T.setupRequiredBanner()}
       activity_log:'Activity Log', lesson_plans:'Lesson Plans', behaviour:'Behaviour',
       support_plans:'Support Plans', donations:'Donations', substitutions:'Substitutions',
       helpdesk:'Help Desk', payments_online:'Online Pay', 'report_cards':'Report Cards',
-      'admin-data':'Admin Data', approvals:'Approvals', flyer:'Flyer', checkin:'QR Check-in', diary:'Diary',
+      'admin-data':'Admin Data', approvals:'Approvals', flyer:'Flyer', checkin:'QR Check-in', 'checkin-staff':'Staff Check-In', 'checkin_staff':'Staff Check-In', diary:'Diary',
       surveys:'Surveys', menu:'Menu', academic_records:'Records'
     };
     return map[id] || fallbackName || id;
@@ -446,11 +446,11 @@ ${T.setupRequiredBanner()}
       ['Academic Setup','academic_setup.html'],['Approvals','approvals.html'],['Students','students.html'],['Staff','staff.html'],['Parents','parents.html'],['Parent–Child Links','parents.html'],['Classes','classes.html'],['Subjects','subjects.html'],['Departments','departments.html'],
       ['Admissions','admissions.html'],['Finance','finance.html'],['Fees','fees.html'],['Payroll','payroll.html'],['Staff Loans','staff_loans.html'],['Staff Bonus','staff_bonus.html'],['Appraisals','appraisals.html'],
       ['Analytics','analytics.html'],['Admin Data','admin-data.html'],['Storage','storage.html'],['Compliance','compliance.html'],['Activity Log','activity_log.html'],['Settings','settings.html'],
-      ['Timetable Generator','timetable-generator.html'],['QR Check-in','checkin.html'],['Surveys','surveys.html'],['Menu Planner','menu.html'],['Fleet','fleet_tracking.html'],['Facilities','facility_booking.html'],['Inventory','inventory.html'],['Documents','document_builder.html'],
+      ['Timetable Generator','timetable-generator.html'],['QR Check-in','checkin.html'],['Staff Check-In','checkin-staff.html'],['Staff Geofence','geofence-settings.html'],['Surveys','surveys.html'],['Menu Planner','menu.html'],['Fleet','fleet_tracking.html'],['Facilities','facility_booking.html'],['Inventory','inventory.html'],['Documents','document_builder.html'],
       ['ID Cards','idcards.html'],['Certificates','certificates.html'],['Flyer','flyer.html'],['Broadcast','broadcast.html'],['Announcements','announcements.html'],['Voting','voting.html']
     ];
     const staffLinks = [
-      ['My Account','profile.html'],['Change Password','change-password.html'],['Attendance','attendance.html'],['Results','results.html'],['CBT Manager','cbt.html'],['CBT Prompts','cbt-prompts.html'],['Report Cards','report-cards.html'],['Academic Records','academic-records.html'],['Assignments','assignments.html'],['Scheme of Work','sow.html'],['Lesson Plans','lesson_plans.html'],['Timetable','timetable.html'],['Digital Library','digital_library.html'],['Library','library.html'],['Behaviour','behaviour.html'],['Support Plans','support_plans.html'],['Diary','diary.html'],['Messages','messages.html'],['Inbox','inbox.html'],['Students','students.html']
+      ['My Account','profile.html'],['Change Password','change-password.html'],['Staff Check-In','checkin-staff.html'],['Staff Geofence','geofence-settings.html'],['Attendance','attendance.html'],['Results','results.html'],['CBT Manager','cbt.html'],['CBT Prompts','cbt-prompts.html'],['Report Cards','report-cards.html'],['Academic Records','academic-records.html'],['Assignments','assignments.html'],['Scheme of Work','sow.html'],['Lesson Plans','lesson_plans.html'],['Timetable','timetable.html'],['Digital Library','digital_library.html'],['Library','library.html'],['Behaviour','behaviour.html'],['Support Plans','support_plans.html'],['Diary','diary.html'],['Messages','messages.html'],['Inbox','inbox.html'],['Students','students.html']
     ];
     const parentLinks = [
       ['My Account','profile.html'],['Change Password','change-password.html'],['Child Dashboard','student-profile.html'],['Fees / Balance','fees.html'],['Results','results.html'],['Report Cards','report-cards.html'],['Attendance','attendance.html'],['Assignments','assignments.html'],['Diary','diary.html'],['Timetable','timetable.html'],['Messages','inbox.html'],['Announcements','announcements.html'],['Complaint','complaints.html'],['Apply / Admissions','apply.html']
@@ -858,6 +858,29 @@ ${T.setupRequiredBanner()}
     const mod = window.SC.MODULES.find(m => m.id === moduleId) || { id: moduleId, name: moduleId };
     const def = (window.CRUD && CRUD.def) ? CRUD.def(moduleId) : null;
     const readOnly = def && def.readOnly;
+
+    // Dedicated public/info pages fallback here when static templates are unavailable.
+    if (moduleId === 'about') {
+      const body = `<div class="card"><h2 style="margin-top:0">About ${T.esc(config.schoolName)}</h2><p>${T.esc(config.schoolMotto || 'Excellence in education.')}</p><p>This portal was generated with School Connect and gives ${T.esc(config.schoolName)} a modern school-management platform with role-based access for administrators, teachers, parents and students.</p><div class="grid grid-2"><div class="card"><h3>What this school portal offers</h3><ul><li>Academic records and report cards</li><li>Attendance, timetable and assignments</li><li>CBT exams and digital resources</li><li>Messaging, notifications and parent access</li></ul></div><div class="card"><h3>School information</h3><p><b>School:</b> ${T.esc(config.schoolName)}</p><p><b>Short name:</b> ${T.esc(config.shortName || '')}</p><p><b>Address:</b> ${T.esc(config.address || 'Not yet provided')}</p><p><b>Email:</b> ${T.esc(config.email || 'Not yet provided')}</p><p><b>Phone:</b> ${T.esc(config.phone || 'Not yet provided')}</p></div></div></div>`;
+      return T.shell(config, 'About', body, { requireRole: 'all', pageId: 'about', noShell: !!opts.noShell });
+    }
+    if (moduleId === 'contact') {
+      const email = T.esc(config.email || '');
+      const phone = T.esc(config.phone || '');
+      const body = `<div class="card"><h2 style="margin-top:0">Contact ${T.esc(config.schoolName)}</h2><p>Use the details below to reach the school directly.</p><div class="grid grid-2"><div class="card"><h3>Contact details</h3><p><b>Address:</b> ${T.esc(config.address || 'Not yet provided')}</p><p><b>Email:</b> ${email || 'Not yet provided'}</p><p><b>Phone:</b> ${phone || 'Not yet provided'}</p></div><div class="card"><h3>Quick actions</h3><div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-primary" href="${email ? 'mailto:'+email : 'apply.html'}">${email ? 'Send Email' : 'Request Access'}</a>${phone ? `<a class="btn btn-outline" href="tel:${phone}">Call School</a>` : ''}<a class="btn btn-outline" href="apply.html">Apply / Request Access</a></div></div></div></div>`;
+      return T.shell(config, 'Contact', body, { requireRole: 'all', pageId: 'contact', noShell: !!opts.noShell });
+    }
+    if (moduleId === 'feature-guide') {
+      const selected = Array.isArray(config.modules) ? config.modules : [];
+      const enabled = selected.length ? selected : (window.SC.MODULES || []).slice(0, 12).map(m => m.id);
+      const labels = enabled.map(id => T.labelFor(id, id));
+      const body = `<div class="card"><h2 style="margin-top:0">Feature Guide</h2><p>This guide summarises what is available in the portal and who each area is for.</p><div class="grid grid-2"><div class="card"><h3>Role guide</h3><ul><li><b>Admin:</b> system oversight, setup, approvals, finance and analytics</li><li><b>Staff/Teacher:</b> classroom, attendance, results, assignments and academic workflows</li><li><b>Parent:</b> linked-child visibility, messages, fees and report cards</li><li><b>Student:</b> own timetable, assignments, CBT, report card and resources</li></ul></div><div class="card"><h3>Enabled features</h3><ul>${labels.map(x => `<li>${T.esc(x)}</li>`).join('')}</ul></div></div></div>`;
+      return T.shell(config, 'Feature Guide', body, { requireRole: 'all', pageId: 'feature-guide', noShell: !!opts.noShell });
+    }
+    if (moduleId === 'developer') {
+      const body = `<div class="card"><h2 style="margin-top:0">About the Developer</h2><p>This portal was generated with School Connect by HMG Concepts. The platform is designed to run on free-first tools: static hosting plus Supabase, without paid AI API dependency.</p><p><a class="btn btn-primary" href="${T.esc(config.hmgLink || 'https://hmgconcepts.pages.dev/')}" target="_blank" rel="noopener">Visit HMG Concepts</a></p></div>`;
+      return T.shell(config, 'Developer', body, { requireRole: 'all', pageId: 'developer', noShell: !!opts.noShell });
+    }
     // FIX v9: Complete role-based write permissions
     const adminOnlyModules = ['academic_setup','departments','admissions','approvals','admin_data','admin-data',
       'analytics','finance','hr','payroll','staff_loans','staff_bonus','appraisals','inventory','compliance',

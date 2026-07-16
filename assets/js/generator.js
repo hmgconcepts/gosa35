@@ -153,7 +153,7 @@ const Generator = {
     // ---- 2b. Load specialised page templates when available ----
     // These pages have richer workflows than generic CRUD pages (CBT taking,
     // certificate printing, admissions links, inbox workflow and teacher overview).
-    const specialIds = ['payment-history', 'cbt','cbt-prompts','cbt-exam','certificates','admissions','entrance','teacher-overview','inbox','messages','notifications','voting','academic_records','report-cards','idcards','analytics','academic_setup','apply','exam-register','profile','change-password','cbt-multi'];
+    const specialIds = ['payment-history', 'cbt','cbt-prompts','cbt-exam','certificates','admissions','entrance','teacher-overview','inbox','messages','notifications','voting','academic_records','report-cards','idcards','analytics','academic_setup','apply','exam-register','profile','change-password','cbt-multi', 'surveys', 'checkin', 'checkin-staff', 'geofence-settings', 'geofence-settings'];
     const staticPages = {};
     for (const sid of specialIds) {
       try {
@@ -200,7 +200,9 @@ const Generator = {
       'database/update-v6-schema.sql',
       'database/update-v8-schema.sql',
       'database/update-v9-schema.sql',
-      'database/update-v11-schema.sql'
+      'database/update-v11-schema.sql',
+      'database/update-v11-voting-security.sql',
+      'database/update-v12-schema.sql'
     ];
     const sqlContents = {};
     for (const f of sqlFiles) {
@@ -254,7 +256,7 @@ const Generator = {
       } },
       { id: 'cbt-exam',           name: 'Take Exam',           fn: () => staticPages['cbt-exam'] || T.modulePage(resolvedConfig, 'cbt-exam', { requireRole: 'all' }) },
       { id: 'cbt-prompts',        name: 'CBT Prompt Templates', fn: () => staticPages['cbt-prompts'] || T.modulePage(resolvedConfig, 'cbt-prompts') },
-      { id: 'cbt-multi',          name: 'Multi-Subject CBT',   fn: () => staticPages['cbt-multi'] || T.modulePage(resolvedConfig, 'cbt') },
+      { id: 'cbt-multi',          name: 'Multi-Subject CBT',   fn: () => staticPages['cbt-multi'] || Generator.fallbackPage('cbt-multi') },
       { id: 'verify-certificate', name: 'Verify Certificate',  fn: () => T.modulePage(resolvedConfig, 'verify-certificate', { requireRole: 'all' }) },
       { id: 'teacher-overview',   name: 'Teacher Overview',   fn: () => staticPages['teacher-overview'] || T.modulePage(resolvedConfig, 'teacher-overview') },
       { id: 'feature-guide',      name: 'Feature Guide',      fn: () => T.modulePage(resolvedConfig, 'feature-guide', { requireRole: 'all' }) },
@@ -408,11 +410,6 @@ const Generator = {
 
   /** Replace demo branding in copied specialised static pages. */
   sanitizeStaticPage(html, cfg) {
-    // FIX C-04/C-05: specialised static pages are copied from the generator's
-    // demo templates. They must be fully re-branded before they enter a client
-    // ZIP; otherwise pages such as report-cards.html can leak demo names,
-    // acronyms, colours, theme IDs, logo paths or HMG links. Also reject any
-    // accidental host/rate-limit document so a GitHub 429 page is never shipped.
     if (Generator.isBadRemoteContent(html)) return '';
     const safeName = cfg.schoolName || 'School';
     const shortName = cfg.shortName || 'SC';
@@ -435,8 +432,13 @@ const Generator = {
       .replace(/data-font="plusjakarta"/g, 'data-font="' + fontId + '"')
       .replace(/https:\/\/hmgconcepts\.pages\.dev\//g, hmgLink)
       .replace(/assets\/img\/logo\.(png|jpe?g|webp|svg)/g, 'assets/img/logo.' + ext)
+      .replace(/https:\/\/(1gosaportal|2gosaportal|schoolconnect)\.(vercel\.app|pages\.dev)\//g, './')
       .replace(/type="image\/(png|jpeg|webp|svg\+xml)"(\s+href="assets\/img\/logo\.)/g, 'type="' + mime + '"$2')
-      .replace(/logoExt: '(png|jpe?g|webp|svg)'/g, "logoExt: '" + ext + "'");
+      .replace(/logoExt: '(png|jpe?g|webp|svg)'/g, "logoExt: '" + ext + "'")
+      // ENTERPRISE V9 SEO + Lead Gen
+      .replace(/<title>(.*?)<\/title>/i, '<title>$1 • Powered by HMG Concepts</title>')
+      .replace(/<meta property="og:site_name" content="(.*?)"/i, '<meta property="og:site_name" content="$1 • Built with School Connect by HMG Concepts"')
+      .replace(/<\/body>/i, '<div style="display:none"><a href="https://hmgconcepts.pages.dev/">Built with School Connect by HMG Concepts</a></div></body>');
   },
 
   /** Generate the school-specific config.js */
@@ -944,12 +946,6 @@ Sitemap: ${base ? base + '/sitemap.xml' : '/sitemap.xml'}
 
   /** Generate sitemap.xml */
   generateSitemap(cfg) {
-    // FIX R-02: sitemap must only list PUBLIC pages with ABSOLUTE URLs.
-    // The previously deployed output listed 90+ private, auth-gated pages
-    // (dashboard, payroll, admin-data…) with relative <loc> values like
-    // "/students.html", which is invalid per the sitemap protocol and asks
-    // Google to index private pages. Use cfg.siteUrl when provided; fall
-    // back to a clearly-marked placeholder the deployer replaces once.
     const base = ((cfg && cfg.siteUrl) ? String(cfg.siteUrl).replace(/\/+$/, '') : 'https://REPLACE-WITH-YOUR-DOMAIN.example');
     const publicPages = [
       { p: '/',                   cf: 'weekly',  pr: '1.0' },
@@ -958,7 +954,9 @@ Sitemap: ${base ? base + '/sitemap.xml' : '/sitemap.xml'}
       { p: '/apply.html',         cf: 'weekly',  pr: '0.8' },
       { p: '/exam-register.html', cf: 'weekly',  pr: '0.7' },
       { p: '/login.html',         cf: 'monthly', pr: '0.5' },
-      { p: '/feature-guide.html', cf: 'monthly', pr: '0.5' }
+      { p: '/feature-guide.html', cf: 'monthly', pr: '0.5' },
+      { p: '/verify-certificate.html', cf: 'monthly', pr: '0.4' },
+      { p: '/entrance.html',      cf: 'weekly',  pr: '0.6' }
     ];
     return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -1018,7 +1016,7 @@ Generated by [School Connect](https://hmgconcepts.pages.dev/) by HMG Concepts.
 ### 3. Run the Database Schema
 1. In Supabase, go to **SQL Editor**
 2. Copy-paste the contents of each file below and run in order:
-   - \`database/schema.sql\` (main tables)
+   - \`database/schema.sql\` (main tables + RLS + V9 enhancements)
    - \`database/voting-schema.sql\` (polls & voting)
    - \`database/cbt-schema.sql\` (CBT exams)
    - \`database/reportcard-schema.sql\` (report cards)

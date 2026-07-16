@@ -3,8 +3,8 @@
 // ====================================================================
 
 // Supabase credentials
-window.SUPABASE_URL = 'https://auptmhagbksebetbxknv.supabase.co';
-window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1cHRtaGFnYmtzZWJldGJ4a252Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNzk2NzIsImV4cCI6MjA5ODY1NTY3Mn0.jqVpNZlpITEM8bmw8r2ja-pt7hQuIhIYTau8uD0Clxc';
+window.SUPABASE_URL = 'https://dgarrlzbmscpgtefdupm.supabase.co';
+window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnYXJybHpibXNjcGd0ZWZkdXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMzc0MTYsImV4cCI6MjA5NzkxMzQxNn0.7CNB3KcQD3NHr6ENDGb7gRX_ld_xjgpQeL_YVuLRW_A';
 
 // Initialize Supabase client (guarded so public/offline pages do not crash if the CDN is unavailable)
 window.sb = null;
@@ -23,15 +23,16 @@ window.SCHOOL = {
   name: 'God of Seed Academy',
   shortName: 'GoSA',
   motto: 'Excellence in Learning and Character',
-  address: '',
-  phone: '',
-  email: '',
+  address: '123 School Way, Lagos, Nigeria',
+  phone: '+234 800 123 4567',
+  email: 'info@gosa.edu.ng',
   logoExt: 'png',
   primary: '#0506ae',
   accent: '#964eec',
   themeId: 'theme15',
   campuses: [],
   hmgLink: 'https://hmgconcepts.pages.dev/',
+  siteUrl: 'https://1gosaportal.vercel.app',
   currency: '\u20A6'
 };
 

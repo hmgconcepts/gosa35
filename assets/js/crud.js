@@ -183,6 +183,12 @@ const CRUD = {
       {key:'method',label:'Method',type:'select',options:['cash','transfer','pos','online']},
       {key:'reference',label:'Reference',type:'text'},{key:'term',label:'Term',type:'lookup',lookupKind:'term'},{key:'session',label:'Session',type:'lookup',lookupKind:'session'}
     ]},
+    payments_online: { table:'payment_intents', title:'Online Fee Payment', cols:[
+      {key:'student_id',label:'Student',type:'ref',refTable:'students',refValue:'full_name',refExtra:['class','admission_no'],refStore:'id',groupBy:'class',searchable:true,required:true},
+      {key:'amount',label:'Amount',type:'number',required:true},
+      {key:'provider',label:'Provider',type:'select',options:['paystack','flutterwave','bank_transfer']},
+      {key:'reference',label:'Reference',type:'text'},{key:'checkout_url',label:'Checkout URL',type:'text'},{key:'status',label:'Status',type:'select',options:['pending','paid','failed','cancelled']}
+    ]},
     finance: { table:'finance_entries', title:'Finance entry', cols:[
       {key:'type',label:'Type',type:'select',options:['income','expense']},
       {key:'category',label:'Category',type:'text'},{key:'amount',label:'Amount',type:'number',required:true},
@@ -278,25 +284,58 @@ const CRUD = {
     ]},
 
     /* ENTERPRISE FINAL V2 (#22): external examination registrations —
-       SSCE (WAEC/NECO), UTME/JAMB, IGCSE, Common Entrance, BECE, others.
-       Stored in module_records via the generic engine? No — dedicated def so
-       exports/extraction work richly; table module_records keeps it schema-safe. */
-    exam_registrations: { table:'module_records', generic:true, module:'exam_registrations', title:'External Exam Registration', help:'Register candidates for SSCE (WAEC/NECO), UTME/JAMB, IGCSE, Common Entrance, BECE and more. Track payment and submission status, then export all details as CSV/PDF for the exam body portal.', cols:[
-      {key:'data.exam_type',label:'Examination',type:'select',options:['WAEC SSCE','NECO SSCE','UTME (JAMB)','IGCSE (Cambridge)','Common Entrance (NCEE)','BECE (Junior WAEC)','GCE (private)','TOEFL/IELTS','Other'],required:true},
-      {key:'title',label:'Candidate full name',type:'text',required:true},
-      {key:'data.student',label:'Link to student record',type:'ref',refTable:'students',refValue:'full_name',refStore:'value',searchable:true},
-      {key:'data.class',label:'Present class',type:'ref',refTable:'classes',refValue:'name'},
-      {key:'data.exam_year',label:'Exam year',type:'number'},
-      {key:'data.exam_number',label:'Exam/Registration number (when issued)',type:'text'},
-      {key:'data.subjects',label:'Subjects (comma-separated, e.g. English, Maths, Physics…)',type:'textarea'},
-      {key:'data.jamb_courses',label:'UTME: course & institutions (1st/2nd choice)',type:'textarea'},
-      {key:'data.centre',label:'Exam centre (when assigned)',type:'text'},
-      {key:'amount',label:'Registration fee paid',type:'number'},
-      {key:'data.fee_balance',label:'Fee balance',type:'number'},
-      {key:'ref_date',label:'Registration date',type:'date'},
-      {key:'data.passport_link',label:'Passport photo (Drive link)',type:'text'},
-      {key:'status',label:'Status',type:'select',options:['collecting-details','paid','submitted-to-body','number-issued','completed']},
-      {key:'body',label:'Notes',type:'textarea'}
+       SSCE (WAEC/NECO), UTME/JAMB, IGCSE, Common Entrance, BECE, others. */
+    exam_registrations: { table:'module_records', generic:true, module:'exam_registrations', title:'External Exam Registration', help:'Register candidates for SSCE (WAEC/NECO), UTME/JAMB, IGCSE, Common Entrance, BECE and more.', cols:[
+      {key:'data.exam_type',label:'Examination',type:'select',options:['WAEC SSCE','NECO SSCE','UTME (JAMB)','IGCSE (Cambridge)','Common Entrance (NCEE)','BECE (Junior WAEC)','GCE','NABTEB','Other'],required:true},
+      {key:'title',label:'Candidate Full Name',type:'text',required:true},
+      {key:'data.student_id',label:'Link to student record',type:'ref',refTable:'students',refValue:'full_name',refStore:'id',searchable:true,autofill:{'data.dob':'date_of_birth','data.gender':'gender'}},
+      {key:'data.dob',label:'Date of Birth',type:'date'},
+      {key:'data.gender',label:'Gender',type:'select',options:['male','female']},
+      {key:'data.nin',label:'NIN (National Identity Number)',type:'text'},
+      {key:'data.exam_year',label:'Exam Year',type:'number',default:new Date().getFullYear()},
+      {key:'data.subjects',label:'Subjects (comma-separated)',type:'textarea',help:'e.g. English, Mathematics, Physics...'},
+      {key:'data.jamb_profile_code',label:'JAMB Profile Code / Number',type:'text'},
+      {key:'data.course_choice_1',label:'1st Choice Course (UTME)',type:'text'},
+      {key:'data.institution_1',label:'1st Choice Institution',type:'text'},
+      {key:'data.course_choice_2',label:'2nd Choice Course (UTME)',type:'text'},
+      {key:'data.institution_2',label:'2nd Choice Institution',type:'text'},
+      {key:'data.centre',label:'Exam Centre',type:'text'},
+      {key:'data.exam_no',label:'Exam/Reg Number',type:'text'},
+      {key:'amount',label:'Fee Paid',type:'number'},
+      {key:'status',label:'Status',type:'select',options:['collecting-details','paid','processing','registered','completed']}
+    ]},
+
+    /* AFFECTIVE & PSYCHOMOTOR DOMAINS (v9) */
+    affective_traits: { table:'affective_traits', title:'Affective Domain', cols:[
+      {key:'student_id',label:'Student',type:'ref',refTable:'students',refValue:'full_name',refStore:'id',groupBy:'class',searchable:true,required:true},
+      {key:'term',label:'Term',type:'lookup',lookupKind:'term',required:true},
+      {key:'session',label:'Session',type:'lookup',lookupKind:'session',required:true},
+      {key:'data.punctuality',label:'Punctuality',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.neatness',label:'Neatness',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.politeness',label:'Politeness',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.honesty',label:'Honesty',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.leadership',label:'Leadership',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.cooperation',label:'Cooperation',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.attentiveness',label:'Attentiveness',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']}
+    ]},
+    psychomotor_traits: { table:'psychomotor_traits', title:'Psychomotor Domain', cols:[
+      {key:'student_id',label:'Student',type:'ref',refTable:'students',refValue:'full_name',refStore:'id',groupBy:'class',searchable:true,required:true},
+      {key:'term',label:'Term',type:'lookup',lookupKind:'term',required:true},
+      {key:'session',label:'Session',type:'lookup',lookupKind:'session',required:true},
+      {key:'data.handwriting',label:'Handwriting',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.verbal_fluency',label:'Verbal Fluency',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.sports',label:'Games & Sports',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.crafts',label:'Crafts / Handiwork',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.drawing',label:'Drawing / Painting',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']},
+      {key:'data.music',label:'Music / Singing',type:'select',options:['5 - Excellent','4 - Very Good','3 - Good','2 - Fair','1 - Poor']}
+    ]},
+    report_comments: { table:'report_comments', title:'Report Card Comments', cols:[
+      {key:'student_id',label:'Student',type:'ref',refTable:'students',refValue:'full_name',refStore:'id',groupBy:'class',searchable:true,required:true},
+      {key:'term',label:'Term',type:'lookup',lookupKind:'term',required:true},
+      {key:'session',label:'Session',type:'lookup',lookupKind:'session',required:true},
+      {key:'class_teacher_comment',label:'Class Teacher\'s Comment',type:'textarea'},
+      {key:'principal_comment',label:'Principal\'s Comment',type:'textarea'},
+      {key:'next_term_begins',label:'Next Term Begins',type:'date'}
     ]},
     hr: { table:'payroll', title:'Salary / Payslip', alias:'payroll', cols:[
       {key:'staff_name',label:'Staff (pick from list)',type:'ref',refTable:'staff',refValue:'full_name',refExtra:['role'],refStore:'value',searchable:true,required:true},
@@ -592,6 +631,12 @@ const CRUD = {
      - Parents see only their linked children's data
      - Staff/Admin see all data (no filter)
   */
+  stableTableCacheKey(moduleId, suffix='') {
+    const uid = (window.SC_PROFILE && SC_PROFILE.id) || 'guest';
+    const role = (window.SC_PROFILE && SC_PROFILE.role) || (window.App && App.currentRole) || 'guest';
+    return 'sc-table-cache:' + role + ':' + uid + ':' + moduleId + ':' + suffix;
+  },
+
   async renderList(moduleId, options = {}) {
     const d = this.def(moduleId);
     const key = this.canonicalId(moduleId);
@@ -612,12 +657,16 @@ const CRUD = {
 
     // Non-admin data scoping: never show another learner/family's private records.
     // strictStudentModules = one learner only; classAssignedModules = class-wide resources like assignments/e-resources.
-    const strictStudentModules = ['results', 'attendance', 'fees', 'report_cards', 'certificates'];
+    const strictStudentModules = ['results', 'attendance', 'fees', 'report_cards', 'certificates', 'payments_online'];
+    // Identity documents are also learner-owned, but kept separate so fee/payment scoping stays explicit and regression-testable.
+    const identityScopedModules = ['idcards'];
+    const strictStudentLikeModules = strictStudentModules.concat(identityScopedModules);
     const classAssignedModules = ['assignments', 'eresources', 'digital_library', 'library_borrowers', 'timetable'];
     const messageModules = ['messages', 'inbox', 'complaints', 'helpdesk'];
-    const studentOwnedModules = strictStudentModules.concat(classAssignedModules, messageModules);
-    const parentViewModules = strictStudentModules.concat(['assignments', 'messages', 'inbox', 'complaints', 'helpdesk']);
+    const studentOwnedModules = strictStudentLikeModules.concat(classAssignedModules, messageModules);
+    const parentViewModules = strictStudentLikeModules.concat(['assignments', 'messages', 'inbox', 'complaints', 'helpdesk']);
     const requestedStudentId = new URLSearchParams(location.search).get('student') || '';
+    const cacheKey = this.stableTableCacheKey(moduleId, requestedStudentId || 'all');
 
     // Build query with role-based filtering
     const listTable = d.listTable || d.table;
@@ -646,29 +695,35 @@ const CRUD = {
     const head = '<tr>' + cols.map(c => '<th>' + esc(c.label) + '</th>').join('') + (writable ? '<th>Actions</th>' : '') + '</tr>';
     tableEl.querySelector('thead').innerHTML = head;
     const tb = tableEl.querySelector('tbody');
-    if (error) { tb.innerHTML = '<tr><td colspan="' + (cols.length + (writable ? 1 : 0)) + '">' + esc(error.message) + '</td></tr>'; return; }
+    if (error) {
+      let cached = null; try { cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); } catch(_) {}
+      if (cached && cached.html) { tb.innerHTML = cached.html + '<tr><td colspan="' + (cols.length + (writable ? 1 : 0)) + '" style="color:#b45309;background:#fffbeb">Live refresh failed; showing the last visible records so they do not disappear. ' + esc(error.message) + '</td></tr>'; return; }
+      tb.innerHTML = '<tr><td colspan="' + (cols.length + (writable ? 1 : 0)) + '">' + esc(error.message) + '</td></tr>'; return;
+    }
 
     // Additional filtering for students and parents - get linked IDs/names and filter data
     let filteredData = data || [];
     if (isStudent && studentOwnedModules.includes(key) && currentUserId) {
       try {
-        const { data: st } = await this.sb.from('students').select('id,full_name,class,class_name,admission_no,user_id').eq('user_id', currentUserId).maybeSingle();
+        const { data: st } = await this.sb.from('students').select('id,full_name,class,admission_no,user_id').eq('user_id', currentUserId).maybeSingle();
         if (!st) { filteredData = []; }
         else {
           const stName = String(st.full_name || '').toLowerCase();
-          const stClass = String(st.class || st.class_name || '').toLowerCase();
+          const stClass = String(st.class || '').toLowerCase();
           const stAdm = String(st.admission_no || '').toLowerCase();
-          const ownRecord = (r) => r.student_id === st.id || r.student_id_ref === st.id || r.user_id === currentUserId ||
+          const ownRecord = (r) => r.student_id === st.id || r.student_id_ref === st.id || r.person_id === st.id || r.user_id === currentUserId ||
             (r.student_name && String(r.student_name).toLowerCase() === stName) ||
             (r.admission_no && String(r.admission_no).toLowerCase() === stAdm) ||
             (r.data && r.data.student && String(r.data.student).toLowerCase() === stName) ||
-            (r.data && r.data.admission_no && String(r.data.admission_no).toLowerCase() === stAdm);
+            (r.data && r.data.student_name && String(r.data.student_name).toLowerCase() === stName) ||
+            (r.data && r.data.admission_no && String(r.data.admission_no).toLowerCase() === stAdm) ||
+            (r.data && r.data.person_id && String(r.data.person_id) === String(st.id));
           const classRecord = (r) => (r.class && String(r.class).toLowerCase() === stClass) ||
             (r.student_class && String(r.student_class).toLowerCase() === stClass) ||
             (r.data && r.data.class && String(r.data.class).toLowerCase() === stClass);
           const myMessage = (r) => r.created_by === currentUserId || r.submitted_by === currentUserId || r.recipient_id === currentUserId ||
-            (r.data && String(r.data.to || '').toLowerCase().includes(stName));
-          filteredData = (data || []).filter(r => strictStudentModules.includes(key) ? ownRecord(r) : (classAssignedModules.includes(key) ? (ownRecord(r) || classRecord(r)) : myMessage(r)));
+            (r.data && (r.data.recipient_id === currentUserId || String(r.data.to || '').toLowerCase().includes(stName) || String(r.data.student || '').toLowerCase() === stName || String(r.data.admission_no || '').toLowerCase() === stAdm));
+          filteredData = (data || []).filter(r => strictStudentLikeModules.includes(key) ? ownRecord(r) : (classAssignedModules.includes(key) ? (ownRecord(r) || classRecord(r)) : myMessage(r)));
         }
       } catch(e) { console.warn('Student filter failed:', e); filteredData = []; }
     }
@@ -678,26 +733,32 @@ const CRUD = {
         if (links && links.length > 0) {
           let childIds = links.map(l => l.student_id).filter(Boolean);
           if (requestedStudentId && childIds.includes(requestedStudentId)) childIds = [requestedStudentId];
-          const { data: kids } = await this.sb.from('students').select('id,full_name,class,class_name,admission_no').in('id', childIds).then(r=>r, ()=>({data:[]}));
+          const { data: kids } = await this.sb.from('students').select('id,full_name,class,admission_no').in('id', childIds).then(r=>r, ()=>({data:[]}));
           const childNames = (kids || []).map(k => String(k.full_name || '').toLowerCase()).filter(Boolean);
-          const childClasses = (kids || []).flatMap(k => [k.class, k.class_name]).map(x => String(x || '').toLowerCase()).filter(Boolean);
+          const childClasses = (kids || []).flatMap(k => [k.class]).map(x => String(x || '').toLowerCase()).filter(Boolean);
           const childAdm = (kids || []).map(k => String(k.admission_no || '').toLowerCase()).filter(Boolean);
-          const childOwn = (r) => childIds.includes(r.student_id) || childIds.includes(r.student_id_ref) ||
+          const childOwn = (r) => childIds.includes(r.student_id) || childIds.includes(r.student_id_ref) || childIds.includes(r.person_id) ||
             (r.student_name && childNames.includes(String(r.student_name).toLowerCase())) ||
             (r.admission_no && childAdm.includes(String(r.admission_no).toLowerCase())) ||
-            (r.data && r.data.student && childNames.includes(String(r.data.student).toLowerCase()));
+            (r.data && r.data.student && childNames.includes(String(r.data.student).toLowerCase())) ||
+            (r.data && r.data.student_name && childNames.includes(String(r.data.student_name).toLowerCase())) ||
+            (r.data && r.data.person_id && childIds.includes(String(r.data.person_id)));
           const childClass = (r) => (r.class && childClasses.includes(String(r.class).toLowerCase())) ||
             (r.student_class && childClasses.includes(String(r.student_class).toLowerCase())) ||
             (r.data && r.data.class && childClasses.includes(String(r.data.class).toLowerCase()));
-          const myMessage = (r) => r.created_by === currentUserId || r.submitted_by === currentUserId || r.recipient_id === currentUserId;
-          filteredData = (data || []).filter(r => strictStudentModules.includes(key) ? childOwn(r) : (key === 'assignments' ? (childOwn(r) || childClass(r)) : (messageModules.includes(key) ? myMessage(r) : childOwn(r))));
+          const myMessage = (r) => r.created_by === currentUserId || r.submitted_by === currentUserId || r.recipient_id === currentUserId || (r.data && (r.data.recipient_id === currentUserId || childNames.includes(String(r.data.student || '').toLowerCase()) || childAdm.includes(String(r.data.admission_no || '').toLowerCase())));
+          filteredData = (data || []).filter(r => strictStudentLikeModules.includes(key) ? childOwn(r) : (key === 'assignments' ? (childOwn(r) || childClass(r)) : (messageModules.includes(key) ? myMessage(r) : childOwn(r))));
         } else filteredData = [];
       } catch(e) { console.warn('Parent filter failed:', e); filteredData = []; }
     }
 
-    if (!filteredData || !filteredData.length) { tb.innerHTML = '<tr><td colspan="' + (cols.length + (writable ? 1 : 0)) + '" style="color:var(--gray-500)">No records yet.' + (writable ? ' Click “+ Add new”.' : '') + '</td></tr>'; return; }
+    if (!filteredData || !filteredData.length) {
+      let cached = null; try { cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); } catch(_) {}
+      if (cached && cached.html) { tb.innerHTML = cached.html + '<tr><td colspan="' + (cols.length + (writable ? 1 : 0)) + '" style="color:#64748b;background:#f8fafc">No new live rows found right now; the last visible records are kept here so recipients can continue reading them.</td></tr>'; return; }
+      tb.innerHTML = '<tr><td colspan="' + (cols.length + (writable ? 1 : 0)) + '" style="color:var(--gray-500)">No records yet.' + (writable ? ' Click “+ Add new”.' : '') + '</td></tr>'; return;
+    }
     const isLinkCol = (key) => /(_link|link|media_url|photo_url|video|image|thumbnail|read_link|drive)$/i.test(key) || /^(media_url|read_link|drive_link|photo_url)$/i.test(key);
-    tb.innerHTML = filteredData.map(row => '<tr>' + cols.map(c => {
+    const renderedRows = filteredData.map(row => '<tr>' + cols.map(c => {
       let v = cellVal(row, c);
       // ENTERPRISE FINAL V2 (#8): fee balance reflects in every record —
       // auto-compute for display when the stored value is missing.
@@ -723,6 +784,8 @@ const CRUD = {
         '<button class="btn btn-sm btn-outline" onclick="CRUD.openForm(\'' + moduleId + '\',\'' + row.id + '\')">Edit</button> ' +
         '<button class="btn btn-sm btn-outline" onclick="CRUD.remove(\'' + moduleId + '\',\'' + row.id + '\')">Delete</button>' +
       '</td>') + '</tr>').join('');
+    tb.innerHTML = renderedRows;
+    try { sessionStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), html: renderedRows })); } catch(_) {}
     // re-apply role visibility to the freshly-rendered action buttons
     if (window.App && App.applyVisibilityTokens) try { App.applyVisibilityTokens(App.currentRole || (window.SC_PROFILE && SC_PROFILE.role) || ''); } catch (e) {}
   },
@@ -761,6 +824,23 @@ const CRUD = {
     return this.dedupeOptions((c.options || []).map(o => ({ value: o, label: o })));
   },
 
+  isOwnedByCurrent(row) {
+    if (!row) return true;
+    const uid = window.SC_PROFILE?.id || '';
+    const uname = String(window.SC_PROFILE?.full_name || '').toLowerCase();
+    const checks = [row.teacher_id, row.posted_by, row.recorded_by_id, row.created_by, row.submitted_by, row.generated_by, row.assignee];
+    if (checks.some(v => v && uid && String(v) === String(uid))) return true;
+    if (row.teacher && uname && String(row.teacher).toLowerCase() === uname) return true;
+    if (row.recorded_by && uname && String(row.recorded_by).toLowerCase() === uname) return true;
+    if (row.data && row.data.created_by && uid && String(row.data.created_by) === String(uid)) return true;
+    return false;
+  },
+
+  hasOwnershipMarker(row) {
+    if (!row) return false;
+    return !!(row.teacher_id || row.posted_by || row.recorded_by_id || row.created_by || row.submitted_by || row.generated_by || row.assignee || row.teacher || row.recorded_by || (row.data && row.data.created_by));
+  },
+
   async openForm(moduleId, id) {
     const d = this.def(moduleId);
     if (!d) { toast('This module has no editable form.', 'warning'); return; }
@@ -768,13 +848,9 @@ const CRUD = {
     if (!this.sb) { toast('Database not configured (add Supabase keys in assets/js/config.js).', 'warning', 6000); return; }
     let row = {};
     if (id) { const { data } = await this.sb.from(d.table).select('*').eq('id', id).maybeSingle(); row = data || {}; }
-    if (window.App && !App.isAdminRole(App.currentRole) && row && (row.teacher_id || row.posted_by || row.teacher)) {
-      const uid = window.SC_PROFILE?.id;
-      const uname = window.SC_PROFILE?.full_name;
-      if (row.teacher_id !== uid && row.posted_by !== uid && row.teacher !== uname) {
-        toast('Access Denied: You cannot edit records created by another subject teacher.', 'danger', 6000);
-        return;
-      }
+    if (window.App && !App.isAdminRole(App.currentRole) && row && this.hasOwnershipMarker(row) && !this.isOwnedByCurrent(row)) {
+      toast('Access Denied: You can read this record, but only the creator/assigned owner or an admin can edit it.', 'danger', 7000);
+      return;
     }
     // Pre-load any ref/lookup/select option sources
     const getVal = (k) => k.indexOf('data.') === 0 ? ((row.data || {})[k.slice(5)]) : row[k];
@@ -872,12 +948,13 @@ const CRUD = {
     });
     if (missing) { toast(missing + ' is required.', 'warning'); return; }
     if (d.generic) { payload.module = d.module; payload.data = dataObj; if (!payload.title && dataObj.title) payload.title = dataObj.title; if (!id && window.SC_PROFILE && SC_PROFILE.id) payload.created_by = SC_PROFILE.id; }
-    if (!id && d.table === 'complaints' && window.SC_PROFILE && SC_PROFILE.id) payload.submitted_by = SC_PROFILE.id;
-    if (!id && d.table === 'academic_print_records' && window.SC_PROFILE && SC_PROFILE.id) payload.generated_by = SC_PROFILE.id;
+    if (!id && ['complaints','helpdesk_tickets'].includes(d.table) && window.SC_PROFILE && SC_PROFILE.id) payload.submitted_by = SC_PROFILE.id;
+    if (!id && d.table === 'health' && window.SC_PROFILE && SC_PROFILE.id) { payload.recorded_by_id = SC_PROFILE.id; if (!payload.recorded_by && SC_PROFILE.full_name) payload.recorded_by = SC_PROFILE.full_name; }
+    if (!id && ['academic_print_records','reports'].includes(d.table) && window.SC_PROFILE && SC_PROFILE.id) payload.generated_by = SC_PROFILE.id;
     // V6/V4: teacher-owned academic records. Admin can supervise all, but subject teachers
     // should not edit/delete another teacher's records.
     if (!id && window.SC_PROFILE && SC_PROFILE.id && !(window.App && App.isAdminRole && App.isAdminRole(App.currentRole))) {
-      const ownedTables = ['results','assignments','scheme_of_work','lesson_plans','cbt_exams','attendance'];
+      const ownedTables = ['results','assignments','scheme_of_work','lesson_plans','cbt_exams','attendance','health','helpdesk_tickets','reports'];
       if (ownedTables.includes(d.table)) {
         if (!payload.teacher_id) payload.teacher_id = SC_PROFILE.id;
         if (!payload.posted_by) payload.posted_by = SC_PROFILE.id;
@@ -914,6 +991,14 @@ const CRUD = {
     if (!id && d.table === 'parent_child' && payload.parent_id && payload.student_id) {
       const ex = await this.sb.from('parent_child').select('id').eq('parent_id', payload.parent_id).eq('student_id', payload.student_id).maybeSingle().then(r=>r, ()=>({data:null}));
       if (ex.data) { toast('This parent is already linked to this child. Choose another child or update the existing link.', 'warning', 7000); return; }
+    }
+    const sharedTables = ['library', 'digital_library', 'gallery', 'eresources', 'events', 'announcements'];
+    if (id && window.App && !App.isAdminRole(App.currentRole) && !sharedTables.includes(d.table)) {
+      const { data: row } = await this.sb.from(d.table).select('*').eq('id', id).maybeSingle();
+      if (row && this.hasOwnershipMarker(row) && !this.isOwnedByCurrent(row)) {
+        toast('Access Denied: You can read this record, but only the creator/assigned owner or an admin can modify it.', 'danger', 7000);
+        return;
+      }
     }
     const runSave = async (pl) => id ? await this.sb.from(d.table).update(pl).eq('id', id) : await this.sb.from(d.table).insert(pl);
     let res = await runSave(payload);
@@ -1126,13 +1211,9 @@ const CRUD = {
     const sharedTables = ['library', 'digital_library', 'gallery', 'eresources', 'events', 'announcements'];
     if (window.App && !App.isAdminRole(App.currentRole) && !sharedTables.includes(d.table)) {
       const { data: row } = await this.sb.from(d.table).select('*').eq('id', id).maybeSingle();
-      if (row && (row.teacher_id || row.posted_by || row.teacher)) {
-        const uid = window.SC_PROFILE?.id;
-        const uname = window.SC_PROFILE?.full_name;
-        if (row.teacher_id !== uid && row.posted_by !== uid && row.teacher !== uname) {
-          toast('Access Denied: You cannot delete records created by another subject teacher.', 'danger', 6000);
-          return;
-        }
+      if (row && this.hasOwnershipMarker(row) && !this.isOwnedByCurrent(row)) {
+        toast('Access Denied: You can read this record, but only the creator/assigned owner or an admin can delete it.', 'danger', 7000);
+        return;
       }
     }
     if (!confirm('Delete this ' + d.title.toLowerCase() + '?')) return;
@@ -1251,8 +1332,12 @@ const CRUD = {
      ============================================================ */
   async promoteWholeClass() {
     if (!this.sb) { toast('Database not configured.', 'warning'); return; }
-    const { data: classes } = await this.sb.from('classes').select('name').order('name');
+    const [{ data: classes }, { data: lookups }] = await Promise.all([this.sb.from('classes').select('name').order('name'), this.sb.from('lookups').select('kind,value').in('kind',['term','session']).order('position')]);
     const opts = (classes || []).map(c => '<option>' + esc(c.name) + '</option>').join('');
+    const terms = [...new Set((lookups||[]).filter(x=>x.kind==='term').map(x=>x.value).filter(Boolean))];
+    const sessions = [...new Set((lookups||[]).filter(x=>x.kind==='session').map(x=>x.value).filter(Boolean))];
+    const termOpts = (terms.length?terms:['First Term','Second Term','Third Term']).map(v=>'<option>'+esc(v)+'</option>').join('');
+    const sessionOpts = (sessions.length?sessions:['2025/2026','2026/2027']).map(v=>'<option>'+esc(v)+'</option>').join('');
     openModal('🎓 End-of-Session Class Migration',
       '<p style="color:var(--gray-600)">Move every student from one class to the next after the 3rd-term exams. Results, fees and records remain attached to each student automatically.</p>' +
       '<div class="grid grid-2"><div class="form-group"><label>From class</label><select id="pm-from" class="form-select" onchange="CRUD._pmLoad()"><option value="">— select —</option>' + opts + '</select></div>' +
@@ -1515,6 +1600,64 @@ const CRUD = {
     if (window.App && App.logActivity) App.logActivity('attendance-from-checkin', 'attendance', rows.length + ' present');
     toast('✅ Marked ' + rows.length + ' student(s) PRESENT from QR check-ins.', 'success', 6000);
     this.renderList('attendance');
+  },
+
+  /* ============================================================
+     ENTERPRISE V10: BULK TRAITS FILL
+     Easy interface to fill Affective/Psychomotor domains for a 
+     whole class at once.
+     ============================================================ */
+  async bulkFillTraits(kind) {
+    if (!this.sb) { toast('Database not configured.', 'warning'); return; }
+    const [{ data: classes }, { data: lookups }] = await Promise.all([this.sb.from('classes').select('name').order('name'), this.sb.from('lookups').select('kind,value').in('kind',['term','session']).order('position')]);
+    const opts = (classes || []).map(c => '<option>' + esc(c.name) + '</option>').join('');
+    const terms = [...new Set((lookups||[]).filter(x=>x.kind==='term').map(x=>x.value).filter(Boolean))];
+    const sessions = [...new Set((lookups||[]).filter(x=>x.kind==='session').map(x=>x.value).filter(Boolean))];
+    const termOpts = (terms.length?terms:['First Term','Second Term','Third Term']).map(v=>'<option>'+esc(v)+'</option>').join('');
+    const sessionOpts = (sessions.length?sessions:['2025/2026','2026/2027']).map(v=>'<option>'+esc(v)+'</option>').join('');
+    const title = kind === 'affective' ? '⭐ Bulk Fill Affective Domain' : '🏃 Bulk Fill Psychomotor Domain';
+    openModal(title,
+      '<div class="grid grid-2"><div class="form-group"><label>Class</label><select id="bf-class" class="form-select" onchange="CRUD._bfLoad(\''+kind+'\')"><option value="">— select —</option>' + opts + '</select></div>' +
+      '<div class="form-group"><label>Term</label><select id="bf-term" class="form-select">'+termOpts+'</select></div><div class="form-group"><label>Session</label><select id="bf-session" class="form-select">'+sessionOpts+'</select></div></div>' +
+      '<div id="bf-list" style="max-height:400px;overflow:auto;margin-top:10px"><p style="color:var(--gray-500)">Pick a class to load students...</p></div>',
+      '<button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="CRUD._bfSave(\''+kind+'\')">Save All</button>');
+  },
+
+  async _bfLoad(kind) {
+    const cls = document.getElementById('bf-class').value;
+    const box = document.getElementById('bf-list');
+    if (!cls) return;
+    const { data: studs } = await this.sb.from('students').select('id,full_name').eq('class', cls).order('full_name');
+    if (!studs || !studs.length) { box.innerHTML = '<p>No students found.</p>'; return; }
+    
+    const traits = kind === 'affective' 
+      ? ['Punctuality','Neatness','Politeness','Honesty','Leadership','Cooperation','Attentiveness']
+      : ['Handwriting','Verbal Fluency','Sports','Crafts','Drawing','Music'];
+
+    let html = '<table class="form-table"><thead><tr><th>Student</th>' + traits.map(t => '<th>'+t+'</th>').join('') + '</tr></thead><tbody>';
+    studs.forEach(s => {
+      html += '<tr data-student-id="'+s.id+'"><td><b>'+esc(s.full_name)+'</b></td>' + traits.map(t => '<td><select class="form-select bf-val" data-trait="'+t+'"><option value="5">5</option><option value="4">4</option><option value="3" selected>3</option><option value="2">2</option><option value="1">1</option></select></td>').join('') + '</tr>';
+    });
+    html += '</tbody></table>';
+    box.innerHTML = html;
+  },
+
+  async _bfSave(kind) {
+    const cls = document.getElementById('bf-class').value;
+    const term = document.getElementById('bf-term').value;
+    const session = (document.getElementById('bf-session')||{}).value || new Date().getFullYear() + '/' + (new Date().getFullYear()+1);
+    const table = kind === 'affective' ? 'affective_traits' : 'psychomotor_traits';
+    const rows = [];
+    document.querySelectorAll('#bf-list tr[data-student-id]').forEach(tr => {
+      const student_id = tr.dataset.studentId;
+      const ratings = {};
+      tr.querySelectorAll('.bf-val').forEach(sel => { ratings[sel.dataset.trait] = sel.value; });
+      rows.push({ student_id, term, session, ratings, teacher_id: window.SC_PROFILE?.id });
+    });
+    const { error } = await this.sb.from(table).upsert(rows, { onConflict: 'student_id,term,session' });
+    if (error) { toast(error.message, 'danger'); return; }
+    toast('✅ Saved traits for ' + rows.length + ' students.', 'success');
+    closeModal();
   }
 };
 

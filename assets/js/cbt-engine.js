@@ -59,8 +59,8 @@ const CBT = {
     // section values, recover subject tabs from the multi-subject builder's
     // anti_cheat_config.subject_breakdown metadata. This is a second safety net
     // so tabs still appear for students.
-    const breakdown = exam && exam.anti_cheat_config && Array.isArray(exam.anti_cheat_config.subject_breakdown)
-      ? exam.anti_cheat_config.subject_breakdown : [];
+    const cfg = exam && exam.anti_cheat_config ? exam.anti_cheat_config : {};
+    const breakdown = Array.isArray(cfg.subject_breakdown) ? cfg.subject_breakdown : [];
     if (breakdown.length > 1) {
       const isMulti = exam && String(exam.subject||'').toLowerCase().startsWith('multi-subject');
       if (new Set(qs.map(q => q.section || q.subject || 'General')).size <= 1 || isMulti) {
@@ -73,6 +73,14 @@ const CBT = {
       });
       }
     }
+    qs = qs.map((q,i) => {
+      if (!(q.section || q.subject)) {
+        const raw = (exam && ((exam._questions && exam._questions[i]) || (exam.questions && exam.questions[i]) || (Array.isArray(exam.csv_data) && exam.csv_data[i]))) || {};
+        const sec = raw.section || raw.subject || raw.subject_section || raw.exam_subject || '';
+        if (sec) { q.section = sec; q.subject = sec; }
+      }
+      return q;
+    });
     // ENTERPRISE V6 (issue 13): UTME-style multi-subject exams must keep each
     // subject's questions GROUPED — never mixed together randomly. Randomise
     // and select_count now operate WITHIN each subject section.
