@@ -116,3 +116,7 @@ Pick ONE of these (all free):
 If anything goes wrong, open **TROUBLESHOOTING.md** in this ZIP.
 
 Powered by HMG Concepts — https://hmgconcepts.pages.dev/
+
+
+## School Connect v1 Final Deployment Note
+Run `database/complete-schema.sql` once in Supabase SQL Editor for a fresh deployment. It is now cumulative and self-contained: it includes base schema, CBT, voting, report cards, enterprise tables, class fee structures, product store, status audit log, parent-child access policies, staff check-in deadline settings, and schema-cache reload notifications. The smaller update SQL files are retained only for upgrading older deployed clients.

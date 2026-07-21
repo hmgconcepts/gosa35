@@ -6,7 +6,7 @@
 <title>Take Exam • School Portal</title>
 <meta name="description" content="Take an online CBT exam. Multi-subject support with subject tabs, anti-cheat monitoring, automatic grading, and printable certificates.">
 <meta name="keywords" content="CBT, online exam, multi-subject, UTME, school, HMG Concepts">
-<meta name="theme-color" content="#1c72e7">
+<meta name="theme-color" content="#0506ae">
 <link rel="icon" type="image/png" href="assets/img/logo.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/img/logo.png">
@@ -15,50 +15,50 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="assets/css/style.css">
 <style>
-:root{--sc-primary:#1c72e7;--sc-accent:#5e2174;--primary:#1c72e7;--accent:#5e2174}
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f8fafc;margin:0;padding:0;color:#0f172a;min-height:100vh}
+:root{--sc-primary:#0506ae;--sc-accent:#964eec;--primary:#0506ae;--accent:#964eec}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;background:#f8fafc;margin:0;padding:0;color:#0f172a;min-height:100vh}
 .login-shell{min-height:100vh;background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);padding:24px}
 .login-shell .card{background:white;border-radius:18px;box-shadow:0 4px 24px rgba(15,23,42,.08);padding:24px;max-width:840px;margin:0 auto}
-.login-shell .hero-card{text-align:center;margin-bottom:18px;background:linear-gradient(135deg,#1c72e7,#5e2174);color:white;padding:32px 24px}
+.login-shell .hero-card{text-align:center;margin-bottom:18px;background:linear-gradient(135deg,#0506ae,#964eec);color:white;padding:32px 24px}
 .login-shell .hero-card img{width:54px;height:54px;border-radius:12px;object-fit:contain;background:white;padding:6px;margin-bottom:8px}
 .login-shell h1{margin:8px 0 0;font-size:1.4rem;font-weight:800}
 .login-shell h2{margin:0 0 8px;font-size:1.15rem;font-weight:800;color:#0f172a}
 .login-shell .form-group{margin-bottom:12px}
 .login-shell .form-group label{display:block;font-weight:600;font-size:.85rem;color:#475569;margin-bottom:5px}
 .login-shell .form-input{width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:.92rem;font-family:inherit;box-sizing:border-box;background:white}
-.login-shell .form-input:focus{outline:0;border-color:#1c72e7;box-shadow:0 0 0 3px rgba(28,114,231,.15)}
+.login-shell .form-input:focus{outline:0;border-color:#0506ae;box-shadow:0 0 0 3px rgba(28,114,231,.15)}
 .login-shell .btn{padding:10px 18px;border-radius:10px;font-weight:700;font-size:.9rem;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.login-shell .btn-primary{background:linear-gradient(135deg,#1c72e7,#5e2174);color:white}
-.login-shell .btn-outline{background:transparent;border:1px solid #1c72e7;color:#1c72e7}
+.login-shell .btn-primary{background:linear-gradient(135deg,#0506ae,#964eec);color:white}
+.login-shell .btn-outline{background:transparent;border:1px solid #0506ae;color:#0506ae}
 .login-shell .btn:disabled{opacity:.5;cursor:not-allowed}
 .cbt-subject-tabs{position:sticky;top:0;z-index:20;background:white;display:flex;gap:8px;flex-wrap:wrap;margin:-4px -4px 14px;padding:10px 4px;border-bottom:2px solid #e2e8f0}
 .cbt-subject-tabs .btn{font-weight:800}
-.cbt-subject-tabs .btn-primary{background:linear-gradient(135deg,#1c72e7,#5e2174);color:white;border:0}
+.cbt-subject-tabs .btn-primary{background:linear-gradient(135deg,#0506ae,#964eec);color:white;border:0}
 .pulse{display:inline-block;animation:pulse 1.4s ease-in-out infinite;color:#94a3b8}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 #exam-root .card{border-radius:18px;border:1px solid #e2e8f0;background:white;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}
 .q-palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
 .q-palette button{width:34px;height:34px;border-radius:6px;border:1px solid #e2e8f0;background:white;font-weight:700;cursor:pointer;font-size:.82rem}
-.q-palette button.current{background:#1c72e7;color:white;border-color:#1c72e7}
+.q-palette button.current{background:#0506ae;color:white;border-color:#0506ae}
 .q-palette button.answered{background:#dcfce7;border-color:#86efac}
 .q-palette button.flagged{background:#fef08a;border-color:#fde047}
 .q-palette .label{font-size:.75rem;color:#64748b;width:100%;margin-bottom:4px}
-.clock{font-weight:800;font-size:1.05rem;color:#1c72e7}
+.clock{font-weight:800;font-size:1.05rem;color:#0506ae}
 .clock.urgent{color:#dc2626;animation:pulse 1s ease-in-out infinite}
 .viol{color:#dc2626;margin-left:10px;font-size:.85rem;font-weight:700}
 .option-label{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;margin:6px 0;cursor:pointer;transition:all .15s}
 .option-label:hover{background:#f1f5f9;border-color:#cbd5e1}
-.option-label.selected{background:linear-gradient(135deg,rgba(28,114,231,.08),rgba(94,33,116,.08));border-color:#1c72e7}
-.option-letter{width:28px;height:28px;border-radius:50%;background:#1c72e7;color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0}
-.option-label.selected .option-letter{background:#5e2174}
+.option-label.selected{background:linear-gradient(135deg,rgba(28,114,231,.08),rgba(94,33,116,.08));border-color:#0506ae}
+.option-letter{width:28px;height:28px;border-radius:50%;background:#0506ae;color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0}
+.option-label.selected .option-letter{background:#964eec}
 .option-text{flex:1;line-height:1.5}
 textarea.form-input{min-height:80px;resize:vertical}
-.score-circle{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#1c72e7,#5e2174);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 16px;font-weight:900}
+.score-circle{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#0506ae,#964eec);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 16px;font-weight:900}
 .score-circle .pct{font-size:2.4rem;line-height:1}
 .score-circle .lbl{font-size:.7rem;letter-spacing:.1em;opacity:.9;text-transform:uppercase}
 #exam-root .actions{display:flex;justify-content:space-between;margin-top:14px;gap:8px;flex-wrap:wrap}
 #exam-root .actions .btn-outline{background:white;border:1px solid #e2e8f0;color:#0f172a}
-#exam-root .actions .btn-primary{background:linear-gradient(135deg,#1c72e7,#5e2174);color:white;border:0}
+#exam-root .actions .btn-primary{background:linear-gradient(135deg,#0506ae,#964eec);color:white;border:0}
 .notice{background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;font-size:.88rem;color:#92400e;margin:10px 0}
 .notice-error{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
 </style>
@@ -90,8 +90,8 @@ textarea.form-input{min-height:80px;resize:vertical}
       <div class="card"><span class="pulse">Initialising exam system…</span></div>
     </div>
     <p style="text-align:center;margin-top:20px;font-size:.78rem;color:#64748b">
-      Powered by <a href="https://hmgconcepts.pages.dev/" target="_blank" rel="noopener" style="color:#1c72e7">HMG Concepts</a> ·
-      <a href="cbt.html" style="color:#1c72e7">Back to CBT Manager</a>
+      Powered by <a href="https://hmgconcepts.pages.dev/" target="_blank" rel="noopener" style="color:#0506ae">HMG Concepts</a> ·
+      <a href="cbt.html" style="color:#0506ae">Back to CBT Manager</a>
     </p>
   </div>
 </main>
@@ -226,7 +226,7 @@ textarea.form-input{min-height:80px;resize:vertical}
       const st = this.sectionStats(sec);
       const key = encodeURIComponent(sec);
       const isActive = sec === current;
-      return '<button type="button" class="btn ' + (isActive ? 'btn-primary' : 'btn-outline') + '" data-sec="' + esc(key) + '" style="font-weight:800;background:' + (isActive ? 'linear-gradient(135deg,#1c72e7,#5e2174);color:white;border:0' : 'white;color:#1c72e7;border:1px solid #1c72e7') + '">' + esc(sec) + ' <span style="font-size:.68rem;opacity:.85">(' + st.a + '/' + st.t + ')</span></button>';
+      return '<button type="button" class="btn ' + (isActive ? 'btn-primary' : 'btn-outline') + '" data-sec="' + esc(key) + '" style="font-weight:800;background:' + (isActive ? 'linear-gradient(135deg,#0506ae,#964eec);color:white;border:0' : 'white;color:#0506ae;border:1px solid #0506ae') + '">' + esc(sec) + ' <span style="font-size:.68rem;opacity:.85">(' + st.a + '/' + st.t + ')</span></button>';
     }).join('') + '</div>';
   };
 
@@ -522,10 +522,10 @@ textarea.form-input{min-height:80px;resize:vertical}
       return;
     }
     const pct = d.percent != null ? d.percent : graded.percent;
-    const gradeColor = pct >= 75 ? '#1c72e7' : (pct >= 50 ? '#059669' : (pct >= 40 ? '#f59e0b' : '#dc2626'));
+    const gradeColor = pct >= 75 ? '#0506ae' : (pct >= 50 ? '#059669' : (pct >= 40 ? '#f59e0b' : '#dc2626'));
     this.root().innerHTML =
       '<div class="card" style="text-align:center;padding:40px">' +
-      '<div class="score-circle" style="background:linear-gradient(135deg,' + gradeColor + ',#5e2174)"><div class="pct">' + (pct || 0) + '%</div><div class="lbl">Grade ' + (graded.grade || 'F') + '</div></div>' +
+      '<div class="score-circle" style="background:linear-gradient(135deg,' + gradeColor + ',#964eec)"><div class="pct">' + (pct || 0) + '%</div><div class="lbl">Grade ' + (graded.grade || 'F') + '</div></div>' +
       '<h2 style="margin:0 0 8px">🎉 Exam Complete</h2>' +
       '<p style="color:#64748b;margin:0 0 16px">' + esc(this.student.name) + ' · ' + esc(this.data.title || 'Exam') + '</p>' +
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:520px;margin:0 auto">' +
@@ -534,7 +534,7 @@ textarea.form-input{min-height:80px;resize:vertical}
       '<div style="padding:10px;background:#f8fafc;border-radius:10px"><div style="font-size:1.4rem;font-weight:900">' + (d.wrong_count != null ? d.wrong_count : graded.wrong) + '</div><div style="font-size:.7rem;color:#64748b;text-transform:uppercase">Wrong</div></div>' +
       '<div style="padding:10px;background:#f8fafc;border-radius:10px"><div style="font-size:1.4rem;font-weight:900">' + (d.skipped_count != null ? d.skipped_count : graded.skipped) + '</div><div style="font-size:.7rem;color:#64748b;text-transform:uppercase">Skipped</div></div>' +
       '</div>' +
-      (d.cert_code ? '<p style="margin-top:20px">Certificate code: <strong style="font-size:1.1rem;color:#1c72e7">' + esc(d.cert_code) + '</strong></p>' : '') +
+      (d.cert_code ? '<p style="margin-top:20px">Certificate code: <strong style="font-size:1.1rem;color:#0506ae">' + esc(d.cert_code) + '</strong></p>' : '') +
       (d.report_column ? '<p style="color:#64748b;font-size:.88rem">This result was added to the <strong>' + esc(d.report_column) + '</strong> column of your report card.</p>' : '') +
       '<p style="margin-top:20px"><a class="btn btn-primary" href="cbt.html">Back to CBT Manager</a> <a class="btn btn-outline" href="verify-certificate.html">Verify Certificate</a></p>' +
       '</div>';

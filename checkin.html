@@ -119,7 +119,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
 <div class="app-layout sidebar" data-require-role="super_admin admin principal proprietor head_teacher bursar staff teacher">
   <aside class="app-sidebar" id="app-sidebar">
       <div class="app-brand">
-        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{textContent:('G'),style:'width:40px;height:40px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900'}))">
+        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.src='assets/img/logo.svg'">
         <div>
           <strong>God of Seed Academy</strong>
           <div style="font-size:0.7rem;color:var(--gray-500)">GOSA</div>
@@ -168,7 +168,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="flyer.html" data-module-id="flyer" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📰</span>
           <span>Flyer</span>
-        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🧾</span>
           <span>Report Cards</span>
         </a><a href="analytics.html" data-module-id="analytics" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -246,7 +246,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="parents.html" data-module-id="parents" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">👨‍👩‍👧</span>
           <span>Parent–Child</span>
-        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class="">
           <span class="app-nav-icon">🪪</span>
           <span>ID Cards</span>
         </a><a href="directory.html" data-module-id="directory" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -282,7 +282,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
-        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="exam-register.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -478,6 +478,19 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
             <input class="form-input" id="ck-id" placeholder="ADM/1001"></div>
           <div class="form-group"><label>Name (optional)</label><input class="form-input" id="ck-name"></div>
           <div class="form-group"><label>Class (optional)</label><input class="form-input" id="ck-class"></div>
+          
+          <div class="form-group" style="margin-top: 14px; margin-bottom: 14px;">
+            <label style="font-weight: 700; margin-bottom: 8px; display: block;">Select Attendance Action:</label>
+            <div style="display: flex; gap: 20px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem;">
+                <input type="radio" name="clock_action" value="in" checked style="width:18px;height:18px;"> ⏰ <b>Clock In (Daily Arrival)</b>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem;">
+                <input type="radio" name="clock_action" value="out" style="width:18px;height:18px;"> 🚪 <b>Clock Out (Departure)</b>
+              </label>
+            </div>
+          </div>
+          
           <button class="btn btn-primary" onclick="CK.go(document.getElementById('ck-id').value)">✅ Check in</button>
         </div>
       </div>
@@ -580,12 +593,60 @@ const CK={ done:[], stream:null, scanning:false, last:'', lastAt:0,
     const locOk = await this.verifyGeofence();
     if (!locOk) return;
     const p=Enterprise.checkin.parseQR(raw);
-    const nm=p.name||document.getElementById('ck-name').value, cl=document.getElementById('ck-class').value;
-    const r=await Enterprise.checkin.record(p.id, nm, cl, method||(raw.charAt(0)==='{'?'qr':'code'));
-    if(r&&r.error){toast(r.error.message||'Error','danger');return;}
-    CK.done.unshift({id:p.id,name:nm,at:new Date().toLocaleTimeString()});
-    document.getElementById('ck-id').value=''; document.getElementById('ck-name').value=''; toast('✅ Checked in: '+(p.id||nm),'success');
-    document.getElementById('ck-log').innerHTML='<h3>Today\'s check-ins ('+CK.done.length+')</h3>'+CK.done.map(d=>'<div style="padding:6px 0;border-bottom:1px solid var(--gray-200)">✅ <strong>'+esc(d.id)+'</strong> '+esc(d.name||'')+' <span style="color:var(--gray-500);float:right">'+d.at+'</span></div>').join('');
+    const id = p.id || raw;
+    const nm=p.name||document.getElementById('ck-name').value || 'Student';
+    const cl=document.getElementById('ck-class').value || '';
+    const action = document.querySelector('input[name="clock_action"]:checked')?.value || 'in';
+    const now = new Date();
+    
+    const supabase = window.sb || sb;
+    if (!supabase) { toast('Database not configured', 'warning'); return; }
+
+    // Resolve student record ID from admission_no or full_name
+    let studentId = null;
+    let studentName = nm;
+    let studentClass = cl;
+    try {
+      const { data: stRec } = await supabase.from('students').select('id, full_name, class').or(`admission_no.eq.${id},full_name.ilike.%${nm}%`).maybeSingle();
+      if (stRec) {
+        studentId = stRec.id;
+        studentName = stRec.full_name;
+        studentClass = stRec.class || cl;
+      }
+    } catch (_) {}
+
+    if (action === 'in') {
+      // 1. Log Clock-In in student_clock table
+      const { error: clErr } = await supabase.from('student_clock').insert({
+        student_id: studentId,
+        clock_in: now.toISOString(),
+        date: now.toISOString().slice(0, 10),
+        note: 'Clocked in successfully'
+      });
+      if (clErr) { toast('Error logging clock-in: ' + clErr.message, 'danger'); return; }
+
+      // 2. Insert into standard attendance_checkins for overall listings
+      const r = await Enterprise.checkin.record(id, studentName, studentClass, method||(raw.charAt(0)==='{'?'qr':'code'));
+      if(r&&r.error){toast(r.error.message||'Error','danger');return;}
+
+      CK.done.unshift({id: id, name: studentName, at: now.toLocaleTimeString(), action: 'Clock In' });
+      toast('✅ Student Clock-In Successful!', 'success');
+    } else {
+      // 1. Log Clock-Out in student_clock table
+      const todayStr = now.toISOString().slice(0, 10);
+      const { data: todayClock } = await supabase.from('student_clock').select('*').eq('student_id', studentId).eq('date', todayStr).maybeSingle();
+      if (todayClock) {
+        await supabase.from('student_clock').update({ clock_out: now.toISOString(), note: 'Clocked out at ' + now.toLocaleTimeString() }).eq('id', todayClock.id);
+      } else {
+        await supabase.from('student_clock').insert({ student_id: studentId, clock_out: now.toISOString(), date: todayStr, note: 'Clock out only' });
+      }
+      
+      CK.done.unshift({id: id, name: studentName, at: now.toLocaleTimeString(), action: 'Clock Out' });
+      toast('🚪 Student Clock-Out Successful!', 'success');
+    }
+
+    document.getElementById('ck-id').value=''; document.getElementById('ck-name').value='';
+    document.getElementById('ck-log').innerHTML='<h3>Today\'s logs ('+CK.done.length+')</h3>'+CK.done.map(d=>'<div style="padding:6px 0;border-bottom:1px solid var(--gray-200)">✅ <strong>'+esc(d.id)+'</strong> '+esc(d.name||'')+' — <span class="badge" style="font-size:0.75rem;padding:2px 8px;border-radius:4px;background:#e2e8f0">'+esc(d.action)+'</span> <span style="color:var(--gray-500);float:right">'+d.at+'</span></div>').join('');
   }
 };
 window.addEventListener('beforeunload',()=>CK.stopCam());

@@ -119,7 +119,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
 <div class="app-layout sidebar" data-require-role="super_admin admin principal proprietor head_teacher bursar staff teacher parent student">
   <aside class="app-sidebar" id="app-sidebar">
       <div class="app-brand">
-        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{textContent:('G'),style:'width:40px;height:40px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900'}))">
+        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.src='assets/img/logo.svg'">
         <div>
           <strong>God of Seed Academy</strong>
           <div style="font-size:0.7rem;color:var(--gray-500)">GOSA</div>
@@ -153,7 +153,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="subjects.html" data-module-id="subjects" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
           <span class="app-nav-icon">◦</span>
           <span>Subjects</span>
-        </a><a href="attendance.html" data-module-id="attendance" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="active">
+        </a><a href="attendance.html" data-module-id="attendance" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="active">
           <span class="app-nav-icon">📋</span>
           <span>Attendance</span>
         </a><a href="cbt-prompts.html" data-module-id="cbt-prompts" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -168,7 +168,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="flyer.html" data-module-id="flyer" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📰</span>
           <span>Flyer</span>
-        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🧾</span>
           <span>Report Cards</span>
         </a><a href="analytics.html" data-module-id="analytics" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -246,7 +246,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="parents.html" data-module-id="parents" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">👨‍👩‍👧</span>
           <span>Parent–Child</span>
-        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class="">
           <span class="app-nav-icon">🪪</span>
           <span>ID Cards</span>
         </a><a href="directory.html" data-module-id="directory" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -282,7 +282,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
-        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="exam-register.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -486,5 +486,145 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
   if (window.CRUD) CRUD.init(sb);
 </script>
 <script>
-const AT={students:[], async init(){document.getElementById('at-date').value=new Date().toISOString().slice(0,10); try{const {data}=await sb.from('classes').select('name').order('name'); const sel=document.getElementById('at-class'); (function(){var seen=new Set();(data||[]).forEach(c=>{var v=String(c.name==null?'':c.name).trim(),k=v.toLowerCase();if(!v||seen.has(k))return;seen.add(k);var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});})();}catch(e){}}, async load(){ const cls=document.getElementById('at-class').value, box=document.getElementById('at-register'); if(!cls){box.innerHTML='<p>Choose a class.</p>';return;} const {data,error}=await sb.from('students').select('id,full_name,admission_no,class').eq('class',cls).order('full_name').limit(300); if(error){box.innerHTML='<div class="card">'+esc(error.message)+'</div>';return;} this.students=data||[]; box.innerHTML='<div class="card"><h3>'+esc(cls)+' Register</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>Student</th><th>Admission No</th><th>Status</th></tr></thead><tbody>'+this.students.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.full_name)+'</td><td>'+esc(s.admission_no||'')+'</td><td><select class="form-select" id="ats-'+s.id+'"><option value="present">Present</option><option value="absent">Absent</option><option value="late">Late</option><option value="excused">Excused</option></select></td></tr>').join('')+'</tbody></table></div></div>';}, async saveAll(){ if(!this.students.length){toast('Load a class first','warning');return;} const date=document.getElementById('at-date').value||new Date().toISOString().slice(0,10); const rows=this.students.map(s=>({student_id:s.id,student_name:s.full_name,class:s.class,date:date,status:document.getElementById('ats-'+s.id).value,recorded_by:(window.SC_PROFILE&&SC_PROFILE.id)||null})); const {error}=await sb.from('attendance').upsert(rows,{onConflict:'student_id,date'}); if(error){toast(error.message,'danger');return;} toast('Attendance saved for '+rows.length+' student(s)','success'); }}; document.addEventListener('DOMContentLoaded',()=>AT.init()); AT.init();
+const AT={
+  students:[], 
+  async init(){
+    document.getElementById('at-date').value=new Date().toISOString().slice(0,10);
+    const role = (window.SC_PROFILE && SC_PROFILE.role) || (window.SCHOOL_USER && SCHOOL_USER.role) || '';
+    const isParentOrStudent = role === 'parent' || role === 'student';
+    
+    if (isParentOrStudent) {
+      document.getElementById('at-register').innerHTML = '<div class="pulse">Loading attendance history…</div>';
+      const selectors = document.getElementById('at-class')?.closest('.card');
+      if (selectors) selectors.style.display = 'none';
+      document.querySelectorAll('[data-staff-only],[data-admin-only]').forEach(el => el.style.display = 'none');
+      try {
+        let students = [];
+        const userId = (window.SC_PROFILE && SC_PROFILE.id) || (window.SCHOOL_USER && SCHOOL_USER.id) || '';
+        if (!userId) throw new Error('Your session has expired. Please sign in again.');
+        if (role === 'parent') {
+          const { data: links, error: linkError } = await sb.from('parent_child').select('student_id').eq('parent_id', userId);
+          if (linkError) throw linkError;
+          const ids = (links || []).map(x => x.student_id).filter(Boolean);
+          if (ids.length) {
+            const { data: linked, error: studentError } = await sb.from('students').select('id,full_name,class,admission_no').in('id', ids);
+            if (studentError) throw studentError;
+            students = linked || [];
+          }
+        } else {
+          const { data: own, error: studentError } = await sb.from('students').select('id,full_name,class,admission_no').eq('user_id', userId);
+          if (studentError) throw studentError;
+          students = own || [];
+        }
+        if (!students.length) {
+          document.getElementById('at-register').innerHTML = '<div class="card"><p style="color:var(--gray-500)">No student profiles found.</p></div>';
+          return;
+        }
+        const studentIds = students.map(s => s.id);
+        const { data: att, error } = await sb.from('attendance').select('*').in('student_id', studentIds).order('date', { ascending: false }).limit(300);
+        if (error) throw error;
+        if (!att || !att.length) {
+          document.getElementById('at-register').innerHTML = `<div class="card"><h3>📅 Attendance Records</h3><p style="color:var(--gray-500)">No attendance records found yet for: ${students.map(s => s.full_name).join(', ')}</p></div>`;
+          return;
+        }
+        const total = att.length;
+        const present = att.filter(a => String(a.status).toLowerCase() === 'present').length;
+        const late = att.filter(a => String(a.status).toLowerCase() === 'late').length;
+        const absent = att.filter(a => String(a.status).toLowerCase() === 'absent').length;
+        const excused = att.filter(a => String(a.status).toLowerCase() === 'excused').length;
+        const pct = total ? Math.round((present / total) * 100) : 100;
+        let html = `
+          <div class="grid grid-4" style="margin-bottom:16px">
+            <div class="card" style="background:#f0fdf4;border-color:#bbf7d0;text-align:center">
+              <b style="font-size:1.8rem;color:#15803d">${pct}%</b>
+              <div style="font-size:.8rem;color:#166534">Attendance Rate</div>
+            </div>
+            <div class="card" style="background:#f0f9ff;border-color:#bae6fd;text-align:center">
+              <b style="font-size:1.8rem;color:#0369a1">${present}</b>
+              <div style="font-size:.8rem;color:#075985">Days Present</div>
+            </div>
+            <div class="card" style="background:#fffbeb;border-color:#fef08a;text-align:center">
+              <b style="font-size:1.8rem;color:#b45309">${late}</b>
+              <div style="font-size:.8rem;color:#854d0e">Days Late</div>
+            </div>
+            <div class="card" style="background:#fef2f2;border-color:#fecaca;text-align:center">
+              <b style="font-size:1.8rem;color:#b91c1c">${absent}</b>
+              <div style="font-size:.8rem;color:#991b1b">Days Absent</div>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">📅 Read-Only Attendance History</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Student Name</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${att.map(a => {
+                    const statusColors = {
+                      present: 'background:#dcfce7;color:#166534',
+                      absent: 'background:#fee2e2;color:#991b1b',
+                      late: 'background:#fef3c7;color:#854d0e',
+                      excused: 'background:#f1f5f9;color:#475569'
+                    };
+                    const col = statusColors[String(a.status).toLowerCase()] || '';
+                    return `
+                      <tr>
+                        <td><b>${new Date(a.date).toLocaleDateString(undefined, {weekday:'short', year:'numeric', month:'short', day:'numeric'})}</b></td>
+                        <td>${esc(a.student_name || '')}</td>
+                        <td>${esc(a.class || '')}</td>
+                        <td><span style="display:inline-block;padding:3px 12px;border-radius:12px;font-weight:800;font-size:0.75rem;text-transform:uppercase;${col}">${esc(a.status)}</span></td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        document.getElementById('at-register').innerHTML = html;
+      } catch (err) {
+        document.getElementById('at-register').innerHTML = `<div class="card danger">Could not load attendance: ${esc(err.message || err)}</div>`;
+      }
+      return;
+    }
+
+    try{
+      const {data}=await sb.from('classes').select('name').order('name'); 
+      const sel=document.getElementById('at-class'); 
+      (function(){
+        var seen=new Set();
+        (data||[]).forEach(c=>{
+          var v=String(c.name==null?'':c.name).trim(),k=v.toLowerCase();
+          if(!v||seen.has(k))return;
+          seen.add(k);
+          var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);
+        });
+      })();
+    }catch(e){}
+  }, 
+  async load(){ 
+    const cls=document.getElementById('at-class').value, box=document.getElementById('at-register'); 
+    if(!cls){box.innerHTML='<p>Choose a class.</p>';return;} 
+    const {data,error}=await sb.from('students').select('id,full_name,admission_no,class').eq('class',cls).order('full_name').limit(300); 
+    if(error){box.innerHTML='<div class="card">'+esc(error.message)+'</div>';return;} 
+    this.students=data||[]; 
+    box.innerHTML='<div class="card"><h3>'+esc(cls)+' Register</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>Student</th><th>Admission No</th><th>Status</th></tr></thead><tbody>'+this.students.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.full_name)+'</td><td>'+esc(s.admission_no||'')+'</td><td><select class="form-select" id="ats-'+s.id+'"><option value="present">Present</option><option value="absent">Absent</option><option value="late">Late</option><option value="excused">Excused</option></select></td></tr>').join('')+'</tbody></table></div></div>';
+  }, 
+  async saveAll(){ 
+    if(!this.students.length){toast('Load a class first','warning');return;} 
+    const date=document.getElementById('at-date').value||new Date().toISOString().slice(0,10); 
+    const rows=this.students.map(s=>({student_id:s.id,student_name:s.full_name,class:s.class,date:date,status:document.getElementById('ats-'+s.id).value,recorded_by:(window.SC_PROFILE&&SC_PROFILE.id)||null})); 
+    const {error}=await sb.from('attendance').upsert(rows,{onConflict:'student_id,date'}); 
+    if(error){toast(error.message,'danger');return;} 
+    toast('Attendance saved for '+rows.length+' student(s)','success'); 
+  }
+}; 
+document.addEventListener('DOMContentLoaded',()=>AT.init()); 
+AT.init();
 </script></body></html>

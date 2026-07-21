@@ -119,7 +119,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
 <div class="app-layout sidebar" data-require-role="super_admin admin principal proprietor head_teacher bursar staff teacher">
   <aside class="app-sidebar" id="app-sidebar">
       <div class="app-brand">
-        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{textContent:('G'),style:'width:40px;height:40px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900'}))">
+        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.src='assets/img/logo.svg'">
         <div>
           <strong>God of Seed Academy</strong>
           <div style="font-size:0.7rem;color:var(--gray-500)">GOSA</div>
@@ -168,7 +168,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="flyer.html" data-module-id="flyer" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📰</span>
           <span>Flyer</span>
-        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🧾</span>
           <span>Report Cards</span>
         </a><a href="analytics.html" data-module-id="analytics" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -246,7 +246,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="parents.html" data-module-id="parents" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">👨‍👩‍👧</span>
           <span>Parent–Child</span>
-        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class="">
           <span class="app-nav-icon">🪪</span>
           <span>ID Cards</span>
         </a><a href="directory.html" data-module-id="directory" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -282,7 +282,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
-        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="exam-register.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -503,7 +503,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
 </script>
 <script>
 const AR={ rows:[],
- async init(){ if(!sb)return; try{ const [cls,sub,term,ses]=await Promise.all([sb.from('classes').select('name').order('name'),sb.from('subjects').select('name').order('name'),sb.from('lookups').select('value').eq('kind','term').order('position'),sb.from('lookups').select('value').eq('kind','session').order('position')]); const fill=(id,data,k)=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— select —</option>'+(data||[]).map(r=>'<option value="'+esc(r[k])+'">'+esc(r[k])+'</option>').join('');}; fill('ar-class',cls.data,'name'); fill('ar-subject',sub.data,'name'); fill('ar-term',term.data,'value'); fill('ar-session',ses.data,'value'); }catch(e){} },
+ async init(){ window.AR = AR; if(!sb)return; try{ const [cls,sub,term,ses]=await Promise.all([sb.from('classes').select('name').order('name'),sb.from('subjects').select('name').order('name'),sb.from('lookups').select('value').eq('kind','term').order('position'),sb.from('lookups').select('value').eq('kind','session').order('position')]); const fill=(id,data,k)=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— select —</option>'+(data||[]).map(r=>'<option value="'+esc(r[k])+'">'+esc(r[k])+'</option>').join('');}; fill('ar-class',cls.data,'name'); fill('ar-subject',sub.data,'name'); fill('ar-term',term.data,'value'); fill('ar-session',ses.data,'value'); }catch(e){} },
  async generate(){ if(!sb){toast('Database not configured','warning');return;} const type=document.getElementById('ar-type').value, cls=document.getElementById('ar-class').value, sub=document.getElementById('ar-subject').value, term=document.getElementById('ar-term').value, ses=document.getElementById('ar-session').value, stu=document.getElementById('ar-student').value; let q=sb.from('results').select('*').limit(2000); if(cls)q=q.eq('class',cls); if(sub&&type==='subject')q=q.eq('subject',sub); if(term)q=q.eq('term',term); if(ses)q=q.eq('session',ses); if(stu)q=q.ilike('student_name','%'+stu+'%'); const {data,error}=await q; if(error){toast(error.message,'danger');return;} this.rows=data||[]; document.getElementById('ar-output').innerHTML=this.html(type,cls,sub,term,ses); },
  html(type,cls,sub,term,ses){ const sc=window.SCHOOL||{}; const title=type==='student'?'STUDENT RECORD CARD':(type==='subject'?'SUBJECT BROADSHEET':'CLASS BROADSHEET'); const rows=this.rows; const byStudent={}; rows.forEach(r=>{(byStudent[r.student_name]=byStudent[r.student_name]||[]).push(r);}); const names=Object.keys(byStudent).sort(); const numStuds=names.length||22;
  if(type==='student'){
