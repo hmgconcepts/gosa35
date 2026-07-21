@@ -119,7 +119,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{display:none!importa
 <div class="app-layout sidebar" data-require-role="super_admin admin principal proprietor head_teacher bursar">
   <aside class="app-sidebar" id="app-sidebar">
       <div class="app-brand">
-        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{textContent:('G'),style:'width:40px;height:40px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900'}))">
+        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.src='assets/img/logo.svg'">
         <div>
           <strong>God of Seed Academy</strong>
           <div style="font-size:0.7rem;color:var(--gray-500)">GoSA</div>
@@ -159,7 +159,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{display:none!importa
         </a><a href="flyer.html" data-module-id="flyer" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📰</span>
           <span>Flyer</span>
-        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🧾</span>
           <span>Report Cards</span>
         </a><a href="analytics.html" data-module-id="analytics" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -234,7 +234,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{display:none!importa
         </a><a href="parents.html" data-module-id="parents" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">👨‍👩‍👧</span>
           <span>Parent–Child</span>
-        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class="">
           <span class="app-nav-icon">🪪</span>
           <span>ID Cards</span>
         </a><a href="directory.html" data-module-id="directory" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -522,13 +522,30 @@ const ICUI={ cur:{}, all:[], kind:'student', loaded:false,
   async load(){ const sel=document.getElementById('ic-student'); if(!sel)return;
     while(sel.options.length>1)sel.remove(1);
     if(!window.sb){ this.loaded=true; this.render(); return; }
+    // Wait for role resolution so we know if the user is a parent or student
+    for (let i = 0; i < 30; i++) {
+      if (window.SC_PROFILE && window.SC_PROFILE.role) break;
+      await new Promise(r => setTimeout(r, 100));
+    }
     try{
       if(this.kind==='staff'){
         const {data,error}=await sb.from('staff').select('id,full_name,staff_no,role,department,staff_type,gender,phone,photo_url').order('full_name').limit(3000); if(error)throw error;
         ICUI.all=data||[]; const seen=new Set(); (data||[]).forEach(s=>{ const key=String(s.id||s.staff_no||s.full_name||'').toLowerCase(); if(!key||seen.has(key))return; seen.add(key); const o=document.createElement('option'); o.value=JSON.stringify(s); o.textContent=(s.full_name||'Unnamed')+' ('+(s.role||s.staff_type||'staff')+')'; sel.appendChild(o); });
       } else {
-        const {data,error}=await sb.from('students').select('id,full_name,class,arm,admission_no,gender,photo_url,date_of_birth').order('full_name').limit(5000); if(error)throw error;
+        const role = (window.SC_PROFILE && SC_PROFILE.role) || (window.SCHOOL_USER && SCHOOL_USER.role) || '';
+        const userId = (window.SC_PROFILE && SC_PROFILE.id) || (window.SCHOOL_USER && SCHOOL_USER.id) || null;
+        let query = sb.from('students').select('id,full_name,class,arm,admission_no,gender,photo_url,date_of_birth').order('full_name').limit(5000);
+        if (role === 'student' && userId) query=query.eq('user_id',userId);
+        if (role === 'parent' && userId) { const linked=await sb.from('parent_child').select('student_id').eq('parent_id',userId); const ids=(linked.data||[]).map(x=>x.student_id).filter(Boolean); if(!ids.length){ICUI.all=[];this.loaded=true;this.render();return;} query=query.in('id',ids); }
+        const {data,error}=await query; if(error)throw error;
         ICUI.all=data||[]; const seen=new Set(); (data||[]).forEach(s=>{ const key=String(s.id||s.admission_no||s.full_name||'').toLowerCase(); if(!key||seen.has(key))return; seen.add(key); const o=document.createElement('option'); o.value=JSON.stringify(s); o.textContent=(s.full_name||'Unnamed')+' ('+(s.class||'student')+')'; sel.appendChild(o); });
+        // Auto-select an actual linked child/self, never a sample object.
+        if (ICUI.all.length > 0 && (role === 'parent' || role === 'student')) {
+          setTimeout(() => {
+            sel.value = JSON.stringify(ICUI.all[0]);
+            ICUI.pick(sel.value);
+          }, 100);
+        }
       }
     }catch(e){ console.warn('ID-card list load failed:', e); if(typeof toast==='function')toast('Could not load list. You can still type details manually and print.', 'warning', 7000); }
     this.loaded=true; this.render();

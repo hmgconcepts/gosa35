@@ -128,7 +128,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         <a href="entrance.html" data-module-id="entrance" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">🎯</span><span>Entrance &amp; Assessments</span></a>
         <a href="results.html" data-module-id="results" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">📊</span><span>Results</span></a>
         <a href="flyer.html" data-module-id="flyer" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">📰</span><span>Flyer</span></a>
-        <a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="active"><span class="app-nav-icon">🧾</span><span>Report Cards</span></a>
+        <a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="active"><span class="app-nav-icon">🧾</span><span>Report Cards</span></a>
         <a href="analytics.html" data-module-id="analytics" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">📊</span><span>Analytics</span></a>
         <a href="admin-data.html" data-module-id="admin-data" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">🗄️</span><span>Admin Data</span></a>
         <a href="academic-records.html" data-module-id="academic_records" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">📄</span><span>Records</span></a>
@@ -155,7 +155,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         <a href="digital_library.html" data-module-id="digital_library" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">📚</span><span>Digital Library</span></a>
         <a href="assignments.html" data-module-id="assignments" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">📝</span><span>Assignments</span></a>
         <a href="parents.html" data-module-id="parents" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">👨‍👩‍👧</span><span>Parent–Child</span></a>
-        <a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">🪪</span><span>ID Cards</span></a>
+        <a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class=""><span class="app-nav-icon">🪪</span><span>ID Cards</span></a>
         <a href="directory.html" data-module-id="directory" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">🔍</span><span>Directory</span></a>
         <a href="departments.html" data-module-id="departments" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">🏢</span><span>Departments</span></a>
         <a href="broadcast.html" data-module-id="broadcast" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">📨</span><span>Result Broadcast</span></a>
@@ -167,7 +167,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         <a href="alumni.html" data-module-id="alumni" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">🤝</span><span>Alumni</span></a>
         <a href="certificates.html" data-module-id="certificates" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">📜</span><span>Certificates</span></a>
         <a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">📝</span><span>Admissions</span></a>
-        <a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">🎓</span><span>Exam Registrations</span></a>
+        <a href="exam-register.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class=""><span class="app-nav-icon">🎓</span><span>Exam Registrations</span></a>
         <a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">🎓</span><span>Promotion</span></a>
         <a href="finance.html" data-module-id="finance" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">💵</span><span>Finance</span></a>
         <a href="inventory.html" data-module-id="inventory" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class=""><span class="app-nav-icon">📦</span><span>Inventory</span></a>
@@ -484,7 +484,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
       if (!this.ctx.class || !this.ctx.subject) { toast('Choose a class and subject first.', 'warning'); return; }
       try {
         const { data: cols } = await window.sb.from('assessment_columns').select('*')
-          .eq('class', this.ctx.class).eq('subject', this.ctx.subject)
+          .eq('class', this.ctx.class).eq('subject', '*')
           .eq('term', this.ctx.term).eq('session', this.ctx.session)
           .order('position');
         this.cols = cols || [];
@@ -499,7 +499,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
 
     renderCols(){
       $('rc-cols').innerHTML =
-        '<div class="card"><h3>Assessment columns</h3>' +
+        '<div class="card"><h3>School-wide assessment columns</h3><p style="color:var(--gray-600);font-size:.86rem">Create CA1, CA2, CBT, project and examination columns once. The same template is reused for every subject; scores stay separated by subject.</p>' +
         '<div class="table-wrap"><table><thead><tr><th>Name</th><th>Max mark</th><th>Source</th><th></th></tr></thead><tbody>' +
         (this.cols.length ? this.cols.map(c => '<tr><td>' + esc(c.name) + '</td><td>' + c.max_mark + '</td><td>' + (c.source === 'cbt' ? '<span class="badge">From CBT</span>' : 'Manual') + '</td><td><button type="button" class="btn btn-sm btn-outline" data-del-col="' + c.id + '">✕</button></td></tr>').join('') : '<tr><td colspan="4">No columns yet — add your first one below.</td></tr>') +
         '</tbody></table></div>' +
@@ -514,10 +514,10 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
       const name = ($('rc-cn') || {}).value ? $('rc-cn').value.trim() : '';
       const max = parseFloat(($('rc-cm') || {}).value) || 10;
       if (!name) { toast('Enter a column name.', 'warning'); return; }
-      const { error } = await window.sb.from('assessment_columns').insert({ ...this.ctx, name, max_mark: max, position: this.cols.length });
+      const { error } = await window.sb.from('assessment_columns').insert({ ...this.ctx, subject: '*', name, max_mark: max, position: this.cols.length });
       if (error) { toast(error.message, 'danger'); return; }
       if (window.App) App.logActivity('create', 'assessment_column', name);
-      toast('Column added.', 'success');
+      toast('School-wide column added once for every subject in this class, term and session.', 'success');
       this.load();
     },
 
@@ -542,7 +542,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
       (scores || []).forEach(s => { map[(s.student_id_ref || s.student_name) + '|' + s.column_id] = s.score; });
       const totalMax = this.cols.reduce((a, c) => a + Number(c.max_mark), 0);
       const canWrite = !this._familyMode;
-      let html = '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Scores — ' + esc(this.ctx.subject) + ' (' + esc(this.ctx.class) + ')</h3><div style="display:flex;gap:8px"><button type="button" class="btn btn-sm btn-outline" id="rc-export-csv">⬇ Export</button></div></div><div class="table-wrap"><table><thead><tr><th>Student</th>' + this.cols.map(c => '<th>' + esc(c.name) + '<br><small>/' + c.max_mark + '</small></th>').join('') + '<th>Total<br><small>/' + totalMax + '</small></th><th>%</th><th>Grade</th></tr></thead><tbody>';
+      let html = '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Scores — ' + esc(this.ctx.subject) + ' (' + esc(this.ctx.class) + ')</h3><div style="display:flex;gap:8px">' + (canWrite ? '<button type="button" class="btn btn-sm btn-primary" id="rc-save-all-scores" style="background:var(--gradient);border:none;color:white;font-weight:700">💾 Save All Scores</button>' : '') + '<button type="button" class="btn btn-sm btn-outline" id="rc-export-csv">⬇ Export</button></div></div><div class="table-wrap"><table><thead><tr><th>Student</th>' + this.cols.map(c => '<th>' + esc(c.name) + '<br><small>/' + c.max_mark + '</small></th>').join('') + '<th>Total<br><small>/' + totalMax + '</small></th><th>%</th><th>Grade</th></tr></thead><tbody>';
       if (!this.students.length) {
         html += '<tr><td colspan="' + (this.cols.length + 4) + '">No students found for class "' + esc(this.ctx.class) + '". Add students in the Students module first.</td></tr>';
       }
@@ -552,16 +552,22 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         const cells = this.cols.map(c => {
           const v = map[ref + '|' + c.id];
           if (v != null) tot += Number(v);
-          return '<td><input style="width:64px" class="form-input" type="number" data-ref="' + esc(ref) + '" data-name="' + esc(st.full_name) + '" data-col="' + c.id + '" data-max="' + c.max_mark + '" value="' + (v != null ? v : '') + '"' + (canWrite ? '' : ' readonly') + '></td>';
+          return '<td><input style="width:64px" class="form-input" type="number" data-ref="' + esc(ref) + '" data-name="' + esc(st.full_name) + '" data-student-id="' + esc(st.id||'') + '" data-col="' + c.id + '" data-max="' + c.max_mark + '" value="' + (v != null ? v : '') + '"' + (canWrite ? '' : ' readonly') + '></td>';
         }).join('');
         const pct = totalMax ? ((tot / totalMax) * 100).toFixed(1) : 0;
         const g = RC.grade(pct);
         html += '<tr><td>' + esc(st.full_name) + '</td>' + cells + '<td><strong>' + tot.toFixed(1) + '</strong></td><td>' + pct + '%</td><td>' + g + '</td></tr>';
       });
-      html += '</tbody></table></div></div>';
+      html += '</tbody></table></div>';
+      if (canWrite) {
+        html += '<div style="margin-top:12px;text-align:right"><button type="button" class="btn btn-primary" id="rc-save-all-scores-bot" style="background:var(--gradient);border:none;color:white;font-weight:700;padding:10px 24px">💾 Save All Scores</button></div>';
+      }
+      html += '</div>';
       $('rc-grid').innerHTML = html;
       if (canWrite) {
         $('rc-grid').querySelectorAll('input[data-col]').forEach(inp => inp.addEventListener('change', () => RC.saveScore(inp)));
+        const sBtn = $('rc-save-all-scores'); if (sBtn) sBtn.addEventListener('click', () => RC.saveAllScores());
+        const sBtnBot = $('rc-save-all-scores-bot'); if (sBtnBot) sBtnBot.addEventListener('click', () => RC.saveAllScores());
       }
       const exp = $('rc-export-csv'); if (exp) exp.addEventListener('click', () => RC.exportCSV());
     },
@@ -571,11 +577,67 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
     async saveScore(el){
       if (this._familyMode) { toast('Read-only: parents and students cannot edit report cards.', 'warning'); return; }
       const max = Number(el.dataset.max); let v = parseFloat(el.value); if (isNaN(v)) v = 0; if (v > max) { v = max; el.value = max; toast('Capped at max ' + max, 'warning'); }
-      const row = { column_id: el.dataset.col, student_id_ref: el.dataset.ref, student_name: el.dataset.name, class: this.ctx.class, subject: this.ctx.subject, term: this.ctx.term, session: this.ctx.session, score: v, source: 'manual' };
-      const { error } = await window.sb.from('report_scores').upsert(row, { onConflict: 'column_id,student_id_ref,student_name' });
+      const row = { column_id: el.dataset.col, student_id: el.dataset.studentId || null, student_id_ref: el.dataset.ref, student_name: el.dataset.name, class: this.ctx.class, subject: this.ctx.subject, term: this.ctx.term, session: this.ctx.session, score: v, source: 'manual' };
+      const { error } = await window.sb.from('report_scores').upsert(row, { onConflict: 'column_id,student_id_ref,student_name,class,subject,term,session' });
       if (error) { toast(error.message, 'danger'); return; }
+      // Mirror standard assessment columns into Results immediately. This is the one-way bridge that makes a subject-broadsheet entry available to the class broadsheet and student report card without retyping.
+      await this.syncScoreToResults(el, v);
       if (window.App) App.logActivity('update', 'report_score', el.dataset.ref);
       this.renderGrid();
+    },
+
+    async saveAllScores(){
+      if (this._familyMode) { toast('Read-only: parents and students cannot edit report cards.', 'warning'); return; }
+      const inputs = $('rc-grid').querySelectorAll('input[data-col]');
+      if (!inputs.length) { toast('No scores to save.', 'info'); return; }
+      const saveBtn = $('rc-save-all-scores');
+      const saveBtnBot = $('rc-save-all-scores-bot');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+      if (saveBtnBot) { saveBtnBot.disabled = true; saveBtnBot.textContent = 'Saving…'; }
+      let ok = 0, fail = 0;
+      for (const el of inputs) {
+        const max = Number(el.dataset.max); let v = parseFloat(el.value); if (isNaN(v)) v = 0; if (v > max) { v = max; el.value = max; }
+        const row = { column_id: el.dataset.col, student_id: el.dataset.studentId || null, student_id_ref: el.dataset.ref, student_name: el.dataset.name, class: this.ctx.class, subject: this.ctx.subject, term: this.ctx.term, session: this.ctx.session, score: v, source: 'manual' };
+        const { error } = await window.sb.from('report_scores').upsert(row, { onConflict: 'column_id,student_id_ref,student_name,class,subject,term,session' });
+        if (error) { fail++; }
+        else {
+          await this.syncScoreToResults(el, v);
+          ok++;
+        }
+      }
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save All Scores'; }
+      if (saveBtnBot) { saveBtnBot.disabled = false; saveBtnBot.textContent = '💾 Save All Scores'; }
+      if (fail) {
+        toast(`Saved ${ok} score(s). ${fail} failed.`, 'warning');
+      } else {
+        toast(`✅ All ${ok} scores saved successfully! Broadsheet and report cards are updated.`, 'success');
+      }
+      if (window.App && App.logActivity) App.logActivity('update-bulk', 'report_score', this.ctx.class + '|' + this.ctx.subject);
+      this.renderGrid();
+    },
+
+    async syncScoreToResults(el, score){
+      const col=(this.cols||[]).find(c=>String(c.id)===String(el.dataset.col)); if(!col) return;
+      const token=String(col.name||'').toLowerCase().replace(/[^a-z0-9]+/g,'_');
+      let field = null;
+      if (token.includes('ca1') || token.includes('ca_1') || token.includes('test_1') || token.includes('test1') || token.includes('first_ca') || token.includes('first_test')) {
+        field = 'ca1';
+      } else if (token.includes('ca2') || token.includes('ca_2') || token.includes('test_2') || token.includes('test2') || token.includes('second_ca') || token.includes('second_test')) {
+        field = 'ca2';
+      } else if (token.includes('ca3') || token.includes('ca_3') || token.includes('test_3') || token.includes('test3') || token.includes('cbt') || token.includes('project') || token.includes('assignment') || token.includes('homework') || token.includes('classwork') || token.includes('mid_term') || token.includes('midterm') || token.includes('third_ca') || token.includes('third_test')) {
+        field = 'ca3';
+      } else if (token.includes('exam') || token.includes('test') || token.includes('paper') || token.includes('terminal')) {
+        field = 'exam';
+      } else {
+        const colIndex = (this.cols||[]).findIndex(c => String(c.id) === String(el.dataset.col));
+        if (colIndex === 0) field = 'ca1';
+        else if (colIndex === 1) field = 'ca2';
+        else if (colIndex === 2) field = 'ca3';
+        else field = 'exam';
+      }
+      const identity={student_id:el.dataset.studentId||null,student_name:el.dataset.name,subject:this.ctx.subject,class:this.ctx.class,term:this.ctx.term,session:this.ctx.session};
+      try { const q=window.sb.from('results').select('id').eq('student_name',identity.student_name).eq('subject',identity.subject).eq('class',identity.class).eq('term',identity.term).eq('session',identity.session).limit(1); const {data}=await q; const payload=Object.assign({},identity,{[field]:score,assessment_source:'report_sheet'}); if(data&&data[0]) await window.sb.from('results').update(payload).eq('id',data[0].id); else await window.sb.from('results').insert(payload); }
+      catch(e){ console.warn('Results mirror failed; report score was saved safely.',e); }
     },
 
     exportCSV() {

@@ -119,7 +119,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
 <div class="app-layout sidebar" data-require-role="super_admin admin principal proprietor head_teacher bursar parent student">
   <aside class="app-sidebar" id="app-sidebar">
       <div class="app-brand">
-        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{textContent:('G'),style:'width:40px;height:40px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900'}))">
+        <img src="assets/img/logo.png" alt="God of Seed Academy" style="object-fit:contain" onerror="this.onerror=null;this.src='assets/img/logo.svg'">
         <div>
           <strong>God of Seed Academy</strong>
           <div style="font-size:0.7rem;color:var(--gray-500)">GOSA</div>
@@ -168,7 +168,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="flyer.html" data-module-id="flyer" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📰</span>
           <span>Flyer</span>
-        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🧾</span>
           <span>Report Cards</span>
         </a><a href="analytics.html" data-module-id="analytics" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -246,7 +246,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="parents.html" data-module-id="parents" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">👨‍👩‍👧</span>
           <span>Parent–Child</span>
-        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class="">
           <span class="app-nav-icon">🪪</span>
           <span>ID Cards</span>
         </a><a href="directory.html" data-module-id="directory" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -282,7 +282,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
-        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="exam-register.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -504,18 +504,20 @@ const SP={fees:[],student:null,
       Object.keys(groups).sort().forEach(g=>{ var og=document.createElement('optgroup'); og.label=g; var seenG=new Set(); groups[g].forEach(s=>{ if(seenG.has(s.id))return; seenG.add(s.id); var o=document.createElement('option');o.value=s.id;o.textContent=s.full_name;og.appendChild(o);}); sel.appendChild(og); }); }
     // deep-link or auto-load own profile
     var q=new URLSearchParams(location.search).get('student');
-    if(q && !['parent','student'].includes((window.SC_PROFILE||{}).role)){ if(sel)sel.value=q; this.load(q); }
+    if(q && !['student'].includes((window.SC_PROFILE||{}).role)){ if(sel)sel.value=q; if((window.SC_PROFILE||{}).role==='parent'){ const pc=await sb.from('parent_child').select('student_id').eq('parent_id',SC_PROFILE.id).eq('student_id',q).maybeSingle(); if(pc.data) this.load(q); } else this.load(q); }
     else { try{ var prof=(window.SC_PROFILE||{}); if(prof.role==='student' && prof.id){ const st=await sb.from('students').select('id').eq('user_id',prof.id).maybeSingle(); if(st.data&&st.data.id) this.load(st.data.id); else document.getElementById('sp-view').innerHTML='<div class="card"><h3>Student record not linked</h3><p>Your login account is active, but it has not been linked to a student record. Contact the school admin.</p></div>'; } else if(prof.student_id) this.load(prof.student_id); else if(prof.role==='parent' && prof.id){ const pc=await sb.from('parent_child').select('student_id').eq('parent_id',prof.id).limit(1); if(pc.data&&pc.data[0]) this.load(pc.data[0].student_id); else document.getElementById('sp-view').innerHTML='<div class="card"><h3>No child linked yet</h3><p>Your parent account is active, but no student has been mapped to you. Please contact the school admin to link your child on the Parents page.</p></div>'; } }catch(e){} }
   },
   cur(currency){ return (window.SCHOOL&&SCHOOL.currency)||currency||'₦'; },
   async load(id){ if(!id||!sb){return;} var box=document.getElementById('sp-view'); box.innerHTML='<p class="pulse">Loading…</p>';
     var {data:s}=await sb.from('students').select('*').eq('id',id).maybeSingle(); if(!s){box.innerHTML='<p>Student not found.</p>';return;}
     var name=s.full_name;
-    var fees=[],results=[],att={present:0,total:0},awards=[];
+    var fees=[],results=[],att={present:0,total:0},awards=[],classBill=null,products=[];
     try{ var r1=await sb.from('fee_payments').select('*').eq('student_name',name).order('created_at',{ascending:false}); fees=r1.data||[]; }catch(e){}
     try{ var r2=await sb.from('results').select('*').eq('student_name',name).limit(500); results=r2.data||[]; }catch(e){}
     try{ var r3=await sb.from('attendance').select('status').eq('student_name',name).limit(2000); var rows=r3.data||[]; att.total=rows.length; att.present=rows.filter(x=>x.status==='present').length; }catch(e){}
     try{ var r4=await sb.from('behaviour_points').select('*').eq('student_name',name).limit(200); awards=r4.data||[]; }catch(e){}
+    try{ var r5=await sb.from('class_fee_structure').select('*').eq('class',s.class).eq('term','Next Term').limit(1); classBill=(r5.data||[])[0]||null; }catch(e){}
+    try{ var r6=await sb.from('school_products').select('*').order('category').order('name').limit(100); products=r6.data||[]; }catch(e){}
     this.fees=fees; this.student=s; var totalPaid=fees.reduce((a,b)=>a+(Number(b.amount_paid)||0),0);
     var cur=this.cur();
     var photo=window.Super?Super.media.thumb(s.photo_url||'',{w:90,h:90}):'';
@@ -531,6 +533,8 @@ const SP={fees:[],student:null,
       '<div class="grid grid-2">'+
         '<div class="card"><h3 style="margin-top:0">💰 Fees & Payment History</h3>'+
           '<p>Total paid: <b>'+cur+totalPaid.toLocaleString()+'</b> over '+fees.length+' payment(s)</p>'+
+          (classBill?'<div class="card" style="background:#fffbeb;border-color:#fcd34d"><b>Next-term class bill:</b> '+cur+Number(classBill.total||0).toLocaleString()+' · Due: '+esc(classBill.due_date||'See school notice')+'</div>':'')+
+          (products.length?'<div><b>Required school products</b><ul>'+products.map(p=>'<li>'+esc(p.name)+' — '+cur+Number(p.price||0).toLocaleString()+'</li>').join('')+'</ul></div>':'')+
           (fees.length?'<div class="table-wrap"><table><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Term</th><th>Receipt</th></tr></thead><tbody>'+
             fees.map((f,i)=>'<tr><td>'+esc((window.CRUD&&CRUD.formatDate)?CRUD.formatDate(f.created_at):String(f.created_at||'').slice(0,10))+'</td><td>'+cur+Number(f.amount_paid||0).toLocaleString()+'</td><td>'+esc(f.method||'')+'</td><td>'+esc(f.term||'')+'</td><td><button class="btn btn-sm btn-outline" onclick="SP.receipt('+i+')">Print</button></td></tr>').join('')+'</tbody></table></div>':'<p style="color:var(--gray-500)">No payments recorded.</p>')+'</div>'+
         '<div class="card"><h3 style="margin-top:0">📊 Attendance & Awards</h3>'+

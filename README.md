@@ -158,3 +158,7 @@ Your platform is pre-configured with the following modules:
 
 ## 🌐 HMG Academy Ecosystem
 This platform is a proud part of the **HMG Academy Ecosystem**. It's optimized for lead generation, pointing prospective clients and students to [HMG Concepts](https://hmgconcepts.pages.dev/). The software stays free forever, with robust architecture preventing any dependency on paid AI APIs or costly third-party services.
+
+
+## School Connect v1 Final Deployment Note
+Run `database/complete-schema.sql` once in Supabase SQL Editor for a fresh deployment. It is now cumulative and self-contained: it includes base schema, CBT, voting, report cards, enterprise tables, class fee structures, product store, status audit log, parent-child access policies, staff check-in deadline settings, and schema-cache reload notifications. The smaller update SQL files are retained only for upgrading older deployed clients.

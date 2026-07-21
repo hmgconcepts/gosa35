@@ -168,7 +168,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="flyer.html" data-module-id="flyer" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📰</span>
           <span>Flyer</span>
-        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="report-cards.html" data-module-id="report-cards" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher parent student" class="">
           <span class="app-nav-icon">🧾</span>
           <span>Report Cards</span>
         </a><a href="analytics.html" data-module-id="analytics" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -246,7 +246,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="parents.html" data-module-id="parents" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">👨‍👩‍👧</span>
           <span>Parent–Child</span>
-        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
+        </a><a href="idcards.html" data-module-id="idcards" data-role-allow="super_admin admin principal proprietor head_teacher bursar parent student" class="">
           <span class="app-nav-icon">🪪</span>
           <span>ID Cards</span>
         </a><a href="directory.html" data-module-id="directory" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
@@ -282,7 +282,7 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
         </a><a href="admissions.html" data-module-id="admissions" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
           <span class="app-nav-icon">📝</span>
           <span>Admissions</span>
-        </a><a href="exam_registrations.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
+        </a><a href="exam-register.html" data-module-id="exam_registrations" data-role-allow="super_admin admin principal proprietor head_teacher bursar staff teacher" class="">
           <span class="app-nav-icon">🎓</span>
           <span>Exam Registrations</span>
         </a><a href="promotion.html" data-module-id="promotion" data-role-allow="super_admin admin principal proprietor head_teacher bursar" class="">
@@ -498,11 +498,44 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
           <p id="st-geo-preview" style="font-size:.82rem;color:var(--gray-500);margin-top:8px">No geofence loaded yet.</p>
         </div>
         <div class="card" data-admin-only>
+                    <h3>💳 Next-Term Fee Bills on Report Cards</h3>
+            <p style="color:var(--gray-600);font-size:.88rem;margin-bottom:12px">Pick class, arm and department from dropdowns — no typing, so no typos. Each combination can have its own next-term bill printed automatically on report cards. Previous balances come from fee payment records. This fixes the “Could not load class bills” schema-cache error when the database is correctly migrated.</p>
+            <div class="grid grid-3">
+              <div class="form-group"><label>Class (dropdown)</label><select class="form-select" id="st-fee-class"><option value="">— select class —</option></select><small style="color:#64748b">Populated from your Classes table</small></div>
+              <div class="form-group"><label>Arm / Stream (dropdown)</label><select class="form-select" id="st-fee-arm"><option value="">— all arms / none —</option></select><small style="color:#64748b">From Lookups: arm values (A/B/C/D)</small></div>
+              <div class="form-group"><label>Department / Section (dropdown)</label><select class="form-select" id="st-fee-dept"><option value="">— all departments / none —</option></select><small style="color:#64748b">From Departments table + lookups</small></div>
+              <div class="form-group"><label>Total next-term bill</label><input class="form-input" type="number" min="0" id="st-fee-total" placeholder="e.g. 85000"></div>
+              <div class="form-group"><label>Due date</label><input class="form-input" type="date" id="st-fee-due"></div>
+              <div class="form-group"><label>Next term begins</label><input class="form-input" type="date" id="st-fee-begins"></div>
+              <div class="form-group" style="grid-column:1/-1"><label>Payment note / bank instruction</label><textarea class="form-input" id="st-fee-note" rows="2" placeholder="Payable before resumption. Bank: ..."></textarea></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="ST.saveClassFeeBill()">Add / update class bill</button><button class="btn btn-outline btn-sm" onclick="ST.loadClassFeeBills()">Refresh class bills</button></div>
+            <div id="st-fee-bills" style="margin-top:10px;font-size:.85rem;color:var(--gray-600)">Class bills will appear here.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="ST.saveNextTermFees()">Save default next-term bill</button><a class="btn btn-outline btn-sm" href="school-fees.html">Open full fee-structure page</a></div>
+        </div>
+        <div class="card" data-admin-only>
+          <h3>⏱ Staff Check-in Deadline</h3>
+          <p style="color:var(--gray-600);font-size:.9rem;line-height:1.65">Set the daily cut-off time for staff arrival. Staff who clock in after this time are automatically marked <b>late</b> on the Staff Check-In page.</p>
+          <div class="grid grid-2"><div class="form-group"><label>Daily check-in deadline</label><input class="form-input" type="time" id="st-checkin-deadline" value="08:00"></div><div class="form-group"><label>Grace minutes</label><input class="form-input" type="number" min="0" max="120" id="st-checkin-grace" value="0"></div></div>
+          <button class="btn btn-primary btn-sm" onclick="ST.saveCheckinDeadline()">Save staff check-in deadline</button>
+        </div>
+        <div class="card" data-admin-only>
           <h3>✍️ Official Signature for Documents</h3>
           <p style="color:var(--gray-600);font-size:.9rem">Paste a Google Drive/direct image link for the principal/admin signature. It will appear on receipts, certificates, admission letters and academic records printed from this browser/site.</p>
           <div class="form-group"><label>Principal / signatory name</label><input class="form-input" id="st-principal" placeholder="Principal name"></div>
           <div class="form-group"><label>Signature image link</label><input class="form-input" id="st-signature" placeholder="https://drive.google.com/... or image URL"></div>
-          <button class="btn btn-primary btn-sm" onclick="ST.saveSignature()">Save signature</button>
+          <div class="grid grid-2"><div class="form-group"><label>Stamp text</label><input class="form-input" id="st-stamp-text" value="OFFICIAL SCHOOL SEAL" placeholder="OFFICIAL SCHOOL SEAL"></div><div class="form-group"><label>Stamp colour</label><input class="form-input" id="st-stamp-color" type="color" value="#1e3a8a"></div></div>
+          <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="st-stamp-enabled" checked> Print the official school stamp on report cards and certificates</label>
+          <div style="margin:14px 0;border:1px dashed var(--gray-300);border-radius:8px;padding:12px;background:var(--gray-50)">
+            <label style="font-weight:700;display:block;margin-bottom:6px">Or Draw Signature Directly on this Pad:</label>
+            <canvas id="sig-pad" width="300" height="120" style="border:1px solid var(--gray-300);background:#fff;border-radius:4px;cursor:crosshair;touch-action:none;display:block;max-width:100%"></canvas>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" onclick="ST.clearSigPad()">Clear Pad</button>
+              <button class="btn btn-primary btn-sm" onclick="ST.saveSigPad()">Save Drawn Signature</button>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="ST.saveSignature()">Save signature details</button>
           <div id="st-sign-preview" style="margin-top:8px"></div>
         </div>
       </div>
@@ -536,11 +569,93 @@ body:not([data-role-ready="1"]) .app-nav a[data-role-allow]{visibility:visible!i
 <script>
 const ST={
   async init(){ try{ const p=await Enterprise.security.getPrefs(); const c=document.getElementById('st-2fa'); if(c)c.checked=!!p.two_factor; }catch(e){}
-    const l=document.getElementById('st-lang'); if(l) l.value=Enterprise.i18n.lang; const sig=document.getElementById('st-signature'), pn=document.getElementById('st-principal'); if(sig) sig.value=localStorage.getItem('sc-signature-url')||''; if(pn) pn.value=localStorage.getItem('sc-principal-name')||''; await ST.loadGeofence(); ST.preview(); },
+    const l=document.getElementById('st-lang'); if(l) l.value=Enterprise.i18n.lang; const sig=document.getElementById('st-signature'), pn=document.getElementById('st-principal'); if(sig) sig.value=localStorage.getItem('sc-signature-url')||''; if(pn) pn.value=localStorage.getItem('sc-principal-name')||''; if(document.getElementById('st-stamp-text'))document.getElementById('st-stamp-text').value=(window.SC_SETTINGS&&SC_SETTINGS.stamp_text)||localStorage.getItem('sc-stamp-text')||'OFFICIAL SCHOOL SEAL'; if(document.getElementById('st-stamp-color'))document.getElementById('st-stamp-color').value=(window.SC_SETTINGS&&SC_SETTINGS.stamp_color)||localStorage.getItem('sc-stamp-color')||'#1e3a8a'; if(document.getElementById('st-stamp-enabled'))document.getElementById('st-stamp-enabled').checked=!((window.SC_SETTINGS&&SC_SETTINGS.stamp_enabled)===false); await ST.loadGeofence(); await ST.loadNextTermFees(); await ST.populateFeeBillDropdowns(); ST.loadClassFeeBills(); await ST.loadCheckinDeadline(); ST.preview(); ST.initSigPad(); },
+  initSigPad() {
+    const canvas = document.getElementById('sig-pad');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    ctx.strokeStyle = '#1e3a8a'; // Stamp blue color
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    const getPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+    canvas.onmousedown = (e) => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+    canvas.onmousemove = (e) => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+    window.onmouseup = () => drawing = false;
+    canvas.ontouchstart = (e) => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+    canvas.ontouchmove = (e) => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+    canvas.ontouchend = () => drawing = false;
+  },
+  clearSigPad() {
+    const canvas = document.getElementById('sig-pad');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  },
+  async saveSigPad() {
+    const canvas = document.getElementById('sig-pad');
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const sig = document.getElementById('st-signature');
+    if (sig) sig.value = url;
+    await ST.saveSignature();
+    toast('Signature drawn and saved! It is now embedded into the official stamp.','success');
+  },
   async toggle2fa(on){ const r=await Enterprise.security.setTwoFactor(on); if(r&&r.error){toast(r.error.message||r.error,'danger');return;} toast(on?'2FA enabled':'2FA disabled','success'); },
   lang(l){ Enterprise.i18n.setLang(l); toast('Language set','success'); },
   preview(){ const box=document.getElementById('st-sign-preview'); const raw=localStorage.getItem('sc-signature-url')||''; const url=(window.Super&&Super.idcard&&Super.idcard.driveDirect)?Super.idcard.driveDirect(raw):raw; if(box) box.innerHTML=url?'<img src="'+esc(url)+'" referrerpolicy="no-referrer" style="max-width:180px;max-height:80px;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.3) brightness(1.05)" onerror="this.replaceWith(document.createTextNode(&quot;Signature link saved; preview unavailable — check the Drive link is public.&quot;))">':''; },
-  async saveSignature(){ const url=document.getElementById('st-signature').value.trim(), name=document.getElementById('st-principal').value.trim(); localStorage.setItem('sc-signature-url',url); localStorage.setItem('sc-principal-name',name); try{ if(sb) await sb.from('school_settings').upsert({id:1,signature_url:url,principal_name:name},{onConflict:'id'}); }catch(e){} ST.preview(); toast('Signature saved for exported documents','success'); },
+  async loadNextTermFees(){ try{let d=window.SC_SETTINGS||{};if(sb){const r=await sb.from('school_settings').select('next_term_fees,next_term_fees_currency,next_term_begins,next_term_fees_note').eq('id',1).maybeSingle();d=r.data||d;} const set=(id,v)=>{const e=document.getElementById(id);if(e&&v!=null)e.value=v;};set('st-next-fee',d.next_term_fees);set('st-next-begins',d.next_term_begins);set('st-next-currency',d.next_term_fees_currency||'₦');set('st-next-note',d.next_term_fees_note||'Payable before resumption');}catch(_){}},
+  async saveNextTermFees(){const payload={id:1,next_term_fees:Number(document.getElementById('st-next-fee')?.value)||0,next_term_fees_currency:document.getElementById('st-next-currency')?.value||'₦',next_term_begins:document.getElementById('st-next-begins')?.value||null,next_term_fees_note:document.getElementById('st-next-note')?.value?.trim()||'Payable before resumption'};try{if(sb){const r=await sb.from('school_settings').upsert(payload,{onConflict:'id'});if(r.error)throw r.error;}window.SC_SETTINGS=Object.assign(window.SC_SETTINGS||{},payload);localStorage.setItem('sc-next-term-fees',String(payload.next_term_fees));localStorage.setItem('sc-next-term-begins',payload.next_term_begins||'');toast('Default next-term bill saved. Class/department overrides can be managed below.','success');}catch(e){toast('Could not save next-term bill: '+(e.message||e),'danger');}},
+
+  async populateFeeBillDropdowns(){
+    try {
+      if(!sb) return;
+      const classSel = document.getElementById('st-fee-class');
+      const armSel = document.getElementById('st-fee-arm');
+      const deptSel = document.getElementById('st-fee-dept');
+      if(classSel){
+        const {data: classes} = await sb.from('classes').select('name').order('name').limit(200);
+        const cur = classSel.value;
+        classSel.innerHTML = '<option value="">— select class —</option>' + (classes||[]).map(c=>'<option>'+esc(c.name)+'</option>').join('');
+        if(cur) classSel.value = cur;
+      }
+      if(armSel){
+        const {data: arms} = await sb.from('lookups').select('value').eq('kind','arm').order('position').limit(50);
+        const cur = armSel.value;
+        armSel.innerHTML = '<option value="">— all arms / none —</option>' + (arms||[]).map(a=>'<option>'+esc(a.value)+'</option>').join('');
+        if(cur) armSel.value = cur;
+      }
+      if(deptSel){
+        const {data: depts} = await sb.from('departments').select('name').order('name').limit(200);
+        let deptOptions = (depts||[]).map(d=>'<option>'+esc(d.name)+'</option>').join('');
+        if(!deptOptions){
+          const {data: lookDepts} = await sb.from('lookups').select('value').eq('kind','department').order('position').limit(100);
+          deptOptions = (lookDepts||[]).map(d=>'<option>'+esc(d.value)+'</option>').join('');
+        }
+        const cur = deptSel.value;
+        deptSel.innerHTML = '<option value="">— all departments / none —</option>' + deptOptions;
+        if(cur) deptSel.value = cur;
+      }
+    } catch(e){ console.warn('populate fee bill dropdowns failed', e); }
+  },
+
+  async loadClassFeeBills(){const box=document.getElementById('st-fee-bills'); if(!box)return; if(!sb){box.textContent='Connect Supabase to manage class/department bills.';return;} try{const {data,error}=await sb.from('class_fee_structure').select('*').eq('term','Next Term').order('class').limit(100); if(error)throw error; box.innerHTML=(data&&data.length)?'<div class="table-wrap"><table><thead><tr><th>Class</th><th>Arm</th><th>Department</th><th>Total</th><th>Due</th><th>Note</th></tr></thead><tbody>'+data.map(r=>'<tr><td>'+esc(r.class||'')+'</td><td>'+esc(r.arm||'')+'</td><td>'+esc(r.department||'')+'</td><td>'+esc((window.SCHOOL&&SCHOOL.currency)||'₦')+Number(r.total||0).toLocaleString()+'</td><td>'+esc(r.due_date||'')+'</td><td>'+esc(r.note||'')+'</td></tr>').join('')+'</tbody></table></div>':'No next-term class/department bills yet.';}catch(e){box.textContent='Could not load class bills: '+(e.message||e);}},
+  async saveClassFeeBill(){ if(!sb){toast('Supabase is required to save class bills.','warning');return;} const payload={class:document.getElementById('st-fee-class')?.value?.trim(),arm:document.getElementById('st-fee-arm')?.value?.trim()||'',department:document.getElementById('st-fee-dept')?.value?.trim()||'',term:'Next Term',total:Number(document.getElementById('st-fee-total')?.value)||0,due_date:document.getElementById('st-fee-due')?.value||null,next_term_begins:document.getElementById('st-fee-begins')?.value||document.getElementById('st-next-begins')?.value||null,note:document.getElementById('st-fee-note')?.value?.trim()||document.getElementById('st-next-note')?.value?.trim()||'Payable before resumption'}; if(!payload.class||!payload.total){toast('Enter at least class and total amount.','warning');return;} try{const {error}=await sb.from('class_fee_structure').upsert(payload,{onConflict:'class,arm,department,term'}); if(error)throw error; toast('Class/department next-term bill saved.','success'); ST.populateFeeBillDropdowns(); ST.loadClassFeeBills();}catch(e){toast('Could not save class bill: '+(e.message||e),'danger',8000);}},
+  async loadCheckinDeadline(){try{let d=window.SC_SETTINGS||{};if(sb){const r=await sb.from('school_settings').select('checkin_deadline,checkin_grace_minutes').eq('id',1).maybeSingle();d=r.data||d;} const t=document.getElementById('st-checkin-deadline'), g=document.getElementById('st-checkin-grace'); if(t)t.value=d.checkin_deadline||localStorage.getItem('sc-checkin-deadline')||'08:00'; if(g)g.value=d.checkin_grace_minutes||localStorage.getItem('sc-checkin-grace')||0;}catch(_){}},
+  async saveCheckinDeadline(){
+    const payload={id:1,checkin_deadline:document.getElementById('st-checkin-deadline')?.value||'08:00',checkin_grace_minutes:Number(document.getElementById('st-checkin-grace')?.value)||0};
+    try{
+      if(!sb){window.SC_SETTINGS=Object.assign(window.SC_SETTINGS||{},payload);localStorage.setItem('sc-checkin-deadline',payload.checkin_deadline);localStorage.setItem('sc-checkin-grace',String(payload.checkin_grace_minutes));toast('Saved on this device. Connect Supabase to share the deadline with all staff.','warning');return;}
+      const {error}=await sb.from('school_settings').upsert(payload,{onConflict:'id'}); if(error)throw error;
+      window.SC_SETTINGS=Object.assign(window.SC_SETTINGS||{},payload); localStorage.setItem('sc-checkin-deadline',payload.checkin_deadline); localStorage.setItem('sc-checkin-grace',String(payload.checkin_grace_minutes)); toast('Staff check-in deadline saved to the school database.','success');
+    }catch(e){toast('Could not save check-in deadline to the school database: '+(e.message||e),'danger',9000);}
+  },
+  async saveSignature(){ const url=document.getElementById('st-signature').value.trim(), name=document.getElementById('st-principal').value.trim(), stamp_text=document.getElementById('st-stamp-text')?.value.trim()||'OFFICIAL SCHOOL SEAL', stamp_color=document.getElementById('st-stamp-color')?.value||'#1e3a8a', stamp_enabled=document.getElementById('st-stamp-enabled')?.checked!==false; localStorage.setItem('sc-signature-url',url); localStorage.setItem('sc-principal-name',name); localStorage.setItem('sc-stamp-text',stamp_text); localStorage.setItem('sc-stamp-color',stamp_color); try{if(sb){const {error}=await sb.from('school_settings').upsert({id:1,signature_url:url,principal_name:name,stamp_text,stamp_color,stamp_enabled,signature_enabled:true},{onConflict:'id'});if(error)throw error;}}catch(e){toast('Signature/stamp saved on this device; database update failed: '+(e.message||e),'warning',8000);return;} window.SC_SETTINGS=Object.assign(window.SC_SETTINGS||{},{signature_url:url,principal_name:name,stamp_text,stamp_color,stamp_enabled}); ST.preview(); toast('Signature and official stamp saved for exported documents','success'); },
   async loadGeofence(){ try{ let data=null; if(sb){ const r=await sb.from('school_settings').select('latitude,longitude,geo_radius_m,enforce_geofence').eq('id',1).maybeSingle(); data=r.data; } data=data||window.SC_SETTINGS||{}; const lat=document.getElementById('st-lat'), lng=document.getElementById('st-lng'), rad=document.getElementById('st-radius'), enf=document.getElementById('st-enforce-geo'); if(lat&&data.latitude!=null)lat.value=data.latitude; if(lng&&data.longitude!=null)lng.value=data.longitude; if(rad&&data.geo_radius_m!=null)rad.value=data.geo_radius_m; if(enf)enf.checked=data.enforce_geofence!==false; ST.renderGeoPreview(); }catch(e){ ST.renderGeoPreview('Could not load geofence: '+(e.message||e)); } },
   renderGeoPreview(msg){ const box=document.getElementById('st-geo-preview'); if(!box)return; if(msg){box.textContent=msg;return;} const lat=document.getElementById('st-lat')?.value, lng=document.getElementById('st-lng')?.value, rad=document.getElementById('st-radius')?.value||200, enf=document.getElementById('st-enforce-geo')?.checked; box.textContent=(lat&&lng)?('Current geofence: '+lat+', '+lng+' within '+rad+'m · '+(enf?'enforced':'not enforced')):'No geofence set. Staff check-in will ask admin to configure location.'; },
   async useCurrentLocation(){ if(!navigator.geolocation){toast('GPS is not supported on this device/browser.','danger');return;} navigator.geolocation.getCurrentPosition(pos=>{ document.getElementById('st-lat').value=pos.coords.latitude.toFixed(6); document.getElementById('st-lng').value=pos.coords.longitude.toFixed(6); ST.renderGeoPreview(); toast('Current location captured. Click Save geofence.','success'); }, err=>toast('Could not capture location: '+err.message,'danger'), {enableHighAccuracy:true,timeout:15000,maximumAge:0}); },
